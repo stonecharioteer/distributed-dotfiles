@@ -1,0 +1,30 @@
+---
+- hosts: all
+  tasks:
+    - name: Download neovim 0.6.1
+      become: yes
+      get_url: 
+        url: https://github.com/neovim/neovim/releases/download/v0.6.1/nvim-linux64.tar.gz
+        dest: /tmp/nvim.tar.gz
+        checksum: sha256:06f1c19b09dd8cc63f970ef7edab8fa3850a154c296f453393d00854f514a847
+    - name: Unpack neovim
+      become: yes
+      unarchive:
+        src: /tmp/nvim.tar.gz 
+        dest: /opt/
+        remote_src: yes
+        mode: a+rx,g-w,o-w
+    - name: Symlink nvim
+      become: yes
+      file:
+        src: /opt/nvim-linux64/bin/nvim
+        dest: /usr/local/bin/nvim
+        state: link
+        mode: a+x,o-rw,g-w
+    - name: Download neovim Config
+      git:
+        repo: "https://github.com/stonecharioter/dotfiles-nvim.git"
+        dest: "{{ ansible_env.HOME}}/.config/nvim"
+        version: master
+        update: yes
+
