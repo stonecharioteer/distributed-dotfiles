@@ -1,19 +1,49 @@
 ---
 - hosts: all
   tasks:
+    # only do this if nvim isn't installed
+    - name: Delete nvim archive if present
+      file:
+        path: "{{ ansible_env.HOME }}/nvim.tar.gz"
+        state: absent
+      when: reinstall
     - name: Download neovim 0.6.1
-      become: yes
       get_url: 
         url: https://github.com/neovim/neovim/releases/download/v0.6.1/nvim-linux64.tar.gz
-        dest: /tmp/nvim.tar.gz
+        dest: "{{ansible_env.HOME}}/nvim.tar.gz"
         checksum: sha256:06f1c19b09dd8cc63f970ef7edab8fa3850a154c296f453393d00854f514a847
+      when: reinstall
+    - name: Delete nvim folder
+      become: yes
+      file:
+        path: /opt/nvim-linux64
+        state: absent
+      when: reinstall
+      tags:
+        - delete
     - name: Unpack neovim
       become: yes
       unarchive:
-        src: /tmp/nvim.tar.gz 
+        src: "{{ansible_env.HOME}}/nvim.tar.gz"
         dest: /opt/
         remote_src: yes
         mode: a+rx,g-w,o-w
+      when: reinstall
+    - name: Delete nvim archive
+      file:
+        path: "{{ ansible_env.HOME }}/nvim.tar.gz"
+        state: absent
+      when: reinstall
+      tags:
+        - delete
+    - name: Delete nvim symlink
+      become: yes
+      file:
+        path: /usr/local/bin/nvim
+        state: absent
+      when: reinstall
+      tags:
+        - delete
     - name: Symlink nvim
       become: yes
       file:
@@ -21,10 +51,13 @@
         dest: /usr/local/bin/nvim
         state: link
         mode: a+x,o-rw,g-w
+      when: reinstall
+      tags:
+        - install
     - name: Download neovim Config
       git:
-        repo: "https://github.com/stonecharioter/dotfiles-nvim.git"
+        repo: "https://github.com/stonecharioter/dotfiles-nvim"
         dest: "{{ ansible_env.HOME}}/.config/nvim"
+        accept_hostkey: yes
         version: master
         update: yes
-
