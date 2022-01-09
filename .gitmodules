@@ -1,0 +1,3 @@
+[submodule "nvim"]
+	path = dotfiles-nvim
+	url = git@github.com:stonecharioteer/dotfiles-nvim
