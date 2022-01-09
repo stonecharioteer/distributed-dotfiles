@@ -76,6 +76,9 @@ It might be better to spin up Raspbian using docker and then try the ansible fil
 since Raspbian uses Debian underneath, it might be easier to account for those packages
 which are Debian specific.
 
+When doing this sort of testing repeatedly, you might want to use the ``--flush-cache``
+flag for the ansible commands.
+
 -------------------
 Structure
 -------------------
