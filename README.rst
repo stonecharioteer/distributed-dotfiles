@@ -14,6 +14,19 @@ to include what each other likes or dislikes.
 Setup
 ------------------
 
+First, clone this repository and all its submodules.
+
+.. code:: bash
+   git clone --recurse-submodules -j8 git@github.com:stonecharioteer/distributed-dotfiles 
+
+If you've already cloned the repo and want to update the submodules or pull them later,
+
+
+.. code:: bash
+   git update --recurse-submodules
+   git submodule update --recursive
+
+
 Install ansible and other dependencies on the host machine.
 
 .. code:: bash
