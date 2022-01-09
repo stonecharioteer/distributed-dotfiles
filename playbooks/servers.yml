@@ -1,0 +1,56 @@
+---
+# this is the playbook that I need for servers.
+- hosts: all
+  gather_facts: yes
+
+  tasks:
+    - name: Print Distribution Names
+      debug: msg="{{ ansible_distribution }}"
+    - name: Install Packages in Ubuntu
+      block: 
+        - name: Update apt-get Sources
+          become: yes
+          apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+          when: ansible_facts["os_family"] == "Debian"
+          tags:
+            - ubuntu
+            - apt
+        - name: Install Ubuntu Packages
+          become: yes
+          when: ansible_facts["os_family"] == "Debian"
+          apt:
+            pkg:
+              - build-essential
+              - busybox-static
+              - curl
+              - curl
+              - git
+              - libbz2-dev
+              - libffi-dev
+              - libreadline-dev
+              - libsqlite3-dev
+              - libssl-dev
+              - netcat-openbsd
+              - pkg-config
+              - sqlite3
+              - tcl
+              - tmux
+              - tree
+              - vim
+              - zlib1g-dev
+    - name: Install Packages in Arch Linux and Manjaro
+      when: ansible_facts["os_family"] == "Archlinux"
+      block:
+        - name: Update Pacman Package Sources
+          become: yes
+          pacman:
+            update_cache: yes
+        - name: Install Arch Packages
+          become: yes
+          pacman:
+            name:
+              - git
+              - curl
+              - httpie
+              - base-devel
+            state: present
