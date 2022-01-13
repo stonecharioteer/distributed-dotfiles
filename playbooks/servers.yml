@@ -23,21 +23,57 @@
               - build-essential
               - busybox-static
               - curl
-              - curl
               - git
               - libbz2-dev
               - libffi-dev
+              - liblzma-dev
+              - libncurses5-dev
+              - libncursesw5-dev
               - libreadline-dev
               - libsqlite3-dev
               - libssl-dev
+              - libxlst-dev
+              - libxml-dev
+              - llvm
+              - make
               - netcat-openbsd
               - pkg-config
+              - python-openssl
+              - python3-openssl
               - sqlite3
               - tcl
+              - tk-dev
               - tmux
               - tree
               - vim
+              - wget
+              - xz-utils
               - zlib1g-dev
+        - name: Check if libmpdec2 has been installed
+          command: dpkg-query -W libmpdec2
+          when: ansible_facts["os_family"] == "Debian"
+          register: libmpdec2_installed
+          failed_when: libmpdec2_installed.rc > 1
+          changed_when: libmpdec2_installed.rc == 1
+        - name: Download libmpdec2.deb
+          get_url:
+            url="http://archive.ubuntu.com/ubuntu/pool/main/m/mpdecimal/libmpdec2_2.4.2-3_amd64.deb"
+            dest="{{ ansible_env.HOME }}/Downloads/libmpdec2_2.4.2-3_amd64.deb"
+          when: libmpdec2_installed.rc == 1
+        - name: Install libmpdec2 from deb file
+          apt: deb="{{ ansible_env.HOME }}/Downloads/libmpdec2_2.4.2-3_amd64.deb"
+          become: true
+          when: libmpdec2_installed.rc == 1
+        - name: Remove libmpdec2 installation file
+          file:
+            src: "{{ ansible_env.HOME }}/Downloads/libmpdec2_2.4.2-3_amd64.deb"
+            state: absent
+        - name: Ensure the locale exists
+          locale_gen:
+            name: en_US.UTF-8
+            state: present
+        - name: set as default locale
+          command: localectl set-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
     - name: Install Packages in Arch Linux and Manjaro
       when: ansible_facts["os_family"] == "Archlinux"
       block:
