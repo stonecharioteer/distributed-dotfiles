@@ -1,0 +1,86 @@
+---
+# This is a playbook to help setup python on a development machine.
+# I don't like using tools such as pyenv, virtualenvwrapper or poetry,
+# since the legacy knowledge on all these feels like it's too much.
+# I prefer just creating standard virtual environments whenever I want.
+# I can be disciplined about this, and make them in ~/.venvs/pythonX.YY/PROJ_NAME
+# That way, I can delete all my virtual environments when I want to.
+# And I can use `direnv` to activate these environments without much of a hassle.
+- hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Setup Python on Ubuntu Machines
+      when: ansible_facts["os_family"] == "Debian"
+      become: yes
+      block:
+        - name: Add the deadsnakes APT repository for python versions (Ubuntu >= 18.04 Bionic Beaver, but before 21.04)
+          become: yes
+          apt_repository:
+            validate_certs: no
+            repo: "ppa:deadsnakes"
+            state: present
+          when: ansible_distribution_major_version|int >= 18 and ansible_distribution_major_version|int < 21
+          register: add_deadsnakes
+          tags:
+            - python
+            - ubuntu
+            - deadsnakes
+        - name: Add the deadsnakes APT repository for python versions (Ubuntu == 21.xx)
+          copy:
+            dest: "/etc/apt/sources.list.d/deadsnakes-ubuntu-ppa.list"
+            content: |
+              deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu/ focal main
+          when:  ansible_distribution_major_version|int == 21
+        - name: Install Python3.8
+          apt:
+            update_cache: yes
+            state: present
+            pkg:
+              - python3.8
+              - python3.8-venv
+              - python3.8-dev
+          tags:
+            - python
+            - ubuntu
+            - deadsnakes
+          when: ansible_distribution_major_version|int == 18
+        - name: Install Python 3.9
+          apt:
+            update_cache: yes
+            state: present
+            pkg:
+              - python3.9
+              - python3.9-venv
+              - python3.9-dev
+          tags:
+            - python
+            - ubuntu
+            - deadsnakes
+        - name: Install Python3.10
+          apt:
+            update_cache: yes
+            state: present
+            pkg:
+              - python3.10
+              - python3.10-venv
+              - python3.10-dev
+          tags:
+            - python
+            - ubuntu
+            - deadsnakes
+        - name: Install Python3.11
+          apt:
+            update_cache: yes
+            state: present
+            pkg:
+              - python3.11
+              - python3.11-venv
+              - python3.11-dev
+          tags:
+            - python
+            - ubuntu
+            - deadsnakes
+    - name: Setup virtual environments folders
+      file:
+        path: "{{ ansible_env.HOME }}/.venvs"
+        state: directory
