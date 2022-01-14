@@ -7,18 +7,13 @@
     - name: Print Distribution Names
       debug: msg="{{ ansible_distribution }}"
     - name: Install Packages in Ubuntu
+      when: ansible_facts["os_family"] == "Debian"
       block: 
-        - name: Update apt-get Sources
-          become: yes
-          apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
-          when: ansible_facts["os_family"] == "Debian"
-          tags:
-            - ubuntu
-            - apt
         - name: Install Ubuntu Packages
           become: yes
-          when: ansible_facts["os_family"] == "Debian"
           apt:
+            update_cache: yes
+            state: present
             pkg:
               - build-essential
               - busybox-static
@@ -32,13 +27,12 @@
               - libreadline-dev
               - libsqlite3-dev
               - libssl-dev
-              - libxlst-dev
-              - libxml-dev
+              - libxslt-dev
+              - libxml2-dev
               - llvm
               - make
               - netcat-openbsd
               - pkg-config
-              - python-openssl
               - python3-openssl
               - sqlite3
               - tcl
@@ -50,30 +44,34 @@
               - xz-utils
               - zlib1g-dev
         - name: Check if libmpdec2 has been installed
+          become: yes
           command: dpkg-query -W libmpdec2
-          when: ansible_facts["os_family"] == "Debian"
           register: libmpdec2_installed
           failed_when: libmpdec2_installed.rc > 1
           changed_when: libmpdec2_installed.rc == 1
         - name: Download libmpdec2.deb
           get_url:
             url="http://archive.ubuntu.com/ubuntu/pool/main/m/mpdecimal/libmpdec2_2.4.2-3_amd64.deb"
-            dest="{{ ansible_env.HOME }}/Downloads/libmpdec2_2.4.2-3_amd64.deb"
+            dest="{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
           when: libmpdec2_installed.rc == 1
         - name: Install libmpdec2 from deb file
-          apt: deb="{{ ansible_env.HOME }}/Downloads/libmpdec2_2.4.2-3_amd64.deb"
-          become: true
+          apt: deb="{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
+          become: yes
           when: libmpdec2_installed.rc == 1
         - name: Remove libmpdec2 installation file
           file:
-            src: "{{ ansible_env.HOME }}/Downloads/libmpdec2_2.4.2-3_amd64.deb"
+            path: "{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
             state: absent
-        - name: Ensure the locale exists
-          locale_gen:
-            name: en_US.UTF-8
-            state: present
-        - name: set as default locale
-          command: localectl set-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+    - name: Ensure the locale exists
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
+      register: en_us_utf_8_locale_generated
+    - name: Reboot if locale generated.
+      reboot:
+      when: en_us_utf_8_locale_generated.changed
+    - name: set as default locale
+      command: localectl set-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
     - name: Install Packages in Arch Linux and Manjaro
       when: ansible_facts["os_family"] == "Archlinux"
       block:
