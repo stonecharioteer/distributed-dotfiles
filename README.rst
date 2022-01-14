@@ -98,5 +98,8 @@ I prefer breaking my playbooks into the following:
 6. ``pi-k3s.yml``: This installs everything for my Raspberry Pi 4 K3S Cluster
 7. ``pi-clsuterhat.yml``: This installs everything for my Raspberry Pi Zero W
    Cluster Hat, including k3s on it.
-8. ``update-hosts.yml``: This updates the hosts file on all the machines I
+8. ``update-hosts.yml``: This updates the ``/etc/hosts`` file on all the machines I
    administer locally at home.
+9. ``python-setup.yml``: This sets up Python on a machine, using the deadsnakes
+   ppa on Ubuntu, and manually installing every known version of Python >=3.7.
+   On Arch, it downloads and *builds* all the required python versions.
