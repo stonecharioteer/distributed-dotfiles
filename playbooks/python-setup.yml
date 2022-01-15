@@ -13,8 +13,7 @@
       when: ansible_facts["os_family"] == "Debian"
       become: yes
       block:
-        - name: Add the deadsnakes APT repository for python versions (Ubuntu >= 18.04 Bionic Beaver, but before 21.04)
-          become: yes
+        - name: Add the deadsnakes APT repository for python versions [Ubuntu - 18.04 Bionic, 20.10]
           apt_repository:
             validate_certs: no
             repo: "ppa:deadsnakes"
@@ -23,14 +22,38 @@
           register: add_deadsnakes
           tags:
             - python
+            - python3.8
+            - python3.9
+            - python3.10
+            - python3.11
             - ubuntu
             - deadsnakes
         - name: Add the deadsnakes APT repository for python versions (Ubuntu == 21.xx)
           copy:
             dest: "/etc/apt/sources.list.d/deadsnakes-ubuntu-ppa.list"
+            # TODO: I need to also add the public key https://ubuntuforums.org/showthread.php?t=1263676
             content: |
               deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu/ focal main
+          when: ansible_distribution_major_version|int == 21
+          tags:
+            - python
+            - python3.8
+            - python3.9
+            - python3.10
+            - python3.11
+            - ubuntu
+            - deadsnakes
+        - name: Add the public key for the deadsnakes ppa
+          command: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776 
           when:  ansible_distribution_major_version|int == 21
+          tags:
+            - python
+            - python3.8
+            - python3.9
+            - python3.10
+            - python3.11
+            - ubuntu
+            - deadsnakes
         - name: Install Python3.8
           apt:
             update_cache: yes
@@ -41,9 +64,48 @@
               - python3.8-dev
           tags:
             - python
+            - python3.8
             - ubuntu
-            - deadsnakes
           when: ansible_distribution_major_version|int == 18
+        - name: Check if libmpdec2 has been installed (for Python 3.9)
+          command: dpkg-query -W libmpdec2
+          register: libmpdec2_installed
+          # rc is the return code. So if it is 1, that means dpkg-query exited
+          # with a return code of 1, not found If it gives anything above 1,
+          # then it means dpkg-query itself failed for some unknown reason.
+          failed_when: libmpdec2_installed.rc > 1
+          changed_when: libmpdec2_installed.rc == 1
+          tags:
+            - python3.9
+            - libmpdec2
+        - name: DEBUG MESSAGE
+          debug:
+            var: libmpdec2_installed.rc
+            verbosity: 1
+          tags:
+            - python3.9
+            - libmpdec2
+        - name: Download libmpdec2.deb
+          get_url:
+            url="http://archive.ubuntu.com/ubuntu/pool/main/m/mpdecimal/libmpdec2_2.4.2-3_amd64.deb"
+            dest="{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
+          when: libmpdec2_installed.rc == 1
+          tags:
+            - python3.9
+            - libmpdec2
+        - name: Install libmpdec2 from deb file (for Python 3.9)
+          apt: deb="{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
+          when: libmpdec2_installed.rc == 1
+          tags:
+            - python3.9
+            - libmpdec2
+        - name: Remove libmpdec2 installation file (for Python 3.9)
+          file:
+            path: "{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
+            state: absent
+          tags:
+            - python3.9
+            - libmpdec2
         - name: Install Python 3.9
           apt:
             update_cache: yes
@@ -54,8 +116,8 @@
               - python3.9-dev
           tags:
             - python
+            - python3.9
             - ubuntu
-            - deadsnakes
         - name: Install Python3.10
           apt:
             update_cache: yes
@@ -66,8 +128,8 @@
               - python3.10-dev
           tags:
             - python
+            - python3.10
             - ubuntu
-            - deadsnakes
         - name: Install Python3.11
           apt:
             update_cache: yes
@@ -78,8 +140,8 @@
               - python3.11-dev
           tags:
             - python
+            - python3.11
             - ubuntu
-            - deadsnakes
     - name: Setup virtual environments folders
       file:
         path: "{{ ansible_env.HOME }}/.venvs"
