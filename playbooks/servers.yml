@@ -43,25 +43,6 @@
               - wget
               - xz-utils
               - zlib1g-dev
-        - name: Check if libmpdec2 has been installed
-          become: yes
-          command: dpkg-query -W libmpdec2
-          register: libmpdec2_installed
-          failed_when: libmpdec2_installed.rc > 1
-          changed_when: libmpdec2_installed.rc == 1
-        - name: Download libmpdec2.deb
-          get_url:
-            url="http://archive.ubuntu.com/ubuntu/pool/main/m/mpdecimal/libmpdec2_2.4.2-3_amd64.deb"
-            dest="{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
-          when: libmpdec2_installed.rc == 1
-        - name: Install libmpdec2 from deb file
-          apt: deb="{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
-          become: yes
-          when: libmpdec2_installed.rc == 1
-        - name: Remove libmpdec2 installation file
-          file:
-            path: "{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
-            state: absent
     - name: Ensure the locale exists
       locale_gen:
         name: en_US.UTF-8
