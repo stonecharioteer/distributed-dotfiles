@@ -18,19 +18,27 @@
               - build-essential
               - busybox-static
               - curl
+              - gdb
               - git
+              - lcov 
               - libbz2-dev
               - libffi-dev
+              - libgdbm-compat-dev
+              - libgdbm-dev
               - liblzma-dev
               - libncurses5-dev
               - libncursesw5-dev
               - libreadline-dev
+              - libreadline6-dev
               - libsqlite3-dev
               - libssl-dev
-              - libxslt-dev
               - libxml2-dev
+              - libxslt-dev
               - llvm
+              - lzma
+              - lzma-dev
               - make
+              - most
               - netcat-openbsd
               - pkg-config
               - python3-openssl
@@ -39,6 +47,7 @@
               - tk-dev
               - tmux
               - tree
+              - uuid-dev
               - vim
               - wget
               - xz-utils
