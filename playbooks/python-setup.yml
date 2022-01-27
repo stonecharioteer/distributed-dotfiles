@@ -54,9 +54,50 @@
             - python3.11
             - ubuntu
             - deadsnakes
-        - name: Install Python3.8
+        - name: Update cache
           apt:
             update_cache: yes
+            cache_valid_time: 86400
+          tags:
+            - python
+            - python3.8
+            - python3.9
+            - python3.10
+            - python3.11
+            - ubuntu
+            - deadsnakes
+        - name: Install Dependencies for Python Builds 
+          apt:
+            state: present
+            pkg:
+              - build-essential
+              - gdb
+              - lcov 
+              - pkg-config
+              - libbz2-dev
+              - libffi-dev
+              - libgdbm-dev
+              - libgdbm-compat-dev
+              - liblzma-dev
+              - libncurses5-dev
+              - libreadline6-dev
+              - libsqlite3-dev
+              - libssl-dev
+              - lzma
+              - lzma-dev
+              - tk-dev
+              - uuid-dev
+              - zlib1g-dev
+          tags:
+            - python
+            - python3.8
+            - python3.9
+            - python3.10
+            - python3.11
+            - ubuntu
+            - deadsnakes
+        - name: Install Python3.8
+          apt:
             state: present
             pkg:
               - python3.8
@@ -108,7 +149,6 @@
             - libmpdec2
         - name: Install Python 3.9
           apt:
-            update_cache: yes
             state: present
             pkg:
               - python3.9
@@ -120,7 +160,6 @@
             - ubuntu
         - name: Install Python3.10
           apt:
-            update_cache: yes
             state: present
             pkg:
               - python3.10
@@ -132,7 +171,6 @@
             - ubuntu
         - name: Install Python3.11
           apt:
-            update_cache: yes
             state: present
             pkg:
               - python3.11
