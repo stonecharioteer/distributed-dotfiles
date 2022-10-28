@@ -1,0 +1,31 @@
+---
+# This playbook installs neovim, and
+# configures it using astronvim
+- name: Install Neovim 0.8
+  hosts: all
+  tasks:
+    - name: Download Neovim 0.8
+      get_url:
+        url="https://github.com/neovim/neovim/releases/download/v0.8.0/nvim-linux64.deb"
+        dest="/tmp/neovim-0.8.deb"
+    - name: Install Neovim 0.8
+      apt: deb="/tmp/neovim-0.8.deb"
+      become: true
+- name: Setup Astronvim config
+  hosts: all
+  tasks:
+    - name: Checkout astronvim
+      git:
+        repo: 'https://github.com/AstroNvim/AstroNvim'
+        dest: '/home/{{ansible_user}}/.config/nvim'
+        update: yes
+    - name: Checkout My personal neovim config
+      git:
+        repo: 'https://github.com/stonecharioteer/dotfiles-astronvim'
+        dest: '/home/{{ansible_user}}/code/tools/dotfiles-astronvim'
+        update: yes
+    - name: Symlink the user config into the astronvim folder
+      file:
+        src: '/home/{{ansible_user}}/code/tools/dotfiles-astronvim/user'
+        dest: '/home/{{ansible_user}}/.config/nvim/lua/user'
+        state: link
