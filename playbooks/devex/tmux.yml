@@ -1,0 +1,55 @@
+---
+# This playbooks installs tmux and configures
+# it using that guy's tmux config
+- name: Install Tmux
+  hosts: all
+  tasks:
+    - name: Download Tmux 3.3
+      unarchive:
+        src: https://github.com/tmux/tmux/releases/download/3.3/tmux-3.3.tar.gz
+        dest: /tmp
+        remote_src: true
+        creates: /tmp/tmux-3.3
+    - name: Install tmux dependencies
+      become: true
+      apt:
+        pkg:
+          - libevent-2.1-7
+          - libevent-dev
+          - libncurses-dev
+        state: latest
+    - name: Install Tmux
+      become: true
+      shell:
+        cmd: |
+          ./configure && make
+          sudo make install
+        chdir: /tmp/tmux-3.3
+- name: Configure Tmux
+  hosts: all
+  tasks:
+    - name: Download gpakosz's tmux config
+      git:
+        repo: https://github.com/gpakosz/.tmux
+        dest: '/home/{{ansible_user}}/code/tools/.tmux'
+        update: yes
+    - name: Symlink tmux config folder to home directory
+      file:
+        src: '/home/{{ansible_user}}/code/tools/.tmux'
+        dest: '/home/{{ansible_user}}/.tmux'
+        state: link
+    - name: Symlink tmux config file to home directory
+      file:
+        src: '/home/{{ansible_user}}/code/tools/.tmux/.tmux.conf'
+        dest: '/home/{{ansible_user}}/.tmux.conf'
+        state: link
+    - name: Download my local tmux config
+      git:
+        repo: https://github.com/stonecharioteer/dotfiles-tmux
+        dest: '/home/{{ansible_user}}/code/tools/dotfiles/tmux'
+        update: yes
+    - name: Symlink my local tmux config file
+      file:
+        src: '/home/{{ansible_user}}/code/tools/dotfiles/tmux/.tmux.conf.local'
+        dest: '/home/{{ansible_user}}/.tmux.conf.local'
+        state: link

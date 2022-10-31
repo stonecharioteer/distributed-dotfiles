@@ -21,12 +21,11 @@ Vagrant.configure("2") do |config|
       neovim_config.compatibility_mode = "2.0"
       neovim_config.playbook = "playbooks/devex/neovim.yml"
     end
-    #
-    # # setup tmux
-    # vm_ubuntu.vm.provision "tmux", type: "ansible" do |tmux_config|
-    #   tmux_config.compatibility_mode = "2.0"
-    #   tmux_config.playbook = "playbooks/devex/tmux.yml"
-    # end
+    # setup tmux
+    vm_ubuntu.vm.provision "tmux", type: "ansible" do |tmux_config|
+      tmux_config.compatibility_mode = "2.0"
+      tmux_config.playbook = "playbooks/devex/tmux.yml"
+    end
     #
     # # install devtools
     # # this includes python, installed the way I like it,
