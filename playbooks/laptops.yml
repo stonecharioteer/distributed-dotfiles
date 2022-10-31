@@ -1,7 +1,7 @@
 ---
 # this is the playbook that I need for laptop-specific items
 - hosts: all
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Print Distribution Names
       debug: msg="{{ ansible_distribution }}"
@@ -9,9 +9,9 @@
       when: ansible_facts["os_family"] == "Debian"
       block: 
         - name: Install Ubuntu Packages
-          become: yes
+          become: true
           apt:
-            update_cache: yes
+            update_cache: true
             state: present
             pkg:
               - wireless-tools

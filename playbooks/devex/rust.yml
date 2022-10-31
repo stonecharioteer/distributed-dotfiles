@@ -1,0 +1,14 @@
+---
+# This playbook will install rustup and rust
+- name: Install Rustup & Rust
+  hosts: all
+  tasks:
+    - name: Download Rustup Installer
+      get_url:
+        url: https://sh.rustup.rs
+        dest: /tmp/install-rustup.sh
+        mode: 0654
+    - name: Install Rustup
+      shell:
+        cmd: ./install-rustup.sh -y
+        chdir: /tmp/

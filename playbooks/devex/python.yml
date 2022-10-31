@@ -1,0 +1,101 @@
+---
+# This playbooks installs the following
+#   - Python
+#     - 3.8
+#     - 3.9
+#     - 3.10
+#     - 3.11
+#   - Build time dependencies for python
+- name: Install Python and all its versions
+  hosts: all
+  tasks:
+    - name: Create Python folder
+      file:
+        path: "/home/{{ansible_user}}/.python"
+        state: directory
+    - name: Create Virtual Environments Folder
+      file:
+        path: "/home/{{ansible_user}}/.python/venvs"
+        state: directory
+    - name: Create Temporary Folder for python installs
+      file:
+        path: /tmp/python
+        state: directory
+    - name: Install Python Build Dependencies
+      become: true
+      apt:
+        pkg:
+          - build-essential
+          - gdb
+          - lcov
+          - libbz2-dev
+          - libffi-dev
+          - libgdbm-compat-dev
+          - libgdbm-dev
+          - liblzma-dev
+          - libncurses5-dev
+          - libreadline6-dev
+          - libsqlite3-dev
+          - libssl-dev
+          - lzma
+          - lzma-dev
+          - pkg-config
+          - tk-dev
+          - uuid-dev
+          - zlib1g-dev
+    - name: Download Python 3.8
+      unarchive: 
+        src: https://www.python.org/ftp/python/3.8.15/Python-3.8.15.tgz
+        dest: /tmp/python/
+        remote_src: true
+        creates: /tmp/python/Python-3.8.15
+    - name: Build and install python 3.8
+      shell:
+        cmd: |
+          ./configure --prefix=/home/{{ansible_user}}/.python/py3.8/ --enable-optimizations --with-ensurepip=install
+          make clean
+          make -s -j 8 
+          make altinstall
+        chdir: /tmp/python/Python-3.8.15
+    - name: Download Python 3.9
+      unarchive: 
+        src: https://www.python.org/ftp/python/3.9.15/Python-3.9.15.tgz
+        dest: /tmp/python/
+        remote_src: true
+        creates: /tmp/python/Python-3.9.15
+    - name: Build and install python 3.9
+      shell:
+        cmd: |
+          ./configure --prefix=/home/{{ansible_user}}/.python/py3.9/ --enable-optimizations --with-ensurepip=install 
+          make clean
+          make -s -j 8 
+          make altinstall
+        chdir: /tmp/python/Python-3.9.15
+    - name: Download Python 3.10
+      unarchive: 
+        src: https://www.python.org/ftp/python/3.10.8/Python-3.10.8.tgz
+        dest: /tmp/python/
+        remote_src: true
+        creates: /tmp/python/Python-3.10.8
+    - name: Build and install python 3.10
+      shell:
+        cmd: |
+          ./configure --prefix=/home/{{ansible_user}}/.python/py3.10/ --enable-optimizations --with-ensurepip=install 
+          make clean
+          make -s -j 8 
+          make altinstall
+        chdir: /tmp/python/Python-3.10.8
+    - name: Download Python 3.11
+      unarchive: 
+        src: https://www.python.org/ftp/python/3.11.0/Python-3.11.0.tgz
+        dest: /tmp/python/
+        remote_src: true
+        creates: /tmp/python/Python-3.11.0
+    - name: Build and install python 3.11
+      shell:
+        cmd: |
+          ./configure --prefix=/home/{{ansible_user}}/.python/py3.9/ --enable-optimizations --with-ensurepip=install 
+          make clean
+          make -s -j 8
+          make altinstall
+        chdir: /tmp/python/Python-3.11.0
