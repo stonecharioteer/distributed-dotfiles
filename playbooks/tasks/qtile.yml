@@ -49,9 +49,11 @@
           mkdir -p '{{ansible_env.HOME}}/.config/qtile/'
           rm -rf '{{ansible_env.HOME}}/.config/qtile/config.py'
           ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/config.py' '{{ansible_env.HOME}}/.config/qtile/config.py'
-    - name: Link the qtile.desktop file
+          rm -rf '{{ansible_env.HOME}}/.config/qtile/stonecharioteer.json'
+          ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/stonecharioteer.json' '{{ansible_env.HOME}}/.config/qtile/stonecharioteer.json'
+    - name: Copy the qtile.desktop file
       become: true
-      file:
+      copy:
         src: '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/qtile.desktop'
         dest: '/usr/share/xsessions/qtile.desktop'
-        state: link
+        remote_src: true
