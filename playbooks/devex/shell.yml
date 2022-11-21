@@ -1,0 +1,33 @@
+---
+# Shell specific setup for a better development experience
+- name: Install Shell improvements
+  hosts: all
+  tasks:
+    - name: Install Fish Shell
+      become: true
+      block:
+        - name: Add Fish PPA
+          apt_repository:
+            repo: ppa:fish-shell/release-3
+            state: present
+        - name: Install fish shell
+          apt:
+            update_cache: yes
+            state: present
+            pkg: fish
+        - name: Make fish the default shell
+          shell:
+            cmd: |
+              usermod --shell /usr/bin/fish {{ansible_env.USER}}
+    - name: Install Star Ship Prompt
+      block:
+        - name: Download Starship Installer
+          get_url:
+            url: https://starship.rs/install.sh
+            dest: /tmp/install-starship.sh
+            mode: 0754
+        - name: Install Starship
+          become: true
+          shell:
+            cmd: ./install-starship.sh --yes
+            chdir: /tmp/

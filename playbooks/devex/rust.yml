@@ -7,7 +7,7 @@
       get_url:
         url: https://sh.rustup.rs
         dest: /tmp/install-rustup.sh
-        mode: 0654
+        mode: 0754
     - name: Install Rustup
       shell:
         cmd: ./install-rustup.sh -y
