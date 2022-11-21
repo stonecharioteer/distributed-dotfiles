@@ -1,0 +1,30 @@
+# TODO
+
+- [ ] Create task files for:
+  - [ ] Bare Build Dependencies for *all* machines
+  - [ ] Any Machine I'll ssh into
+    - [ ] tmux
+    - [ ] neovim
+    - [ ] rust
+    - [ ] fish shell
+    - [ ] starship prompt
+    - [ ] zoxide
+    - [ ] ripgrep
+    - [ ] fzf
+    - [ ] du-dust
+    - [ ] btm
+  - [ ] Machines with Displays:
+    - [ ] Fonts
+    - [ ] Qtile
+    - [ ] Dunst
+    - [ ] pasystray
+    - [ ] pavucontrol
+    - [ ] Laptops
+      - [ ] tlp
+      - [ ] radeontop 
+  - [ ] Python
+    - [ ] Python 3.8
+    - [ ] Python 3.9
+    - [ ] Python 3.10
+    - [ ] Python 3.11
+    - [ ] Python 3.12 (master branch)
