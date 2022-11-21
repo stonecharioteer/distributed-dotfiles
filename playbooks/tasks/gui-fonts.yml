@@ -7,7 +7,7 @@
       # Replace JetBrains mono with any of these fonts.
       # https://www.nerdfonts.com/font-downloads
       wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/JetBrainsMono.zip
-      unzip JetBrainsMono.zip
+      unzip -o JetBrainsMono.zip
       mv JetBrains*.ttf '{{ansible_env.HOME}}/.local/share/fonts/fonts/ttf'
       fc-cache -fv
     chdir: /tmp

@@ -6,7 +6,7 @@
         pkg: python3
         state: build-dep
         update_cache: true
-    - name: Install additional dependencies
+    - name: Install additional dependencies to build python from source
       become: true
       apt:
         pkg:

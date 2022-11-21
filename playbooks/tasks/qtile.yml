@@ -40,3 +40,18 @@
           - redshift
           - rofi
           - dunst
+    - name: Checkout the pystonecharioteer repo and link the config
+      shell:
+        cmd: |
+          if [ -L '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer' ]; then 
+            git clone git@github.com/stonecharioteer/pystonecharioteer '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer'
+          fi
+          mkdir -p '{{ansible_env.HOME}}/.config/qtile/'
+          rm -rf '{{ansible_env.HOME}}/.config/qtile/config.py'
+          ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/config.py' '{{ansible_env.HOME}}/.config/qtile/config.py'
+    - name: Link the qtile.desktop file
+      become: true
+      file:
+        src: '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/qtile.desktop'
+        dest: '/usr/share/xsessions/qtile.desktop'
+        state: link

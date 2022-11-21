@@ -22,9 +22,11 @@
     - [ ] Laptops
       - [ ] tlp
       - [ ] radeontop 
+    - [ ] Fix locale so that it uses `en_US.utf-8`
   - [ ] Python
     - [ ] Python 3.8
     - [ ] Python 3.9
     - [ ] Python 3.10
     - [ ] Python 3.11
     - [ ] Python 3.12 (master branch)
+- [ ] Automate the deb-src bit so that `apt-get build-dep` works. Need to uncomment the 'deb-src' lines from `/etc/apt/sources.list` and then run `sudo apt-get update`
