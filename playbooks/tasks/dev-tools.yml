@@ -1,0 +1,37 @@
+- name: Install CLI tools that will make development faster
+  block: 
+    - name: Install starship.rs Prompt
+      block:
+        # TODO: Only install this when starship isn't already installed.
+        - name: Download Starship Installer
+          get_url:
+            url: https://starship.rs/install.sh
+            dest: /tmp/install-starship.sh
+            mode: 0754
+        - name: Install Starship
+          become: true
+          shell:
+            cmd: ./install-starship.sh --yes
+            chdir: /tmp/
+    - name: Install developer velocity tools
+      block:
+        - name: Install developer velocity tools via package managers
+          become: true
+          apt:
+            pkg:
+              - cowsay
+              - fd-find
+              - fortune-mod
+              - fzf
+              - neofetch
+              - ripgrep
+              - screenfetch
+              - zoxide
+            state: latest
+        - name: Install developer velocity tools from source
+          block:
+            - name: Install bottom and exa
+              shell: |
+                cargo install bottom --locked
+                cargo install du-dust
+                cargo install exa

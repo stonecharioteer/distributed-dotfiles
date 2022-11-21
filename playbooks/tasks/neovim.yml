@@ -1,0 +1,28 @@
+---
+# This playbook installs neovim, and
+# configures it using astronvim
+- name: Download and install neovim 0.8
+  block:
+    - name: Download Neovim 0.8
+      get_url:
+        url="https://github.com/neovim/neovim/releases/download/v0.8.0/nvim-linux64.deb"
+        dest="/tmp/neovim-0.8.deb"
+    - name: Install Neovim 0.8
+      apt: deb="/tmp/neovim-0.8.deb"
+      become: true
+- name: Setup Astronvim config
+  block:
+    - name: Checkout astronvim
+      git:
+        repo: 'https://github.com/AstroNvim/AstroNvim'
+        dest: '{{ansible_env.HOME}}/.config/nvim'
+        update: yes
+    - name: Download my personal astronvim config and symlink it to the config folder
+      # TODO: I need to use ssh to download these, but I can't do that if the
+      # key is encrypted. I'm not sure how to do that.
+      shell:
+        cmd: |
+          if [ -L '{{ansible_env.HOME}}/code/tools/dotfiles/astronvim' ]; then 
+            git clone 'git@github.com:stonecharioteer/dotfiles-astronvim' '{{ansible_env.HOME}}/code/tools/dotfiles/astronvim'
+          fi
+          rm -rf '{{ansible_env.HOME}}/.config/nvim/lua/user' && ln -s '{{ansible_env.HOME}}/code/tools/dotfiles/astronvim/user' '{{ansible_env.HOME}}/.config/nvim/lua/user'

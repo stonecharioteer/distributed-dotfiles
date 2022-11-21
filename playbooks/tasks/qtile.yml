@@ -1,0 +1,42 @@
+---
+# Install and configure qtile
+- name: Install and configure qtile
+  block:
+    - name: Check if qtile python is already installed
+      stat:
+        path: /opt/qtile/bin/python3.9
+      register: qtile_binary
+    - name: Create qtile directory with ownership set to the current user. 
+      when: not qtile_binary.stat.exists
+      become: true
+      file:
+        path: '/opt/qtile'
+        # TODO: Figure out how to use the login user's name
+        owner: 'stonecharioteer'
+        state: directory
+    - name: Install and configure qtile
+      when: not qtile_binary.stat.exists
+      shell:
+        cmd: |
+          wget --quiet https://www.python.org/ftp/python/3.9.15/Python-3.9.15.tar.xz
+          tar -xvf Python-3.9.15.tar.xz
+          cd Python-3.9.15
+          ./configure --prefix=/opt/qtile --enable-optimizations
+          make -s -j8
+          make altinstall
+        chdir: /tmp
+    - name: Download and install the pystonecharioteer config.
+      shell:
+        cmd: /opt/qtile/bin/python3.9 -m pip install --force-reinstall --no-cache-dir stonecharioteer
+    - name: Install additional dependencies for qtile
+      become: true
+      apt:
+        state: present
+        pkg:
+          - pasystray
+          - nitrogen
+          - autorandr
+          - rofi
+          - redshift
+          - rofi
+          - dunst

@@ -1,0 +1,13 @@
+---
+# Install Rust
+- name: Install Rust
+  block:
+    - name: Download Rustup Installer
+      get_url:
+        url: https://sh.rustup.rs
+        dest: /tmp/install-rustup.sh
+        mode: 0754
+    - name: Install rustup
+      shell:
+        cmd: ./install-rustup.sh -y
+        chdir: /tmp/

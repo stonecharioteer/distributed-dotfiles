@@ -1,0 +1,16 @@
+---
+# For all machines with a display
+- hosts: all
+  gather_facts: true
+  tasks:
+    - import_tasks: tasks/build-dependencies.yml
+    - import_tasks: tasks/rust.yml
+    - import_tasks: tasks/python-build-dependencies.yml
+    - import_tasks: tasks/tmux.yml
+    - import_tasks: tasks/neovim.yml
+    - import_tasks: tasks/dev-tools.yml
+    - import_tasks: tasks/fish.yml
+    # - import_tasks: tasks/python.yml
+    - import_tasks: tasks/qtile.yml
+    - import_tasks: tasks/gui-fonts.yml
+    # - import_tasks: tasks/obsidian.yml
