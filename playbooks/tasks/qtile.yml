@@ -33,13 +33,16 @@
       apt:
         state: present
         pkg:
-          - pasystray
-          - nitrogen
           - autorandr
-          - rofi
+          - dunst
+          - nitrogen
+          - pasystray
+          - pavucontrol
           - redshift
           - rofi
-          - dunst
+          - rofi
+          - xfce4-power-manager
+          - xscreensaver
     - name: Checkout the pystonecharioteer repo and link the config
       shell:
         cmd: |
