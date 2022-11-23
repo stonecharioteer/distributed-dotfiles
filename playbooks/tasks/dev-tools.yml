@@ -42,3 +42,22 @@
                 cargo install du-dust
                 cargo install exa
                 cargo install live-server
+        - name: Install gum
+          become: true
+          tags:
+            - gum
+          block:
+            - name: Add the charmbracelet gpg key
+              apt_key:
+                url: https://repo.charm.sh/apt/gpg.key
+                state: present
+            - name: Add the charmbracelet apt repository
+              apt_repository:
+                repo: 'deb https://repo.charm.sh/apt/ * *'
+                state: present
+            - name: Install charmbracelet/gum
+              apt:
+                pkg:
+                  - gum
+                update_cache: true
+                state: present
