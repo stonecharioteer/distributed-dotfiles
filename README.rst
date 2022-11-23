@@ -2,30 +2,46 @@
 Distributed Dotfiles
 =============================
 
-I use a fairly customized setup for my servers and development machines.
-This repository allows me to provision said machines fairly easily. I use
-Ansible for all the provisioning, and I've divided my dotfile configs into
-separate repositories because I like to use some shared dotfiles, like the
-neovim config from my friend `Rohit. <https://github.com/kvrohit/dotfiles>`_
-This way, we can have a shared dotfile config and we can separate things out
-to include what each other likes or dislikes.
+-----
+Why
+-----
+
+I'm very particular about my tools. I want a great development environment that
+*I* control. This repository gives me replicable configurations for my tooling.
+The dotfiles themselves are *separate* from this repository. I'm not keeping any
+configurations here for my tools, besides the *choice* of the dotfiles and tools.
+With this repo, I'd like setting up any server with a simple ansible playbook run.
+That way, I have the exact same configuration *everywhere*.
+
+I've seen other developers maintain dotfile repositories, but I'm not very
+happy with *how* they use them. Installing the tools is half the trouble, and
+ansible solves them perfectly in my opinion.
+
+--------------------------
+Objectives
+--------------------------
+
+* One command setup of any server I use with all the tools and configurations I
+  prefer.
+* Replicable, *testable* and **idempotent** configurations that I can run on
+  any server and/or laptop.
+* Continuously living configuration which I can use to remember how I set up my development
+  machines.
+
+----------------------
+Included Tools
+----------------------
+
+* Editor - Neovim with the `AstroNvim <https://github.com/AstroNvim/AstroNvim>`_ configuration
+* Programming Languages - Python (self-compiled and user-specific), Rust
+* Tooling - ``tmux``, ``ripgrep``, ``fd-find``, ``tokei``, ``bat``, ``exa``, ``zoxide``, ``fzf``
+* Shell - ``fish``
 
 ------------------
 Setup
 ------------------
 
-First, clone this repository and all its submodules.
-
-.. code:: bash
-   git clone --recurse-submodules -j8 git@github.com:stonecharioteer/distributed-dotfiles 
-
-If you've already cloned the repo and want to update the submodules or pull them later,
-
-
-.. code:: bash
-   git update --recurse-submodules
-   git submodule update --recursive
-
+**NOTE** - This configuration is currently only valid for Debian-based / Ubuntu-based machines.
 
 Install ansible and other dependencies on the host machine.
 
@@ -33,6 +49,65 @@ Install ansible and other dependencies on the host machine.
 
    sudo apt-get install ansible
 
+Create an `ansible inventory
+<https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html>`_
+file, and follow the instructions in the official documentation to use it.
+
+
+Usage
+==============
+
+To setup a machine that you'd use with displays.
+
+.. code:: bash
+
+   export ANSIBLE_INVENTORY="PATH TO INVENTORY FILE"
+   ansible-playbook --ask-become-pass --playbooks/gui.yml 
+
+
+Playbooks
+=============
+
+
+``gui.yml``
+--------------
+
+This playbook will setup a machine with Qtile and all my preferred
+development tools.
+
+``servers.yml``
+-----------------
+
+This playbook will setup a machine with all my preferred development tools.
+
+``laptops.yml``
+------------------
+
+This playbook will setup a laptop with qtile and all my preferred development
+tools.
+
+Tasks
+=============
+
+I've set this repo up so that tasks are separate from the playbooks for 
+modularization.
+
+1. ``build-development.yml`` - Installs all the possible build tools.
+2. ``dev-tools.yml`` - Installs my development tools
+3. ``fish.yml`` - Installs the fish shell.
+4. ``gui-fonts.yml`` - Installs fonts I need for tmux and neovim to render as
+   expected in a terminal.
+5. ``neovim.yml`` - Installs neovim 0.8 and sets up AstroNvim.
+6. ``qtile.yml`` - Installs the Qtile tiling window manager and configures it
+   using my configuration.
+7. ``rust.yml`` - Installs the ``rustup`` tool.
+8. ``tmux.yml`` - Installs ``tmux`` and configures it.
+9. ``python/3.9.yml`` - Installs Python 3.9 by compiling it from source and
+   then saves it to the ``~/.python/python3.9`` folder.
+10. ``python/build-dependencies.yml`` - Installs all the required dependencies
+    to build python from source.
+
+---------
 Testing
 ---------
 
@@ -51,12 +126,14 @@ Then, run ``vagrant up`` to bring up the virtual machines. Next, run the
 following ansible command.
 
 .. code:: bash
-   ansible-playbooks playbooks/servers.yml
+
+   ansible-playbook playbook/server.yml
 
 You can choose any of the other servers but this is the easiest. Once you're done testing, or
 if you want to get rid of the machines, run the following command.
 
 .. code:: bash
+
    vagrant destroy -f
 
 **Remember to remove the entries from your ``known_hosts`` files.** If you've used my values,
@@ -78,28 +155,3 @@ which are Debian specific.
 
 When doing this sort of testing repeatedly, you might want to use the ``--flush-cache``
 flag for the ansible commands.
-
--------------------
-Structure
--------------------
-
-I prefer breaking my playbooks into the following:
-
-1. ``servers.yml``: This contains everything I prefer to install on servers I
-   use.
-2. ``dev.yml``: This contains everything I prefer for local development
-   machines. Note that this will begin configuring my editor of choice
-   (neovim), and tmux with all the dotfile customizations.
-3. ``qtile.yml``: This contains everything I prefer to setup the ``qtile``
-   desktop tiling manager.
-4. ``servers-lite.yml``: This is replica of the ``servers.yml`` file, but less
-   loaded, it doesn't install anything that isn't absolutely necessary.
-5. ``pi.yml``: This installs everything for my Raspberry Pis.
-6. ``pi-k3s.yml``: This installs everything for my Raspberry Pi 4 K3S Cluster
-7. ``pi-clsuterhat.yml``: This installs everything for my Raspberry Pi Zero W
-   Cluster Hat, including k3s on it.
-8. ``update-hosts.yml``: This updates the ``/etc/hosts`` file on all the machines I
-   administer locally at home.
-9. ``python-setup.yml``: This sets up Python on a machine, using the deadsnakes
-   ppa on Ubuntu, and manually installing every known version of Python >=3.7.
-   On Arch, it downloads and *builds* all the required python versions.

@@ -20,6 +20,7 @@
           apt:
             pkg:
               - cowsay
+              - direnv
               - fd-find
               - fortune-mod
               - fzf
