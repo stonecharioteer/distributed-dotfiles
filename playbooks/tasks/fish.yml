@@ -14,10 +14,10 @@
             update_cache: yes
             state: present
             pkg: fish
-        - name: Make fish the default shell
-          shell:
-            cmd: |
-              usermod --shell /usr/bin/fish {{ansible_env.USER}}
+        - name: Set fish as the user's default shell.
+          user:
+            name: '{ansible_env.USER}'
+            shell: /usr/bin/fish
     - name: Download my personal fish config and symlink it to the config folder
       shell:
         cmd: |
