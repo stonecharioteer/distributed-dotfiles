@@ -25,6 +25,7 @@
               - fd-find
               - fortune-mod
               - fzf
+              - httpie
               - neofetch
               - ripgrep
               - screenfetch
