@@ -36,3 +36,4 @@
                 cargo install bottom --locked
                 cargo install du-dust
                 cargo install exa
+                cargo install live-server
