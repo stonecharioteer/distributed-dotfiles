@@ -54,6 +54,8 @@
           ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/config.py' '{{ansible_env.HOME}}/.config/qtile/config.py'
           rm -rf '{{ansible_env.HOME}}/.config/qtile/stonecharioteer.json'
           ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/stonecharioteer.json' '{{ansible_env.HOME}}/.config/qtile/stonecharioteer.json'
+          rm -rf '{{ansible_env.HOME}}/.config/qtile/autostart.sh'
+          ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/autostart.sh' '{{ansible_env.HOME}}/.config/qtile/autostart.sh'
     - name: Copy the qtile.desktop file
       become: true
       copy:
