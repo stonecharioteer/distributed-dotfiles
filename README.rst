@@ -57,12 +57,57 @@ file, and follow the instructions in the official documentation to use it.
 Usage
 ==============
 
+**NOTE:** Ensure you set ``ANSIBLE_INVENTORY`` before running any of these, or
+use the ``-i`` parameter to provide the path to it.
+
 To setup a machine that you'd use with displays.
 
 .. code:: bash
 
-   export ANSIBLE_INVENTORY="PATH TO INVENTORY FILE"
    ansible-playbook --ask-become-pass --playbooks/gui.yml 
+
+To setup a headless development server.
+
+.. code:: bash
+
+   ansible-playbook --ask-become-pass --playbooks/servers.yml 
+
+To setup a laptop.
+
+.. code:: bash
+
+   ansible-playbook --ask-become-pass --playbooks/laptops.yml
+
+To run only a specific tag when running a playbook.
+
+.. code:: bash
+
+   ansible-playbook --ask-become-pass --playbooks/gui.yml --tags docker
+
+To ignore certain tags when running a playbook.
+
+.. code:: bash
+
+   ansible-playbook --ask-become-pass --playbooks/gui.yml --skip-tags "qtile,docker"
+
+To list all tags.
+
+.. code:: bash
+
+   ansible-playbook --playbooks/servers.yml --list-tags
+
+To list all tasks.
+
+.. code:: bash
+
+   ansible-playbook --playbooks/servers.yml --list-tasks
+
+To list all tasks that *would* be performed for selected tags.
+
+
+.. code:: bash
+
+   ansible-playbook --playbooks/gui.yml --tags "qtile,docker" --list-tags
 
 
 Playbooks
