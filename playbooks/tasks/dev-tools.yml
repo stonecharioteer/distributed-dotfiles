@@ -21,6 +21,7 @@
             pkg:
               - cowsay
               - direnv
+              - entr
               - fd-find
               - fortune-mod
               - fzf
