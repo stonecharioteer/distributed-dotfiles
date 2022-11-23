@@ -2,12 +2,15 @@
 ---
 # Install Jetbrains Mono
 - name: Download and install the JetBrains Mono NerdFont
+  tags:
+    - fonts
   shell:
     cmd: |
       # Replace JetBrains mono with any of these fonts.
       # https://www.nerdfonts.com/font-downloads
       wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/JetBrainsMono.zip
       unzip -o JetBrainsMono.zip
+      mkdir -p '{{ansible_env.HOME}}/.local/share/fonts/fonts/ttf'
       mv JetBrains*.ttf '{{ansible_env.HOME}}/.local/share/fonts/fonts/ttf'
       fc-cache -fv
     chdir: /tmp

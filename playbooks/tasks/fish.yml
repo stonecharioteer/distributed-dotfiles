@@ -1,6 +1,8 @@
 ---
 # Shell specific setup for a better development experience
 - name: Install Shell improvements
+  tags:
+    - fish
   block:
     - name: Install Fish Shell
       become: true
@@ -16,11 +18,12 @@
             pkg: fish
         - name: Set fish as the user's default shell.
           user:
-            name: '{ansible_env.USER}'
+            name: '{{ansible_env.USER}}'
             shell: /usr/bin/fish
     - name: Download my personal fish config and symlink it to the config folder
       shell:
         cmd: |
+          mkdir -p '{{ansible_env.HOME}}/code/tools/dotfiles/fish'
           if [ -L '{{ansible_env.HOME}}/code/tools/dotfiles/fish' ]; then 
             git clone 'git@github.com:stonecharioteer/dotfiles-fish' '{{ansible_env.HOME}}/code/tools/dotfiles/fish'
           fi

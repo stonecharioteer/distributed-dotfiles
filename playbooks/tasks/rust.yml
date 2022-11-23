@@ -1,6 +1,8 @@
 ---
 # Install Rust
 - name: Install Rust
+  tags:
+    - rust
   block:
     - name: Download Rustup Installer
       get_url:

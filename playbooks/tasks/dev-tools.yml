@@ -1,4 +1,6 @@
 - name: Install CLI tools that will make development faster
+  tags:
+    - tools
   block: 
     - name: Install starship.rs Prompt
       block:
@@ -35,6 +37,7 @@
           block:
             - name: Install bottom and exa
               shell: |
+                . "$HOME/.cargo/env"
                 cargo install bottom --locked
                 cargo install du-dust
                 cargo install exa
