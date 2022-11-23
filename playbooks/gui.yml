@@ -8,9 +8,9 @@
     - import_tasks: tasks/python/build-dependencies.yml
     - import_tasks: tasks/tmux.yml
     - import_tasks: tasks/neovim.yml
+    - import_tasks: tasks/docker.yml
     - import_tasks: tasks/dev-tools.yml
     - import_tasks: tasks/fish.yml
     - import_tasks: tasks/python/3.9.yml
     - import_tasks: tasks/qtile.yml
     - import_tasks: tasks/gui-fonts.yml
-    # - import_tasks: tasks/obsidian.yml
