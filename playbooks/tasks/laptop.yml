@@ -1,0 +1,11 @@
+---
+- name: Setup tools for laptops
+  become: true
+  block:
+    - apt:
+      pkg:
+        - bluez
+        - blueman
+        - xscreensaver
+        - xfce4-power-manager
+      state: present
