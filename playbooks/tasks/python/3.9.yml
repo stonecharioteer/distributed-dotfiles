@@ -19,6 +19,6 @@
           tar -xvf Python-3.9.15.tar.xz
           cd Python-3.9.15
           ./configure --prefix='{{ansible_env.HOME}}/.python/py3.9/' --enable-optimizations
-          make -s -j8
+          make -s -j{{ansible_processor_vcpus}}
           make altinstall
         chdir: /tmp

@@ -22,7 +22,7 @@
           tar -xvf Python-3.9.15.tar.xz
           cd Python-3.9.15
           ./configure --prefix=/opt/qtile --enable-optimizations
-          make -s -j8
+          make -s -j{{ansible_process_vcpus}}
           make altinstall
         chdir: /tmp
     - name: Download and install the pystonecharioteer config.
