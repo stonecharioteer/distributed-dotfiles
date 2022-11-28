@@ -3,6 +3,7 @@
 - hosts: all
   gather_facts: true
   tasks:
+    - import_tasks: tasks/dev-folders.yml
     - import_tasks: tasks/build-dependencies.yml
     - import_tasks: tasks/rust.yml
     - import_tasks: tasks/python/build-dependencies.yml

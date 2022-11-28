@@ -1,6 +1,8 @@
 ---
 # Install Python 3.9
 - name: Install Python 3.9
+  tags:
+    - python
   block:
     - name: Check if Python 3.9 is already installed
       stat:
@@ -15,10 +17,11 @@
       when: not python39.stat.exists
       shell:
         cmd: |
+          echo "Ansible processor vcpus = {{ansible_processor_vcpus}}"
           wget --quiet https://www.python.org/ftp/python/3.9.15/Python-3.9.15.tar.xz
           tar -xvf Python-3.9.15.tar.xz
           cd Python-3.9.15
           ./configure --prefix='{{ansible_env.HOME}}/.python/py3.9/' --enable-optimizations
-          make -s -j{{ansible_processor_vcpus}}
+          make -s -j'{{ansible_processor_vcpus}}'
           make altinstall
         chdir: /tmp

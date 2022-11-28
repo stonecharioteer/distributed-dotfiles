@@ -1,6 +1,8 @@
 ---
 # Install and configure qtile
 - name: Install and configure qtile
+  tags:
+    - qtile
   block:
     - name: Check if qtile python is already installed
       stat:
@@ -22,7 +24,7 @@
           tar -xvf Python-3.9.15.tar.xz
           cd Python-3.9.15
           ./configure --prefix=/opt/qtile --enable-optimizations
-          make -s -j{{ansible_process_vcpus}}
+          make -s -j'{{ansible_processor_vcpus}}'
           make altinstall
         chdir: /tmp
     - name: Download and install the pystonecharioteer config.
@@ -34,6 +36,8 @@
         state: present
         pkg:
           - autorandr
+          - blueman
+          - bluez
           - dunst
           - nitrogen
           - pasystray
@@ -43,22 +47,29 @@
           - rofi
           - xfce4-power-manager
           - xscreensaver
+    - name: Create the qtile configuration folder
+      file:
+        path: "{{ansible_env.HOME}}/.config/qtile/"
+        state: directory
     - name: Checkout the pystonecharioteer repo and link the config
       shell:
         cmd: |
-          if [ -L '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer' ]; then 
-            git clone git@github.com/stonecharioteer/pystonecharioteer '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer'
+          if [o-L '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer' ]; then 
+            git clone 'git@github.com:stonecharioteer/pystonecharioteer.git' '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer'
           fi
-          mkdir -p '{{ansible_env.HOME}}/.config/qtile/'
           rm -rf '{{ansible_env.HOME}}/.config/qtile/config.py'
           ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/config.py' '{{ansible_env.HOME}}/.config/qtile/config.py'
           rm -rf '{{ansible_env.HOME}}/.config/qtile/stonecharioteer.json'
           ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/stonecharioteer.json' '{{ansible_env.HOME}}/.config/qtile/stonecharioteer.json'
           rm -rf '{{ansible_env.HOME}}/.config/qtile/autostart.sh'
           ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/autostart.sh' '{{ansible_env.HOME}}/.config/qtile/autostart.sh'
+      tags:
+        - debug
     - name: Copy the qtile.desktop file
       become: true
       copy:
         src: '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/qtile.desktop'
         dest: '/usr/share/xsessions/qtile.desktop'
         remote_src: true
+      tags:
+        - debug

@@ -1,0 +1,29 @@
+---
+- name: Create Development folders
+  tags:
+    - dev
+  block:
+    - name: Create $HOME/code
+      file:
+        path: "{{ansible_env.HOME}}/code"
+        state: directory
+    - name: Create $HOME/code/checkouts
+      file:
+        path: "{{ansible_env.HOME}}/code/checkouts"
+        state: directory
+    - name: Create $HOME/code/checkouts/personal
+      file:
+        path: "{{ansible_env.HOME}}/code/checkouts/personal"
+        state: directory
+    - name: Create $HOME/code/checkouts/work
+      file:
+        path: "{{ansible_env.HOME}}/code/checkouts/work"
+        state: directory
+    - name: Create $HOME/code/tools/
+      file:
+        path: "{{ansible_env.HOME}}/code/tools"
+        state: directory
+    - name: Create $HOME/code/tools/dotfiles/
+      file:
+        path: "{{ansible_env.HOME}}/code/tools/dotfiles/"
+        state: directory

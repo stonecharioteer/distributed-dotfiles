@@ -32,6 +32,7 @@
               - neofetch
               - ripgrep
               - screenfetch
+              - tree
               - zoxide
             state: latest
         - name: Install developer velocity tools from source
@@ -44,6 +45,7 @@
                 cargo install exa
                 cargo install live-server
                 cargo install tokei
+                cargo install as-tree
         - name: Install gum
           become: true
           tags:

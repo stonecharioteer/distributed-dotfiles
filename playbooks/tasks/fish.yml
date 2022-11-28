@@ -23,7 +23,6 @@
     - name: Download my personal fish config and symlink it to the config folder
       shell:
         cmd: |
-          mkdir -p '{{ansible_env.HOME}}/code/tools/dotfiles/fish'
           if [ -L '{{ansible_env.HOME}}/code/tools/dotfiles/fish' ]; then 
             git clone 'git@github.com:stonecharioteer/dotfiles-fish' '{{ansible_env.HOME}}/code/tools/dotfiles/fish'
           fi
