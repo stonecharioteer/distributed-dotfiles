@@ -36,13 +36,14 @@
             state: latest
         - name: Install developer velocity tools from source
           block:
-            - name: Install bottom and exa
+            - name: Install bottom, du-dust, exa and live-server
               shell: |
                 . "$HOME/.cargo/env"
                 cargo install bottom --locked
                 cargo install du-dust
                 cargo install exa
                 cargo install live-server
+                cargo install tokei
         - name: Install gum
           become: true
           tags:
