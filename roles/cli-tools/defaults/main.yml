@@ -45,3 +45,13 @@ cargo_tools:
     package: "watchexec-cli"
     binary: "watchexec"
     check_cmd: "watchexec --version"
+  
+  just:
+    package: "just"
+    binary: "just"
+    check_cmd: "just --version"
+  
+  amdgpu_top:
+    package: "amdgpu_top"
+    binary: "amdgpu_top"
+    check_cmd: "amdgpu_top --version"
