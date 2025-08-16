@@ -1,0 +1,47 @@
+---
+# Default variables for cli-tools role
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+
+# Modern CLI tools for development productivity
+cli_packages:
+  # File and text search tools
+  - ripgrep        # Fast text search
+  - fd-find        # Fast file search  
+  - tree           # Directory visualization
+  - fzf            # Fuzzy finder
+  - zoxide         # Smart directory navigation
+  
+  # Development utilities
+  - direnv         # Environment variable management
+  - httpie         # Modern HTTP client
+  
+  # System monitoring and utilities
+  - htop           # Process viewer (if not in system-deps)
+  
+  # Fun tools
+  - cowsay         # ASCII art messages
+  - fortune-mod    # Random quotes
+  - lolcat         # Colorful output
+  - neofetch       # System information
+  - screenfetch    # Alternative system info
+
+# Tools installed via external methods
+external_tools:
+  starship:
+    url: "https://starship.rs/install.sh"
+    binary_path: "/usr/local/bin/starship"
+    check_cmd: "starship --version"
+  
+  gum:
+    repo_key: "https://repo.charm.sh/apt/gpg.key"
+    repo_line: "deb https://repo.charm.sh/apt/ * *"
+    package: "gum"
+    check_cmd: "gum --version"
+
+# Tools installed via cargo (requires Rust from mise/fish setup)
+cargo_tools:
+  watchexec-cli:
+    package: "watchexec-cli"
+    binary: "watchexec"
+    check_cmd: "watchexec --version"

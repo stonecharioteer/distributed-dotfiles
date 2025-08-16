@@ -1,0 +1,5 @@
+---
+# Handlers for dev-folders role  
+- name: refresh file explorer
+  debug:
+    msg: "Development folder structure created - refresh file manager to see new directories"

@@ -1,0 +1,182 @@
+---
+- name: Check if Docker is already installed
+  command: docker --version
+  register: docker_version_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Display Docker installation status
+  debug:
+    msg: |
+      Docker installation status:
+      {% if docker_version_check.rc == 0 %}
+      Already installed: {{ docker_version_check.stdout }}
+      {% else %}
+      Not installed - will install Docker Engine
+      {% endif %}
+
+- name: Install Docker Engine
+  block:
+    - name: Install Docker prerequisites
+      package:
+        name: "{{ docker_prereq_packages }}"
+        state: present
+        update_cache: yes
+
+    - name: Create keyrings directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Check if Docker GPG key exists
+      stat:
+        path: "{{ docker_gpg_key_path }}"
+      register: docker_gpg_key_stat
+
+    - name: Download Docker GPG key
+      get_url:
+        url: "{{ docker_gpg_key_url }}"
+        dest: "{{ docker_gpg_key_path }}"
+        mode: '0644'
+      when: not docker_gpg_key_stat.stat.exists
+
+    - name: Set proper permissions on Docker GPG key
+      file:
+        path: "{{ docker_gpg_key_path }}"
+        mode: 'a+r'
+
+    - name: Check if Docker repository is configured
+      stat:
+        path: "{{ docker_repo_file }}"
+      register: docker_repo_stat
+
+    - name: Add Docker repository
+      shell: |
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by={{ docker_gpg_key_path }}] https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+          tee {{ docker_repo_file }} > /dev/null
+      when: not docker_repo_stat.stat.exists
+
+    - name: Update package cache after adding Docker repository
+      package:
+        update_cache: yes
+      when: not docker_repo_stat.stat.exists
+
+    - name: Check which Docker packages are already installed
+      shell: dpkg -l | grep -E "^ii\s+({{ item }})\s" | wc -l
+      register: docker_package_check
+      loop: "{{ docker_packages }}"
+      changed_when: false
+      failed_when: false
+
+    - name: Create list of Docker packages to install
+      set_fact:
+        docker_packages_to_install: "{{ docker_packages_to_install | default([]) + [item.item] }}"
+      loop: "{{ docker_package_check.results }}"
+      when: item.stdout == "0"
+
+    - name: Install Docker packages
+      package:
+        name: "{{ docker_packages_to_install }}"
+        state: present
+      when: docker_packages_to_install is defined and docker_packages_to_install | length > 0
+
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version_verify
+      changed_when: false
+
+    - name: Display Docker installation success
+      debug:
+        msg: "✓ Docker installed: {{ docker_version_verify.stdout }}"
+
+  when: docker_version_check.rc != 0
+  rescue:
+    - name: Display Docker installation failure
+      fail:
+        msg: "Docker installation failed. Please check the logs above."
+
+- name: Configure Docker post-installation
+  block:
+    - name: Check if docker group exists
+      group:
+        name: "{{ docker_group }}"
+        state: present
+      register: docker_group_created
+
+    - name: Check if user is in docker group
+      shell: groups {{ dev_user }} | grep -q docker
+      register: user_in_docker_group
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Add user to docker group
+      user:
+        name: "{{ dev_user }}"
+        groups: "{{ docker_group }}"
+        append: yes
+      when: user_in_docker_group.rc != 0
+      notify: restart docker service
+
+    - name: Enable Docker service to start on boot
+      systemd:
+        name: docker.service
+        enabled: yes
+      when: docker_enable_service
+
+    - name: Enable containerd service to start on boot
+      systemd:
+        name: containerd.service
+        enabled: yes
+      when: docker_enable_service
+
+    - name: Start Docker service
+      systemd:
+        name: docker.service
+        state: started
+
+    - name: Fix Docker directory permissions if needed
+      file:
+        path: "{{ dev_home }}/.docker"
+        owner: "{{ dev_user }}"
+        group: "{{ dev_user }}"
+        recurse: yes
+        mode: 'g+rwx'
+      when: user_in_docker_group.rc != 0
+      ignore_errors: yes
+
+- name: Verify Docker installation and configuration
+  block:
+    - name: Check Docker service status
+      systemd:
+        name: docker.service
+      register: docker_service_status
+
+    - name: Test Docker functionality (as root)
+      command: docker run --rm hello-world
+      register: docker_test
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Display installation and configuration summary
+      debug:
+        msg: |
+          Docker Engine Installation Complete!
+          
+          ✓ Docker version: {{ docker_version_verify.stdout if docker_version_check.rc != 0 else docker_version_check.stdout }}
+          ✓ Service status: {{ docker_service_status.status.ActiveState }}
+          ✓ User {{ dev_user }} added to docker group
+          ✓ Docker and containerd services enabled for boot
+          
+          {% if docker_test.rc == 0 %}
+          ✓ Docker functionality test passed
+          {% else %}
+          ⚠ Docker test failed - may need to log out/in for group changes
+          {% endif %}
+          
+          Post-installation notes:
+          1. Log out and log back in for group changes to take effect
+          2. After re-login, test with: docker run hello-world
+          3. No sudo required for docker commands after re-login

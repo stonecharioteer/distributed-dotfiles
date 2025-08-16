@@ -1,0 +1,5 @@
+---
+# Handlers for tmux-from-source role
+- name: update tmux sessions
+  debug:
+    msg: "tmux installed - existing sessions may need to be restarted to use new version"

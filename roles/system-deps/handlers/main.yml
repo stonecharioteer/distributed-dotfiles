@@ -1,0 +1,5 @@
+---
+# Handlers for system-deps role
+- name: update package cache
+  package:
+    update_cache: yes

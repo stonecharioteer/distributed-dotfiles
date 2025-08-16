@@ -1,0 +1,82 @@
+---
+- name: Check if mise is available
+  stat:
+    path: "{{ dev_home }}/.local/bin/mise"
+  register: mise_available
+  become: no
+
+- name: Fail if mise is not available
+  fail:
+    msg: |
+      mise (runtime version manager) is not found at {{ dev_home }}/.local/bin/mise
+      Please run the fish ansible setup first to install mise and Node.js
+  when: not mise_available.stat.exists
+
+- name: Check if Node.js is installed via mise
+  shell: |
+    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+    command -v node
+  args:
+    executable: /bin/bash
+  register: node_check
+  become_user: "{{ dev_user }}"
+  ignore_errors: yes
+  changed_when: false
+
+- name: Fail if Node.js is not available
+  fail:
+    msg: |
+      Node.js is not installed via mise. 
+      Please run the fish ansible setup first to install Node.js via mise
+  when: node_check.rc != 0
+
+- name: Check if tree-sitter CLI is already installed
+  shell: |
+    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+    command -v tree-sitter
+  args:
+    executable: /bin/bash
+  register: tree_sitter_check
+  become_user: "{{ dev_user }}"
+  ignore_errors: yes
+  changed_when: false
+
+- name: Display tree-sitter status
+  debug:
+    msg: |
+      tree-sitter CLI status:
+      {% if tree_sitter_check.rc == 0 %}
+      Already installed and available in PATH
+      {% else %}
+      Not installed - will install via npm
+      {% endif %}
+
+- name: Install tree-sitter CLI via npm
+  shell: |
+    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+    npm install -g tree-sitter-cli
+  args:
+    executable: /bin/bash
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_home }}"
+  when: tree_sitter_check.rc != 0
+
+- name: Verify tree-sitter installation
+  shell: |
+    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+    tree-sitter --version
+  args:
+    executable: /bin/bash
+  register: tree_sitter_version
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_home }}"
+  changed_when: false
+
+- name: Display tree-sitter installation success
+  debug:
+    msg: |
+      tree-sitter CLI installed successfully!
+      Version: {{ tree_sitter_version.stdout }}
+      Available via mise Node.js environment

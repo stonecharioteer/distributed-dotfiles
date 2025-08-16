@@ -1,0 +1,22 @@
+---
+# Default variables for astronvim-config role
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+
+# AstroNvim configuration
+astronvim_config_dir: "{{ dev_home }}/.config/nvim"
+astronvim_backup_dir: "{{ dev_home }}/.config/nvim.bak"
+astronvim_template_repo: "https://github.com/AstroNvim/template"
+
+# Backup directories for clean installation
+nvim_backup_dirs:
+  - "{{ dev_home }}/.local/share/nvim"
+  - "{{ dev_home }}/.local/state/nvim" 
+  - "{{ dev_home }}/.cache/nvim"
+
+# Dependencies required for AstroNvim
+astronvim_deps:
+  - xclip          # Clipboard integration for X11
+  - wl-clipboard   # Clipboard integration for Wayland  
+  - ripgrep        # Fast text search (should already be installed)
+  - fd-find        # Fast file search (should already be installed)

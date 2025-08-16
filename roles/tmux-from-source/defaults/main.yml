@@ -1,0 +1,23 @@
+---
+# Default variables for tmux-from-source role
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+
+# tmux installation configuration
+tmux_version: "latest"  # Will fetch latest from GitHub releases
+tmux_build_dir: "/tmp/tmux-build"
+tmux_install_prefix: "/usr/local"
+tmux_binary_path: "{{ tmux_install_prefix }}/bin/tmux"
+
+# Build dependencies (complete list for tmux compilation)
+tmux_build_deps:
+  - libevent-dev      # Required: libevent development headers
+  - ncurses-dev       # Required: ncurses development headers  
+  - build-essential   # Required: C compiler, make, etc.
+  - bison             # Required: yacc/bison parser generator
+  - pkg-config        # Required: package configuration tool
+  - autotools-dev     # For autogen.sh script
+  - automake          # For autogen.sh script
+  - autoconf          # For autogen.sh script
+  - libtool           # For autogen.sh script
+  - git               # For downloading source from GitHub

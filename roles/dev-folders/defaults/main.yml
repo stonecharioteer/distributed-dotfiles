@@ -1,0 +1,38 @@
+---
+# Default variables for dev-folders role
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+
+# Development directory structure
+dev_directories:
+  # Code repositories
+  - path: "{{ dev_home }}/code"
+    mode: '0755'
+  - path: "{{ dev_home }}/code/checkouts"
+    mode: '0755'
+  - path: "{{ dev_home }}/code/checkouts/personal"
+    mode: '0755'
+  - path: "{{ dev_home }}/code/checkouts/work"
+    mode: '0755'
+  - path: "{{ dev_home }}/code/tools"
+    mode: '0755'
+  
+  # Screenshots directory (following qtile pattern)
+  - path: "{{ dev_home }}/Pictures"
+    mode: '0755'
+  - path: "{{ dev_home }}/Pictures/screenshots"
+    mode: '0755'
+    
+  # Development workspace
+  - path: "{{ dev_home }}/workspace"
+    mode: '0755'
+  - path: "{{ dev_home }}/workspace/scratch"
+    mode: '0755'
+  - path: "{{ dev_home }}/workspace/projects"
+    mode: '0755'
+    
+  # Local binary directory
+  - path: "{{ dev_home }}/.local"
+    mode: '0755'
+  - path: "{{ dev_home }}/.local/bin"
+    mode: '0755'

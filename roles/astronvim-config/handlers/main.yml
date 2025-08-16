@@ -1,0 +1,5 @@
+---
+# Handlers for astronvim-config role
+- name: reload neovim config
+  debug:
+    msg: "AstroNvim configuration updated - restart nvim to load new config"
