@@ -1,5 +1,62 @@
 # Distributed Dotfiles
 
+## TLDR - Quick Commands
+
+**Set up your inventory once:**
+```bash
+# Copy and customize the inventory template
+cp inventory/hosts.yml inventory/my-home.yml
+# Edit inventory/my-home.yml with your SSH hostnames
+```
+
+**Run on all systems (using environment variable):**
+```bash
+# Set environment variable (one time)
+export ANSIBLE_INVENTORY=inventory/my-home.yml
+
+# Base development environment (servers, workstations, laptops)
+ansible-playbook --ask-become-pass playbooks/base-environment.yml
+
+# GUI workstation (includes base + desktop)
+ansible-playbook --ask-become-pass playbooks/gui-environment.yml
+```
+
+**Or use -i flag each time:**
+```bash
+# Base development environment
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml
+
+# GUI workstation
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/gui-environment.yml
+```
+
+**Run on specific hosts:**
+```bash
+# Single machine by hostname
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit desktop
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/gui-environment.yml --limit laptop
+
+# Group of machines
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit servers
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/gui-environment.yml --limit workstations
+
+# Multiple specific hosts
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit "desktop,laptop,homelab"
+```
+
+**Test connectivity:**
+```bash
+# Using environment variable
+ansible all -m ping
+ansible desktop -m ping
+
+# Using -i flag
+ansible -i inventory/my-home.yml all -m ping
+ansible -i inventory/my-home.yml desktop -m ping
+```
+
+---
+
 ## Why
 
 I'm very particular about my tools. I want a great development environment that *I* control. This repository gives me replicable configurations for my tooling. The dotfiles themselves are *separate* from this repository. I'm not keeping any configurations here for my tools, besides the *choice* of the dotfiles and tools. With this repo, I'd like setting up any server with a simple ansible playbook run. That way, I have the exact same configuration *everywhere*.
