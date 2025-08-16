@@ -18,21 +18,14 @@ This repository features a **consolidated role-based architecture** that provide
 
 ### Available Playbooks
 
-Choose the playbook that matches your system setup needs:
+Simple 2-playbook structure for all your development needs:
 
-#### 🐚 Shell Environment (`shell-environment.yml`)
-Sets up modern shell with language runtimes:
-* **Fish shell** - Modern shell with syntax highlighting
+#### 🛠️ Base Development Environment (`base-environment.yml`)
+Complete development setup for ALL systems (servers, workstations, laptops):
+* **Fish shell** - Modern shell with syntax highlighting + dotfiles repository
 * **mise** - Runtime version manager (Node.js, Python, Go, Rust)
 * **Rust toolchain** - Enhanced with cargo-binstall
-* **Fish configuration** - Abbreviations and modern integrations
-
-```bash
-ansible-playbook --ask-become-pass playbooks/shell-environment.yml
-```
-
-#### 🛠️ Development Environment (`dev-environment.yml`)
-Core development tools (requires shell environment):
+* **Fish configuration** - Cloned from your dotfiles repository
 * **System dependencies** - Build tools, development headers
 * **Modern CLI tools** - ripgrep, fd, fzf, starship, gum, direnv, watchexec
 * **Development structure** - Standardized folder layout
@@ -41,39 +34,19 @@ Core development tools (requires shell environment):
 * **Docker** - Container development platform
 
 ```bash
-ansible-playbook --ask-become-pass playbooks/dev-environment.yml
+ansible-playbook --ask-become-pass playbooks/base-environment.yml
 ```
 
-#### 🖥️ GUI Environment (`gui-environment.yml`)
-Desktop environment for machines with displays:
-* **Qtile** - Modern tiling window manager
+#### 🖥️ GUI Workstation (`gui-environment.yml`)
+Complete GUI workstation setup (includes everything from base + GUI):
+* **Everything from base-environment.yml** 
+* **Qtile** - Modern tiling window manager + dotfiles repository
 * **JetBrains Mono Nerd Font** - Programming font with icons
 * **Alacritty** - GPU-accelerated terminal emulator
 * **Desktop integration** - Session management and launchers
 
 ```bash
 ansible-playbook --ask-become-pass playbooks/gui-environment.yml
-```
-
-#### 🚀 Complete Workstation (`complete-workstation.yml`)
-Everything for a full development workstation:
-* All shell environment components
-* All development tools
-* Full GUI desktop environment
-
-```bash
-ansible-playbook --ask-become-pass playbooks/complete-workstation.yml
-```
-
-#### 🖥️ Development Server (`server-setup.yml`)
-Headless development server setup:
-* Shell environment + development tools
-* No GUI components
-* SSH server for remote access
-* Optimized for remote development
-
-```bash
-ansible-playbook --ask-become-pass playbooks/server-setup.yml
 ```
 
 ## Setup
@@ -94,28 +67,17 @@ Create an [ansible inventory](https://docs.ansible.com/ansible/latest/inventory_
 
 ### Quick Start
 
-For most users, start with these commands:
+Choose the setup that matches your system:
 
 ```bash
-# 1. First, set up shell environment (fish + mise + languages)
-ansible-playbook --ask-become-pass playbooks/shell-environment.yml
+# For ALL systems (servers, workstations, laptops)
+ansible-playbook --ask-become-pass playbooks/base-environment.yml
 
-# 2. Then add development tools
-ansible-playbook --ask-become-pass playbooks/dev-environment.yml
-
-# 3. For GUI systems, also add desktop environment
+# For GUI systems (includes everything from base + desktop environment)  
 ansible-playbook --ask-become-pass playbooks/gui-environment.yml
 ```
 
-**Or run everything at once:**
-
-```bash
-# Complete workstation setup (includes everything)
-ansible-playbook --ask-become-pass playbooks/complete-workstation.yml
-
-# Development server (no GUI)
-ansible-playbook --ask-become-pass playbooks/server-setup.yml
-```
+**That's it!** Two simple commands for any system type.
 
 ### Ansible Tag Operations
 

@@ -10,24 +10,12 @@ This is an Ansible-based dotfiles and development environment automation reposit
 
 ### Running Playbooks
 
-**Consolidated system setup (RECOMMENDED):**
+**Simple 2-playbook setup:**
 ```bash
-# Complete workstation (shell + dev + GUI)
-ansible-playbook --ask-become-pass playbooks/complete-workstation.yml
+# Base development environment (for ALL systems)
+ansible-playbook --ask-become-pass playbooks/base-environment.yml
 
-# Development server (shell + dev, no GUI)
-ansible-playbook --ask-become-pass playbooks/server-setup.yml
-```
-
-**Modular setup (step-by-step):**
-```bash
-# 1. Shell environment (fish + mise + languages)
-ansible-playbook --ask-become-pass playbooks/shell-environment.yml
-
-# 2. Development tools (tmux, neovim, docker)
-ansible-playbook --ask-become-pass playbooks/dev-environment.yml
-
-# 3. GUI environment (qtile + fonts + alacritty)
+# GUI workstation (includes base + desktop environment)
 ansible-playbook --ask-become-pass playbooks/gui-environment.yml
 ```
 
@@ -90,14 +78,13 @@ The repository uses a **unified role-based architecture** with all functionality
 
 ### Main Playbooks
 
-- **playbooks/shell-environment.yml**: Fish shell + mise + language runtimes
-- **playbooks/dev-environment.yml**: Core development tools (tmux, neovim, docker)
-- **playbooks/gui-environment.yml**: Qtile + fonts + desktop applications
-- **playbooks/complete-workstation.yml**: Everything for full workstation setup
-- **playbooks/server-setup.yml**: Headless development server setup
+- **playbooks/base-environment.yml**: Complete development environment for ALL systems
+  - Fish shell + dotfiles, mise + languages, development tools, tmux, neovim, docker
+- **playbooks/gui-environment.yml**: Complete GUI workstation (includes base + desktop)
+  - Everything from base-environment.yml + Qtile + fonts + Alacritty + desktop integration
 
 ### Legacy Playbooks (DEPRECATED)
-- `playbooks/gui.yml`, `playbooks/servers.yml`, `playbooks/laptops.yml` - Replaced by modular approach
+- All other playbooks replaced by the simple 2-playbook approach
 
 ### Consolidated Roles (`roles/`)
 

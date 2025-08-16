@@ -1,7 +1,7 @@
 ---
-# GUI environment setup playbook  
-# Provides Qtile window manager, fonts, and desktop applications
-- name: GUI Environment Setup
+# Complete GUI workstation setup playbook  
+# Includes base development environment + GUI components
+- name: Complete GUI Workstation Setup
   hosts: all
   gather_facts: true
   vars:
@@ -9,7 +9,7 @@
     dev_home: "/home/{{ dev_user }}"
     
   pre_tasks:
-    - name: Install essential system packages for GUI
+    - name: Install essential system packages for GUI workstation
       package:
         name:
           - curl
@@ -27,55 +27,82 @@
           - python3-pip
           - python3-venv
           - build-essential
+          - htop
+          - tree
+          - rsync
         state: present
 
   roles:
+    # Failsafe checks for all components
+    - failsafe-checks
+    
+    # Base Development Environment (shell + dev tools)
+    - fish-shell
+    - fish-repository-setup
+    - mise-tools
+    - rust-toolchain
+    - fish-config
+    - system-deps
+    - cli-tools
+    - dev-folders
+    - tmux-from-source
+    - neovim-latest
+    - tree-sitter-cli
+    - astronvim-config
+    - docker
+    
+    # GUI Environment
     - locale-setup
     - base-system
+    - repository-setup
     - qtile-wm
     - nerd-fonts
     - alacritty
     - desktop-integration
 
   post_tasks:
-    - name: Display GUI environment setup completion
+    - name: Display complete GUI workstation setup completion
       debug:
         msg: |
-          🖥️ GUI Environment Setup Complete!
+          🚀 Complete GUI Workstation Setup Finished!
           
-          ✓ System locale and base system configured
-            - Proper locale settings for GUI applications
-            - Essential system packages installed
-            
-          ✓ Qtile window manager installed
-            - Modern tiling window manager
-            - Python-based configuration
-            - Hardware-specific optimizations
-            
-          ✓ JetBrains Mono Nerd Font installed
-            - Programming font with icon support
-            - Multiple variants (Regular, Mono, Propo)
-            - Proper font cache refresh
-            
-          ✓ Alacritty terminal emulator
-            - GPU-accelerated terminal
-            - Modern terminal features
-            - Integrated with desktop environment
-            
-          ✓ Desktop integration completed
-            - Window manager session files
-            - Application launchers and menus
-            - Hardware-specific configurations
-            
+          🐚 Shell Environment:
+          ✓ Fish shell with syntax highlighting and modern features
+          ✓ Fish dotfiles cloned from: git@github.com:stonecharioteer/dotfiles-fish.git
+          ✓ mise runtime manager (Node.js, Python, Go, Rust)
+          ✓ Enhanced Rust toolchain with cargo-binstall
+          ✓ Fish configuration with abbreviations and integrations
+          
+          🛠️ Development Environment:
+          ✓ System dependencies and development headers
+          ✓ Modern CLI tools (ripgrep, fd, fzf, starship, etc.)
+          ✓ Development folder structure
+          ✓ tmux compiled from latest source
+          ✓ Neovim {{ neovim_version | default('latest') }} with vim symlink
+          ✓ tree-sitter CLI for syntax highlighting
+          ✓ AstroNvim configuration with plugins
+          ✓ Docker Engine with Compose plugin
+          
+          🖥️ GUI Environment:
+          ✓ System locale and base packages
+          ✓ Qtile dotfiles cloned from: git@github.com:stonecharioteer/dotfiles-qtile.git
+          ✓ Qtile window manager with Python configuration
+          ✓ JetBrains Mono Nerd Font with icon support
+          ✓ Alacritty GPU-accelerated terminal
+          ✓ Desktop integration and session management
+          
           📋 Next Steps:
-          1. Log out of current session
-          2. Select "Qtile" from display manager login screen  
+          1. Log out and log back in for shell/group changes
+          2. Select "Qtile" from display manager login screen
           3. Log in with your user account
-          4. Configure Qtile settings in ~/.config/qtile/config.py
+          4. Test complete environment:
+             - tmux new-session -d -s test
+             - docker run hello-world
+             - nvim (complete plugin setup)
+             - mise list (verify language runtimes)
           
-          🔧 For complete workstation setup, also run:
-          - ansible-playbook playbooks/shell-environment.yml
-          - ansible-playbook playbooks/dev-environment.yml
-          
-          ⚡ Or run everything at once:
-          - ansible-playbook playbooks/complete-workstation.yml
+          🎯 Your complete GUI workstation is ready!
+          - Modern shell: Fish with mise for language management
+          - Development tools: tmux, Neovim/AstroNvim, Docker
+          - GUI desktop: Qtile window manager with Alacritty terminal
+          - All tools integrated and configured for maximum productivity

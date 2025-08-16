@@ -157,6 +157,59 @@
     - alacritty_is_git_repo.stat.exists
     - alacritty_git_remote.stdout not in ['https://github.com/alacritty/alacritty.git', 'git@github.com:alacritty/alacritty.git']
 
+# === FISH CONFIGURATION REPOSITORY CHECKS ===
+- name: Check if fish config directory exists
+  stat:
+    path: "{{ dev_home }}/.config/fish"
+  register: fish_config_exists
+
+- name: Check if existing fish directory is a git repository
+  stat:
+    path: "{{ dev_home }}/.config/fish/.git"
+  register: fish_is_git_repo
+  when: fish_config_exists.stat.exists
+
+- name: Get fish git remote URL if it's a git repository
+  shell: |
+    cd {{ dev_home }}/.config/fish
+    git remote get-url origin 2>/dev/null || echo "no-remote"
+  register: fish_git_remote
+  become_user: "{{ dev_user }}"
+  when: fish_config_exists.stat.exists and fish_is_git_repo.stat.exists
+  changed_when: false
+
+- name: Get fish current git branch if it's a git repository
+  shell: |
+    cd {{ dev_home }}/.config/fish
+    git branch --show-current 2>/dev/null || echo "unknown"
+  register: fish_git_branch
+  become_user: "{{ dev_user }}"
+  when: fish_config_exists.stat.exists and fish_is_git_repo.stat.exists
+  changed_when: false
+
+# FAILSAFE: Stop if fish config exists but is not the correct repository
+- name: FAILSAFE - Stop if fish config exists but is not our repository
+  fail:
+    msg: |
+      STOP: ~/.config/fish exists but is not a git repository.
+      This could be a different fish configuration. Please backup or remove it manually.
+      Found at: {{ dev_home }}/.config/fish
+  when:
+    - fish_config_exists.stat.exists
+    - not fish_is_git_repo.stat.exists
+
+- name: FAILSAFE - Stop if fish config is a different git repository
+  fail:
+    msg: |
+      STOP: ~/.config/fish is a git repository but not the expected one.
+      Expected: https://github.com/stonecharioteer/dotfiles-fish.git
+      Found: {{ fish_git_remote.stdout }}
+      Please backup or remove it manually, or update the remote URL.
+  when:
+    - fish_config_exists.stat.exists
+    - fish_is_git_repo.stat.exists
+    - fish_git_remote.stdout not in ['https://github.com/stonecharioteer/dotfiles-fish.git', 'git@github.com:stonecharioteer/dotfiles-fish.git']
+
 # Set facts for other roles to use
 - name: Set facts about current installation state
   set_fact:
@@ -165,6 +218,7 @@
     qtile_already_installed: "{{ qtile_venv_exists.stat.exists and qtile_venv_valid.stat.exists and qtile_installed_check is defined and qtile_installed_check.stdout == 'installed' }}"
     alacritty_source_repo_exists: "{{ alacritty_source_exists.stat.exists and alacritty_is_git_repo.stat.exists }}"
     alacritty_already_built: "{{ alacritty_binary_exists.stat.exists }}"
+    fish_config_repo_exists: "{{ fish_config_exists.stat.exists and fish_is_git_repo.stat.exists }}"
 
 # Hardware Detection for conditional features
 - name: Hardware detection for conditional features
@@ -202,10 +256,11 @@
       Chassis type: {{ chassis_type.stdout }}
       
       === INSTALLATION PLAN ===
-      Qtile config: {{ 'UPDATE existing repository' if qtile_config_repo_exists else 'CLONE new repository' }}
+      Fish config: {{ 'USE existing repository' if fish_config_repo_exists else 'CLONE new repository' }}
+      Qtile config: {{ 'USE existing repository' if qtile_config_repo_exists else 'CLONE new repository' }}
       Python venv: {{ 'USE existing venv' if qtile_venv_ready else 'CREATE new venv' }}
       Qtile package: {{ 'SKIP - already installed' if qtile_already_installed else 'INSTALL qtile + psutil' }}
-      Alacritty source: {{ 'UPDATE existing repository' if alacritty_source_repo_exists else 'CLONE new repository' }}
+      Alacritty source: {{ 'USE existing repository' if alacritty_source_repo_exists else 'CLONE new repository' }}
       Alacritty binary: {{ 'SKIP - already built' if alacritty_already_built else 'BUILD from source' }}
       
       {{ 'LAPTOP FEATURES: Battery monitoring, touchpad gestures, auto-rotation, sleep services' if is_laptop else 'DESKTOP FEATURES: Monitor management only (no laptop-specific features)' }}
