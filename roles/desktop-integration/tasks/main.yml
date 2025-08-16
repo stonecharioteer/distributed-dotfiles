@@ -1,0 +1,176 @@
+---
+# System Integration Role - Configuration Symlinking
+# Makes the qtile repository the single source of truth for all configurations
+
+- name: Make scripts executable
+  shell: |
+    find {{ dev_home }}/.config/qtile -name "*.sh" -type f -exec chmod +x {} \;
+  become_user: "{{ dev_user }}"
+
+- name: Create user .config directory
+  file:
+    path: "{{ dev_home }}/.config"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: '0755'
+
+- name: Backup existing configuration directories
+  block:
+    - name: Check for existing config directories
+      stat:
+        path: "{{ dev_home }}/.config/{{ item }}"
+      register: existing_configs
+      loop:
+        - dunst
+        - touchegg
+        - rofi
+        - conky
+
+    - name: Backup existing directories that aren't symlinks
+      command: mv "{{ dev_home }}/.config/{{ item.item }}" "{{ dev_home }}/.config/{{ item.item }}.backup.{{ ansible_date_time.epoch }}"
+      when: item.stat.exists and not item.stat.islnk
+      loop: "{{ existing_configs.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      become_user: "{{ dev_user }}"
+
+- name: Create directory symlinks for configuration folders
+  file:
+    src: "{{ dev_home }}/.config/qtile/install/{{ item }}"
+    dest: "{{ dev_home }}/.config/{{ item }}"
+    state: link
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    force: yes  # Replace existing symlinks
+  loop:
+    - alacritty
+    - auto-rotate
+    - conky
+    - dunst
+    - monitor-manager
+    - redshift
+    - rofi
+    - touchegg
+  become_user: "{{ dev_user }}"
+
+- name: Check for existing standalone config files
+  stat:
+    path: "{{ dev_home }}/.config/{{ item }}"
+  register: existing_files
+  loop:
+    - picom.conf
+
+- name: Backup existing standalone config files
+  command: mv "{{ dev_home }}/.config/{{ item.item }}" "{{ dev_home }}/.config/{{ item.item }}.backup.{{ ansible_date_time.epoch }}"
+  when: item.stat.exists and not item.stat.islnk
+  loop: "{{ existing_files.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  become_user: "{{ dev_user }}"
+
+- name: Create file symlinks for standalone configurations
+  file:
+    src: "{{ dev_home }}/.config/qtile/install/{{ item }}"
+    dest: "{{ dev_home }}/.config/{{ item }}"
+    state: link
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    force: yes
+  loop:
+    - picom.conf
+  become_user: "{{ dev_user }}"
+
+- name: Copy X11 configuration files
+  copy:
+    src: "{{ dev_home }}/.config/qtile/install/X11/{{ item }}"
+    dest: "/etc/X11/xorg.conf.d/{{ item }}"
+    mode: '0644'
+    backup: yes
+  loop:
+    - 40-libinput-touchpad.conf
+  ignore_errors: yes
+
+- name: Set up systemd user services directory
+  file:
+    path: "{{ dev_home }}/.config/systemd/user"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: '0755'
+
+- name: Copy systemd user service files
+  shell: |
+    find {{ dev_home }}/.config/qtile/install -name "*.service" -type f -exec cp {} {{ dev_home }}/.config/systemd/user/ \;
+    chown {{ dev_user }}:{{ dev_user }} {{ dev_home }}/.config/systemd/user/*.service
+  ignore_errors: yes
+
+- name: Set up battery monitoring cron job (laptops only)
+  cron:
+    name: "Battery monitor"
+    minute: "*/10"
+    job: "{{ dev_home }}/.config/qtile/install/battery-monitor.sh"
+    user: "{{ dev_user }}"
+  when: is_laptop
+
+- name: Run brightness permissions setup script
+  command: "{{ dev_home }}/.config/qtile/install/setup-brightness-permissions.sh"
+  args:
+    creates: /etc/udev/rules.d/90-backlight.rules
+
+- name: Enable touchegg system service (all systems for USB trackpad support)
+  systemd:
+    name: touchegg.service
+    enabled: yes
+    state: started
+  ignore_errors: yes
+
+- name: Enable laptop-specific systemd user services (laptops only)
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    scope: user
+    daemon_reload: yes
+  become_user: "{{ dev_user }}"
+  with_items:
+    - auto-rotate.service
+    - lock-on-suspend.service  
+    - unlock-on-resume.service
+  when: is_laptop
+  ignore_errors: yes
+
+- name: Enable general systemd user services (all systems)
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    scope: user
+    daemon_reload: yes
+  become_user: "{{ dev_user }}"
+  with_items:
+    - monitor-manager.service
+  ignore_errors: yes
+
+- name: Display configuration symlinks status
+  debug:
+    msg: |
+      === CONFIGURATION SYMLINKS CREATED ===
+      Directory symlinks (entire folders managed by git):
+      ~/.config/alacritty -> ~/.config/qtile/install/alacritty
+      ~/.config/auto-rotate -> ~/.config/qtile/install/auto-rotate
+      ~/.config/conky -> ~/.config/qtile/install/conky
+      ~/.config/dunst -> ~/.config/qtile/install/dunst
+      ~/.config/monitor-manager -> ~/.config/qtile/install/monitor-manager
+      ~/.config/redshift -> ~/.config/qtile/install/redshift
+      ~/.config/rofi -> ~/.config/qtile/install/rofi
+      ~/.config/touchegg -> ~/.config/qtile/install/touchegg
+      
+      File symlinks:
+      ~/.config/picom.conf -> ~/.config/qtile/install/picom.conf
+      
+      {{ "LAPTOP-SPECIFIC FEATURES ENABLED:" if is_laptop else "DESKTOP SYSTEM DETECTED:" }}
+      {{ "- Battery monitoring cron job" if is_laptop else "- No battery monitoring (desktop)" }}
+      {{ "- Auto-rotation service" if is_laptop else "- No auto-rotation (desktop)" }}
+      {{ "- Sleep/suspend services" if is_laptop else "- No sleep services (desktop)" }}
+      - Monitor management (all systems)
+      
+      Repository is now the single source of truth for all configurations!

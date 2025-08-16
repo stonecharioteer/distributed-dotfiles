@@ -1,0 +1,7 @@
+---
+- name: update locale
+  command: /usr/sbin/locale-gen
+
+- name: reload systemd
+  systemd:
+    daemon_reload: yes

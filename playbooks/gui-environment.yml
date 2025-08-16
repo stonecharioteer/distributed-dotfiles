@@ -1,0 +1,136 @@
+---
+# Complete GUI workstation setup playbook  
+# Includes base development environment + GUI components
+- name: Complete GUI Workstation Setup
+  hosts: all
+  become: yes
+  gather_facts: true
+  vars:
+    dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+    dev_home: "/home/{{ dev_user }}"
+    
+  pre_tasks:
+    - name: Update package cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+        cache_valid_time: 86400
+      when: ansible_os_family == "Debian"
+      
+    - name: Check which packages are missing
+      shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
+      register: missing_packages_check
+      loop:
+        - curl
+        - wget
+        - git
+        - unzip
+        - tar
+        - gzip
+        - software-properties-common
+        - apt-transport-https
+        - ca-certificates
+        - gnupg
+        - lsb-release
+        - python3-dev
+        - python3-pip
+        - python3-venv
+        - build-essential
+        - htop
+        - tree
+        - rsync
+      changed_when: false
+      failed_when: false
+      when: ansible_os_family == "Debian"
+
+    - name: Create list of packages to install
+      set_fact:
+        packages_to_install: "{{ missing_packages_check.results | selectattr('stdout', 'defined') | selectattr('stdout', '!=', '') | map(attribute='stdout') | list }}"
+      when: ansible_os_family == "Debian"
+
+    - name: Install missing system packages for GUI workstation
+      apt:
+        name: "{{ packages_to_install }}"
+        state: present
+        install_recommends: no
+        force_apt_get: yes
+      when: 
+        - ansible_os_family == "Debian"
+        - packages_to_install is defined
+        - packages_to_install | length > 0
+
+  roles:
+    # Failsafe checks for all components
+    - failsafe-checks
+    
+    # Base Development Environment (shell + dev tools)
+    - fish-shell
+    - fish-repository-setup
+    - scripts-repository-setup
+    - mise-tools
+    - rust-toolchain
+    - fish-config
+    - system-deps
+    - cli-tools
+    - dev-folders
+    - tmux-from-source
+    - neovim-latest
+    - tree-sitter-cli
+    - astronvim-config
+    - docker
+    
+    # GUI Environment
+    - locale-setup
+    - base-system
+    - repository-setup
+    - qtile-wm
+    - nerd-fonts
+    - alacritty
+    - desktop-integration
+
+  post_tasks:
+    - name: Display complete GUI workstation setup completion
+      debug:
+        msg: |
+          🚀 Complete GUI Workstation Setup Finished!
+          
+          🐚 Shell Environment:
+          ✓ Fish shell with syntax highlighting and modern features
+          ✓ Fish dotfiles cloned from: git@github.com:stonecharioteer/dotfiles-fish.git
+          ✓ Personal scripts repository cloned from: git@github.com:stonecharioteer/scripts.git
+          ✓ mise runtime manager (Node.js, Python, Go, Rust)
+          ✓ Enhanced Rust toolchain with cargo-binstall
+          ✓ Fish configuration with abbreviations and integrations
+          
+          🛠️ Development Environment:
+          ✓ System dependencies and development headers
+          ✓ Modern CLI tools (ripgrep, fd, fzf, starship, etc.)
+          ✓ Development folder structure
+          ✓ tmux compiled from latest source
+          ✓ Neovim {{ neovim_version | default('latest') }} with vim symlink
+          ✓ tree-sitter CLI for syntax highlighting
+          ✓ AstroNvim configuration with plugins
+          ✓ Docker Engine with Compose plugin
+          
+          🖥️ GUI Environment:
+          ✓ System locale and base packages
+          ✓ Qtile dotfiles cloned from: git@github.com:stonecharioteer/dotfiles-qtile.git
+          ✓ Qtile window manager with Python configuration
+          ✓ JetBrains Mono Nerd Font with icon support
+          ✓ Alacritty GPU-accelerated terminal
+          ✓ Desktop integration and session management
+          
+          📋 Next Steps:
+          1. Log out and log back in for shell/group changes
+          2. Select "Qtile" from display manager login screen
+          3. Log in with your user account
+          4. Test complete environment:
+             - tmux new-session -d -s test
+             - docker run hello-world
+             - nvim (complete plugin setup)
+             - mise list (verify language runtimes)
+          
+          🎯 Your complete GUI workstation is ready!
+          - Modern shell: Fish with mise for language management
+          - Development tools: tmux, Neovim/AstroNvim, Docker
+          - GUI desktop: Qtile window manager with Alacritty terminal
+          - All tools integrated and configured for maximum productivity

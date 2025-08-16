@@ -1,5 +1,62 @@
 # Distributed Dotfiles
 
+## TLDR - Quick Commands
+
+**Set up your inventory once:**
+```bash
+# Copy and customize the inventory template
+cp inventory/hosts.yml inventory/my-home.yml
+# Edit inventory/my-home.yml with your SSH hostnames
+```
+
+**Run on all systems (using environment variable):**
+```bash
+# Set environment variable (one time)
+export ANSIBLE_INVENTORY=inventory/my-home.yml
+
+# Base development environment (servers, workstations, laptops)
+ansible-playbook --ask-become-pass playbooks/base-environment.yml
+
+# GUI workstation (includes base + desktop)
+ansible-playbook --ask-become-pass playbooks/gui-environment.yml
+```
+
+**Or use -i flag each time:**
+```bash
+# Base development environment
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml
+
+# GUI workstation
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/gui-environment.yml
+```
+
+**Run on specific hosts:**
+```bash
+# Single machine by hostname
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit desktop
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/gui-environment.yml --limit laptop
+
+# Group of machines
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit servers
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/gui-environment.yml --limit workstations
+
+# Multiple specific hosts
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit "desktop,laptop,homelab"
+```
+
+**Test connectivity:**
+```bash
+# Using environment variable
+ansible all -m ping
+ansible desktop -m ping
+
+# Using -i flag
+ansible -i inventory/my-home.yml all -m ping
+ansible -i inventory/my-home.yml desktop -m ping
+```
+
+---
+
 ## Why
 
 I'm very particular about my tools. I want a great development environment that *I* control. This repository gives me replicable configurations for my tooling. The dotfiles themselves are *separate* from this repository. I'm not keeping any configurations here for my tools, besides the *choice* of the dotfiles and tools. With this repo, I'd like setting up any server with a simple ansible playbook run. That way, I have the exact same configuration *everywhere*.
@@ -12,23 +69,42 @@ I've seen other developers maintain dotfile repositories, but I'm not very happy
 * Replicable, *testable* and **idempotent** configurations that I can run on any server and/or laptop.
 * Continuously living configuration which I can use to remember how I set up my development machines.
 
-## Modern Development Environment
+## Consolidated Development Environment
 
-This repository now features a **modern role-based architecture** that installs:
+This repository features a **consolidated role-based architecture** that provides complete environment setup with modular playbooks for different system types.
 
-### Core Development Tools
+### Available Playbooks
 
-* **Editor** - Neovim 0.11.2 with [AstroNvim](https://github.com/AstroNvim/AstroNvim) configuration
-* **Terminal Multiplexer** - tmux (latest version, compiled from source)
-* **Development Structure** - Standardized folder layout (`~/code/`, `~/workspace/`)
-* **Language Support** - tree-sitter CLI for advanced syntax highlighting
+Simple 2-playbook structure for all your development needs:
 
-### Additional Tools (Legacy Tasks)
+#### 🛠️ Base Development Environment (`base-environment.yml`)
+Complete development setup for ALL systems (servers, workstations, laptops):
+* **Fish shell** - Modern shell with syntax highlighting + dotfiles repository
+* **mise** - Runtime version manager (Node.js, Python, Go, Rust)
+* **Rust toolchain** - Enhanced with cargo-binstall
+* **Fish configuration** - Cloned from your dotfiles repository
+* **System dependencies** - Build tools, development headers
+* **Modern CLI tools** - ripgrep, fd, fzf, starship, gum, direnv, watchexec
+* **Development structure** - Standardized folder layout
+* **tmux** - Latest version compiled from source
+* **Neovim + AstroNvim** - Modern editor with full configuration
+* **Docker** - Container development platform
 
-* **Programming Languages** - Python (self-compiled), Rust (via mise)
-* **CLI Tools** - `ripgrep`, `fd-find`, `tokei`, `bat`, `exa`, `zoxide`, `fzf`
-* **Shell** - `fish` with modern integrations
-* **Window Manager** - Qtile (for GUI machines)
+```bash
+ansible-playbook --ask-become-pass playbooks/base-environment.yml
+```
+
+#### 🖥️ GUI Workstation (`gui-environment.yml`)
+Complete GUI workstation setup (includes everything from base + GUI):
+* **Everything from base-environment.yml** 
+* **Qtile** - Modern tiling window manager + dotfiles repository
+* **JetBrains Mono Nerd Font** - Programming font with icons
+* **Alacritty** - GPU-accelerated terminal emulator
+* **Desktop integration** - Session management and launchers
+
+```bash
+ansible-playbook --ask-become-pass playbooks/gui-environment.yml
+```
 
 ## Setup
 
@@ -46,45 +122,19 @@ Create an [ansible inventory](https://docs.ansible.com/ansible/latest/inventory_
 
 **NOTE:** Ensure you set `ANSIBLE_INVENTORY` before running any of these, or use the `-i` parameter to provide the path to it.
 
-### Recommended: Modern Development Environment Setup
+### Quick Start
+
+Choose the setup that matches your system:
 
 ```bash
-ansible-playbook --ask-become-pass playbooks/dev-environment.yml
+# For ALL systems (servers, workstations, laptops)
+ansible-playbook --ask-become-pass playbooks/base-environment.yml
+
+# For GUI systems (includes everything from base + desktop environment)  
+ansible-playbook --ask-become-pass playbooks/gui-environment.yml
 ```
 
-This installs the core development tools using the modern role-based architecture:
-
-* System dependencies (build tools, development headers, Python3)
-* Modern CLI tools (ripgrep, fd-find, fzf, starship, gum, direnv, watchexec)
-* Development folder structure (`~/code/`, `~/workspace/`)
-* tmux compiled from latest source
-* Neovim 0.11.2 with vim symlink
-* tree-sitter CLI (requires Node.js via mise)
-* AstroNvim configuration with plugin setup
-* Docker Engine with complete post-install setup
-
-### Prerequisites
-
-The development environment playbook requires Node.js to be installed via mise. Run the fish shell ansible setup first if you need Node.js/mise:
-
-```bash
-# Setup fish shell with mise (Node.js, Python, Go, Rust)
-cd ~/.config/fish/ansible
-ansible-playbook fish-setup.yml
-```
-
-### Legacy Complete System Setup (Includes GUI/System Tools)
-
-```bash
-# For machines with displays (includes Qtile, fonts, system tools)
-ansible-playbook --ask-become-pass playbooks/gui.yml 
-
-# For headless development servers (includes Docker, system setup)
-ansible-playbook --ask-become-pass playbooks/servers.yml 
-
-# For laptops (includes Qtile, fonts, laptop-specific tools)
-ansible-playbook --ask-become-pass playbooks/laptops.yml
-```
+**That's it!** Two simple commands for any system type.
 
 ### Ansible Tag Operations
 
@@ -114,16 +164,39 @@ ansible-playbook playbooks/servers.yml --list-tasks
 
 ## Architecture
 
-This repository uses a **hybrid architecture**:
+This repository uses a **consolidated role-based architecture**:
 
-### Modern Roles (`roles/`)
-- Used for core development tools (tmux, neovim, astronvim)
-- Proper Ansible role structure with variables, handlers, and templates
-- Idempotent and self-contained
+### Consolidated Roles (`roles/`)
+All functionality has been consolidated into this repository from external configs:
 
-### Legacy Tasks (`playbooks/tasks/`)
-- Preserved for system-level setup (build tools, Docker, Qtile, fonts)
-- Will be gradually migrated to roles over time
+**Shell Environment:**
+- `fish-shell` - Fish shell installation and setup
+- `mise-tools` - Runtime version manager (Node.js, Python, Go, Rust)
+- `rust-toolchain` - Enhanced Rust toolchain with cargo-binstall
+- `fish-config` - Fish configuration and abbreviations
+
+**Development Tools:**
+- `system-deps` - System dependencies and development headers
+- `cli-tools` - Modern CLI utilities (ripgrep, fd, fzf, starship, etc.)
+- `dev-folders` - Standardized development directory structure
+- `tmux-from-source` - tmux compiled from latest source
+- `neovim-latest` - Neovim binary installation
+- `tree-sitter-cli` - Tree-sitter CLI for syntax highlighting
+- `astronvim-config` - AstroNvim configuration and plugins
+- `docker` - Docker Engine with complete setup
+
+**GUI Environment:**
+- `locale-setup` - System locale configuration
+- `base-system` - Essential system packages
+- `qtile-wm` - Qtile window manager
+- `nerd-fonts` - JetBrains Mono Nerd Font installation
+- `alacritty` - Alacritty terminal emulator
+- `desktop-integration` - Desktop session management
+
+### Modular Playbooks
+- **Focused playbooks** for different system types and use cases
+- **Dependency management** between components
+- **Idempotent and self-contained** role execution
 
 For detailed architecture information, see `CLAUDE.md` and `GAMEPLAN.md`.
 
@@ -165,17 +238,21 @@ When doing this sort of testing repeatedly, you might want to use the `--flush-c
 
 ## Dependencies
 
-### Modern Development Environment Dependencies
+All dependencies have been consolidated into this repository. No external ansible setups are required.
 
-The new `dev-environment.yml` playbook depends on external tools managed by separate ansible setups:
+### Role Dependencies
 
-* **Node.js/npm** - Required for tree-sitter CLI (install via `~/.config/fish/ansible/`)
-* **Fonts** - JetBrains Mono Nerd Font (install via `~/.config/qtile/ansible/`)
+The roles have been designed with clear dependency chains:
 
-### Recommended Setup Order
+* **tree-sitter-cli** → requires Node.js (provided by `mise-tools`)
+* **astronvim-config** → requires `neovim-latest` + `tree-sitter-cli`
+* **Development tools** → require shell environment for proper operation
+* **GUI environment** → works independently but complements dev tools
 
-1. Fish shell setup (provides Node.js via mise): `~/.config/fish/ansible/fish-setup.yml`
-2. Development environment: `playbooks/dev-environment.yml`
-3. Optional GUI setup: `~/.config/qtile/ansible/qtile-setup.yml`
+### Setup Order Recommendations
 
-This modular approach allows you to pick and choose which components you need for different machine types.
+1. **Shell first**: `shell-environment.yml` provides the foundation
+2. **Development tools**: `dev-environment.yml` adds coding capabilities  
+3. **GUI environment**: `gui-environment.yml` for desktop systems
+
+Or use the consolidated playbooks (`complete-workstation.yml` or `server-setup.yml`) which handle dependency order automatically.

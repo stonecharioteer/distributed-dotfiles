@@ -1,0 +1,51 @@
+---
+- name: Create Python virtual environment at /opt/qtile (if not exists)
+  shell: |
+    uv venv "{{ qtile_venv_path }}"
+  become_user: "{{ dev_user }}"
+  when: not qtile_venv_ready
+
+# uv automatically ensures pip is present in virtual environments
+
+- name: Install qtile and dependencies in virtual environment (if not already installed)
+  shell: |
+    uv pip install --python "{{ qtile_venv_path }}/bin/python" qtile==0.33.0 psutil
+  become_user: "{{ dev_user }}"
+  when: not qtile_already_installed
+
+- name: Check current qtile version (if already installed)
+  shell: "{{ qtile_venv_path }}/bin/python -c 'import qtile; print(qtile.__version__)' 2>/dev/null || echo 'not-found'"
+  register: current_qtile_version
+  when: qtile_already_installed
+  changed_when: false
+
+- name: Upgrade qtile to 0.33.0 if version mismatch
+  shell: |
+    uv pip install --python "{{ qtile_venv_path }}/bin/python" --upgrade qtile==0.33.0
+  become_user: "{{ dev_user }}"
+  when: qtile_already_installed and current_qtile_version.stdout != "0.33.0"
+
+- name: Display qtile installation status
+  debug:
+    msg: |
+      === QTILE PYTHON ENVIRONMENT ===
+      {% if qtile_already_installed %}
+      Qtile already installed - skipping installation
+      {% else %}
+      Qtile installed fresh in virtual environment
+      {% endif %}
+      Virtual environment: {{ qtile_venv_path }}
+
+- name: Set executable permissions on qtile binaries
+  file:
+    path: "{{ item }}"
+    mode: '0755'
+  with_items:
+    - "{{ qtile_venv_path }}/bin/qtile"
+    - "{{ qtile_venv_path }}/bin/python"
+    - "{{ qtile_venv_path }}/bin/python3"
+
+- name: Make qtile binaries readable by all users
+  file:
+    path: "{{ qtile_venv_path }}/bin/qtile"
+    mode: 'a+rx'

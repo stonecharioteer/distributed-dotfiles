@@ -1,0 +1,31 @@
+---
+- name: Install Alacritty from source with full desktop integration
+  include_tasks: alacritty.yml
+
+- name: Install multimedia and hardware control tools
+  package:
+    name:
+      - pulseaudio-utils
+      - brightnessctl
+      - bc
+      - xbacklight
+      - conky-all  # Full conky functionality
+      - lm-sensors
+    state: present
+  ignore_errors: yes
+
+- name: Install touchpad gesture support (all systems for USB trackpad support)
+  package:
+    name: touchegg
+    state: present
+  ignore_errors: yes
+
+- name: Create .local/share/applications directory for user
+  file:
+    path: "{{ dev_home }}/.local/share/applications"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: '0755'
+
+# Alacritty desktop integration is handled in alacritty.yml

@@ -18,6 +18,14 @@
     state: present
   when: cli_packages_to_install is defined and cli_packages_to_install | length > 0
 
+- name: Create fd symlink (Ubuntu packages fd-find as fdfind)
+  file:
+    src: /usr/bin/fdfind
+    dest: /usr/local/bin/fd
+    state: link
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes
+
 - name: Check if Starship is already installed
   command: "{{ external_tools.starship.check_cmd }}"
   register: starship_check
@@ -98,7 +106,7 @@
 
 - name: Check if Rust/cargo is available for cargo tools
   shell: |
-    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+    source {{ dev_home }}/.cargo/env
     command -v cargo
   args:
     executable: /bin/bash
@@ -111,7 +119,7 @@
   block:
     - name: Check if cargo-binstall is available
       shell: |
-        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        source {{ dev_home }}/.cargo/env
         command -v cargo-binstall
       args:
         executable: /bin/bash
@@ -122,7 +130,7 @@
 
     - name: Install cargo-binstall if not available
       shell: |
-        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        source {{ dev_home }}/.cargo/env
         cargo install cargo-binstall
       args:
         executable: /bin/bash
@@ -133,7 +141,7 @@
 
     - name: Check if watchexec is already installed
       shell: |
-        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        source {{ dev_home }}/.cargo/env
         command -v "{{ cargo_tools['watchexec-cli'].binary }}"
       args:
         executable: /bin/bash
@@ -144,7 +152,7 @@
 
     - name: Install watchexec-cli via cargo binstall
       shell: |
-        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        source {{ dev_home }}/.cargo/env
         cargo binstall -y "{{ cargo_tools['watchexec-cli'].package }}"
       args:
         executable: /bin/bash
@@ -155,7 +163,7 @@
 
     - name: Verify watchexec installation
       shell: |
-        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        source {{ dev_home }}/.cargo/env
         "{{ cargo_tools['watchexec-cli'].check_cmd }}"
       args:
         executable: /bin/bash
@@ -173,7 +181,7 @@
   rescue:
     - name: Display cargo tools installation failure
       debug:
-        msg: "⚠ Cargo tools installation failed - ensure Rust is installed via mise"
+        msg: "⚠ Cargo tools installation failed - ensure Rust is installed (system installation)"
 
 - name: Verify CLI tools installation
   command: "{{ item }} --version"

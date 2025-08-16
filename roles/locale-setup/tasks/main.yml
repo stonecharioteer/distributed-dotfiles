@@ -1,0 +1,35 @@
+---
+- name: Install locales package
+  package:
+    name: locales
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Generate en_US.UTF-8 locale
+  locale_gen:
+    name: en_US.UTF-8
+    state: present
+
+- name: Set system locale to en_US.UTF-8
+  template:
+    src: locale.j2
+    dest: /etc/default/locale
+    backup: yes
+    mode: '0644'
+  notify: update locale
+
+- name: Update locale settings in /etc/locale.conf (if exists)
+  lineinfile:
+    path: /etc/locale.conf
+    regexp: '^LANG='
+    line: 'LANG=en_US.UTF-8'
+    create: no
+  ignore_errors: yes
+
+- name: Set LC_ALL environment variable
+  lineinfile:
+    path: /etc/environment
+    regexp: '^LC_ALL='
+    line: 'LC_ALL=en_US.UTF-8'
+    create: yes
+    mode: '0644'

@@ -1,0 +1,94 @@
+---
+# Note: Fish configuration files are now managed by the git repository
+# cloned by fish-repository-setup role. We just need to set up runtime dependencies.
+
+- name: Verify fish configuration exists (from repository)
+  stat:
+    path: "{{ dev_home }}/.config/fish/config.fish"
+  register: fish_config_file
+  
+- name: Display fish configuration status
+  debug:
+    msg: |
+      === FISH CONFIGURATION STATUS ===
+      Config file exists: {{ fish_config_file.stat.exists }}
+      {% if fish_config_file.stat.exists %}
+      Configuration managed by git repository at: {{ dev_home }}/.config/fish
+      {% else %}
+      WARNING: No fish configuration found! Repository may not have been cloned properly.
+      {% endif %}
+
+- name: Check if fish_plugins file exists (from repository)
+  stat:
+    path: "{{ dev_home }}/.config/fish/fish_plugins"
+  register: fish_plugins_file
+  become: no
+
+- name: Install Fisher plugin manager
+  shell: |
+    fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher"
+  become: no
+  environment:
+    HOME: "{{ dev_home }}"
+  ignore_errors: yes  # Fisher might already be installed
+
+- name: Install Fish plugins from fish_plugins file
+  shell: |
+    fish -c "fisher update"
+  become: no
+  environment:
+    HOME: "{{ dev_home }}"
+  when: fish_plugins_file.stat.exists
+  ignore_errors: yes
+
+- name: Initialize starship prompt
+  shell: |
+    fish -c "starship init fish | source"
+  become: no
+  environment:
+    HOME: "{{ dev_home }}"
+  ignore_errors: yes
+
+- name: Initialize atuin history
+  shell: |
+    fish -c "atuin init fish | source"
+  become: no
+  environment:
+    HOME: "{{ dev_home }}"
+  ignore_errors: yes
+
+- name: Initialize zoxide
+  shell: |
+    fish -c "zoxide init fish | source"
+  become: no
+  environment:
+    HOME: "{{ dev_home }}"
+  ignore_errors: yes
+
+- name: Create local bin directory for additional tools
+  file:
+    path: "{{ dev_home }}/.local/bin"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: '0755'
+  become: no
+
+- name: Download and install mise (runtime version manager)
+  shell: |
+    curl https://mise.run | sh
+  become: no
+  environment:
+    HOME: "{{ dev_home }}"
+  ignore_errors: yes
+
+- name: Install fx JSON viewer
+  shell: |
+    if command -v go >/dev/null 2>&1; then
+      go install github.com/antonmedv/fx@latest
+    fi
+  become: no
+  environment:
+    HOME: "{{ dev_home }}"
+    GOPATH: "{{ dev_home }}/go"
+  ignore_errors: yes

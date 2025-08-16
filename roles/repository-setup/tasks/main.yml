@@ -1,0 +1,74 @@
+---
+# Safe repository setup using information from failsafe-checks
+- name: Clone or update qtile dotfiles repository (safe mode)
+  git:
+    repo: "{{ qtile_git_repo | default('git@github.com:stonecharioteer/dotfiles-qtile.git') }}"
+    dest: "{{ dev_home }}/.config/qtile"
+    version: main
+    update: "{{ not qtile_config_repo_exists }}"  # Only update if it's a new clone
+    force: no  # Never force, to preserve local changes
+  become_user: "{{ dev_user }}"
+  when: not qtile_config_repo_exists
+
+- name: Leave existing qtile repository untouched
+  debug:
+    msg: "Qtile repository already exists - skipping any git operations"
+  when: qtile_config_repo_exists
+
+- name: Display git status for existing repository
+  shell: |
+    cd {{ dev_home }}/.config/qtile
+    echo "=== Current Branch ==="
+    git branch --show-current
+    echo "=== Git Status ==="
+    git status --porcelain
+    echo "=== Uncommitted Changes ==="
+    git diff --name-only
+  become_user: "{{ dev_user }}"
+  when: qtile_config_repo_exists
+  register: git_status_result
+  changed_when: false
+
+- name: Show git repository status
+  debug:
+    msg: |
+      === QTILE REPOSITORY STATUS ===
+      {% if qtile_config_repo_exists %}
+      Repository exists - preserved existing checkout
+      {{ git_status_result.stdout }}
+      {% else %}
+      Repository cloned fresh from GitHub
+      {% endif %}
+  when: qtile_config_repo_exists
+
+- name: Ensure qtile config directory ownership
+  file:
+    path: "{{ dev_home }}/.config/qtile"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    recurse: yes
+
+- name: Clone Alacritty repository (fresh install only)
+  git:
+    repo: "{{ alacritty_git_repo | default('git@github.com:alacritty/alacritty.git') }}"
+    dest: "{{ dev_home }}/code/tools/alacritty"
+    version: master
+    update: no  # Never update existing repos
+    force: no   # Never force, to preserve local changes
+  become_user: "{{ dev_user }}"
+  when: not alacritty_source_repo_exists
+
+- name: Leave existing Alacritty repository untouched
+  debug:
+    msg: "Alacritty repository already exists - skipping any git operations"
+  when: alacritty_source_repo_exists
+
+- name: Show Alacritty repository status
+  debug:
+    msg: |
+      === ALACRITTY REPOSITORY STATUS ===
+      {% if alacritty_source_repo_exists %}
+      Repository exists - preserved existing checkout
+      {% else %}
+      Repository cloned fresh from GitHub
+      {% endif %}

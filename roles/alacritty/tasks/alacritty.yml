@@ -1,0 +1,144 @@
+---
+# Alacritty installation from source with full desktop integration
+- name: Install Alacritty build dependencies (Debian/Ubuntu)
+  package:
+    name:
+      - cmake
+      - g++
+      - pkg-config
+      - libfontconfig1-dev
+      - libxcb-xfixes0-dev
+      - libxkbcommon-dev
+      - python3
+      - curl
+      - gzip
+      - scdoc
+    state: present
+
+- name: Check if Rust is installed
+  stat:
+    path: "{{ dev_home }}/.cargo/bin/rustc"
+  register: rust_installed
+  become_user: "{{ dev_user }}"
+
+- name: Download and install Rust (no updates)
+  shell: |
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source {{ dev_home }}/.cargo/env
+    rustup override set stable
+  become_user: "{{ dev_user }}"
+  when: not rust_installed.stat.exists
+
+- name: Create code/tools directory structure
+  file:
+    path: "{{ dev_home }}/code/tools"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: '0755'
+
+# Alacritty repository is cloned by repository-setup role
+
+- name: Build Alacritty (if not already built)
+  shell: |
+    source {{ dev_home }}/.cargo/env
+    cd {{ dev_home }}/code/tools/alacritty
+    cargo build --release
+  become_user: "{{ dev_user }}"
+  register: alacritty_build
+  failed_when: alacritty_build.rc != 0
+  when: not alacritty_already_built
+
+- name: Display Alacritty build status
+  debug:
+    msg: |
+      === ALACRITTY BUILD STATUS ===
+      {% if alacritty_already_built %}
+      Alacritty binary already exists - skipping build
+      {% else %}
+      Alacritty built from source successfully
+      {% endif %}
+      Binary location: /usr/local/bin/alacritty
+
+- name: Install Alacritty binary to /usr/local/bin (if not already installed)
+  copy:
+    src: "{{ dev_home }}/code/tools/alacritty/target/release/alacritty"
+    dest: /usr/local/bin/alacritty
+    mode: '0755'
+    remote_src: yes
+  when: not alacritty_already_built
+
+- name: Install Alacritty terminfo
+  shell: |
+    cd {{ dev_home }}/code/tools/alacritty
+    sudo tic -xe alacritty,alacritty-direct extra/alacritty.info
+  ignore_errors: yes
+
+- name: Create directories for desktop integration
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /usr/share/pixmaps
+    - /usr/share/applications
+    - /usr/local/share/man/man1
+    - /usr/local/share/man/man5
+    - /usr/share/bash-completion/completions
+    - /usr/share/zsh/site-functions
+    - /usr/share/fish/vendor_completions.d
+
+- name: Install Alacritty icon
+  copy:
+    src: "{{ dev_home }}/code/tools/alacritty/extra/logo/alacritty-term.svg"
+    dest: /usr/share/pixmaps/Alacritty.svg
+    mode: '0644'
+    remote_src: yes
+
+- name: Install Alacritty desktop file using desktop-file-install
+  shell: |
+    cd {{ dev_home }}/code/tools/alacritty
+    desktop-file-install extra/linux/Alacritty.desktop
+  register: desktop_install
+  failed_when: desktop_install.rc != 0
+
+- name: Generate and install Alacritty man pages
+  shell: |
+    cd {{ dev_home }}/code/tools/alacritty
+    scdoc < extra/man/alacritty.1.scd | gzip -c > /usr/local/share/man/man1/alacritty.1.gz
+    scdoc < extra/man/alacritty-msg.1.scd | gzip -c > /usr/local/share/man/man1/alacritty-msg.1.gz
+    scdoc < extra/man/alacritty.5.scd | gzip -c > /usr/local/share/man/man5/alacritty.5.gz
+    scdoc < extra/man/alacritty-bindings.5.scd | gzip -c > /usr/local/share/man/man5/alacritty-bindings.5.gz
+  ignore_errors: yes
+
+- name: Install shell completions
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: '0644'
+    remote_src: yes
+  loop:
+    - src: "{{ dev_home }}/code/tools/alacritty/extra/completions/alacritty.bash"
+      dest: /usr/share/bash-completion/completions/alacritty
+    - src: "{{ dev_home }}/code/tools/alacritty/extra/completions/_alacritty"
+      dest: /usr/share/zsh/site-functions/_alacritty
+    - src: "{{ dev_home }}/code/tools/alacritty/extra/completions/alacritty.fish"
+      dest: /usr/share/fish/vendor_completions.d/alacritty.fish
+  ignore_errors: yes
+
+- name: Update desktop database
+  command: update-desktop-database
+  ignore_errors: yes
+
+- name: Create user-specific Alacritty desktop file for rofi integration
+  template:
+    src: alacritty-user.desktop.j2
+    dest: "{{ dev_home }}/.local/share/applications/alacritty.desktop"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: '0644'
+
+- name: Update user desktop database
+  command: update-desktop-database "{{ dev_home }}/.local/share/applications"
+  become_user: "{{ dev_user }}"
+  ignore_errors: yes
