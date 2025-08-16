@@ -121,10 +121,10 @@ The repository uses a **unified role-based architecture** with all functionality
 **GUI Environment:**
 - **locale-setup**: System locale configuration
 - **base-system**: Essential system packages
-- **qtile-wm**: Qtile window manager installation
+- **qtile-wm**: Qtile window manager installation + Adwaita cursor theme
 - **nerd-fonts**: JetBrains Mono Nerd Font installation
 - **alacritty**: Alacritty terminal emulator
-- **desktop-integration**: Desktop session management
+- **desktop-integration**: Desktop session management + dark mode preference + cursor configuration
 
 ### Dependency Management
 
@@ -160,7 +160,8 @@ The repository uses a **unified role-based architecture** with all functionality
 - **Qtile**: Modern tiling window manager
 - **JetBrains Mono Nerd Font**: Programming font with icons
 - **Alacritty**: GPU-accelerated terminal emulator
-- **Desktop Integration**: Session management and launchers
+- **Desktop Integration**: Session management, launchers, dark mode preference, cursor configuration
+- **Adwaita Cursor Theme**: 16px cursor theme for high-DPI displays
 
 ### Configuration Management
 
@@ -184,3 +185,4 @@ The repository uses a **unified role-based architecture** with all functionality
 4. **SSH Config Integration**: Uses SSH hostnames for clean inventory management
 5. **Modular Playbooks**: Choose components based on system type and needs
 - You must not use mise to install anything else. It's only to install node and go environments, and I use `node@latest` and `go@latest` as my global installs via mise.
+- The desktop-integration role sets browser dark mode preference via `gsettings` and configures 16px Adwaita cursor theme for high-DPI displays.

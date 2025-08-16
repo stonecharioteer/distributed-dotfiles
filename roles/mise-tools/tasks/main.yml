@@ -127,8 +127,8 @@
 
 - name: Install Node.js via mise
   shell: |
-    "{{ dev_home }}/.local/bin/mise" install node@lts
-    "{{ dev_home }}/.local/bin/mise" global node@lts
+    "{{ dev_home }}/.local/bin/mise" install node@latest
+    "{{ dev_home }}/.local/bin/mise" global node@latest
   environment:
     HOME: "{{ dev_home }}"
   become: no

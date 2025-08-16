@@ -51,6 +51,7 @@
       - conky-all  # System monitor for desktop overlay
       - arandr  # GUI for monitor configuration
       - autorandr  # Automatic monitor configuration switching
+      - adwaita-icon-theme  # Includes Adwaita cursor theme
     state: present
   ignore_errors: yes  # Some packages might not be available on all systems
 

@@ -32,10 +32,10 @@ roles/
 # GUI Environment (from ~/.config/qtile/ansible/)
 ├── locale-setup/          # System locale configuration
 ├── base-system/           # Essential system packages
-├── qtile-wm/              # Qtile window manager
+├── qtile-wm/              # Qtile window manager + Adwaita cursor theme
 ├── nerd-fonts/            # JetBrains Mono Nerd Font installation
 ├── alacritty/             # Alacritty terminal emulator
-└── desktop-integration/   # Desktop session management
+└── desktop-integration/   # Desktop session management + dark mode + cursor config
 ```
 
 ### Role Structure (following qtile pattern)
@@ -175,3 +175,17 @@ roles/ (18 consolidated roles)
 - Support multiple Ubuntu/Debian versions
 - Vagrant-based testing workflow
 - Idempotency verification (run twice, same result)
+
+## Recent Updates (2025-08-16)
+
+### Browser Dark Mode & Cursor Configuration
+- **desktop-integration role**: Added browser dark mode preference via `gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'`
+- **desktop-integration role**: Added 16px Adwaita cursor configuration for high-DPI displays via `.Xresources` and environment variables
+- **qtile-wm role**: Added `adwaita-icon-theme` package to provide Adwaita cursor theme
+- **mise-tools role**: Fixed Node.js installation to use `node@latest` instead of `node@lts` per CLAUDE.md specifications
+
+### Configuration Details
+- `.Xresources`: Sets `Xcursor.size: 16` and `Xcursor.theme: Adwaita`
+- `.profile`: Exports `XCURSOR_SIZE=16` and `XCURSOR_THEME=Adwaita` environment variables
+- Browser dark mode detection: Uses system `color-scheme` preference without affecting Qtile appearance
+- Cursor fix: Addresses oversized cursors on 1440p resolution with 4K monitor scaling
