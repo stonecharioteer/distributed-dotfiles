@@ -1,0 +1,70 @@
+---
+# Fish shell environment setup playbook
+# Provides fish shell, mise, and modern CLI tools
+- name: Shell Environment Setup  
+  hosts: all
+  gather_facts: true
+  vars:
+    dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+    dev_home: "/home/{{ dev_user }}"
+    
+  pre_tasks:
+    - name: Install essential system packages
+      package:
+        name:
+          - curl
+          - wget
+          - git
+          - unzip
+          - tar
+          - gzip
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+        state: present
+
+  roles:
+    - fish-shell
+    - mise-tools  
+    - rust-toolchain
+    - fish-config
+
+  post_tasks:
+    - name: Display shell environment setup completion
+      debug:
+        msg: |
+          🐚 Fish Shell Environment Setup Complete!
+          
+          ✓ Fish shell installed and configured
+            - Modern shell with syntax highlighting
+            - Fish as default shell for {{ dev_user }}
+            
+          ✓ mise (runtime version manager) installed
+            - Node.js (latest LTS)
+            - Python (latest stable)
+            - Go (latest stable)
+            - Rust (latest stable)
+            
+          ✓ Rust toolchain enhanced
+            - cargo-binstall for fast binary installation
+            - Essential Rust CLI tools
+            
+          ✓ Fish configuration applied
+            - Custom abbreviations and functions
+            - Modern shell integrations
+            - Fish plugins and completions
+            
+          📋 Next Steps:
+          1. Log out and log back in
+          2. Fish will be your default shell
+          3. Source configuration: source ~/.config/fish/config.fish
+          4. Test mise: mise list
+          5. Test tools: rg --version, fd --version
+          
+          🔧 For development tools, also run:
+          - ansible-playbook playbooks/dev-environment.yml
+          
+          🖥️ For GUI environment, also run:
+          - ansible-playbook playbooks/gui-environment.yml

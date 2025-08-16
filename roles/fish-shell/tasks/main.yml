@@ -1,0 +1,107 @@
+---
+- name: Update package cache (Debian/Ubuntu)
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400
+  when: ansible_os_family == "Debian"
+
+- name: Update package cache (Arch)
+  pacman:
+    update_cache: yes
+  when: ansible_os_family == "Archlinux"
+
+- name: Install Fish shell and dependencies (Debian/Ubuntu)
+  package:
+    name:
+      - fish
+      - curl
+      - wget
+      - git
+      - build-essential
+      - pkg-config
+      - libssl-dev
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install Fish shell and dependencies (Arch)
+  package:
+    name:
+      - fish
+      - curl
+      - wget
+      - git
+      - base-devel
+      - openssl
+      - pkg-config
+    state: present
+  when: ansible_os_family == "Archlinux"
+
+- name: Install Fish shell and dependencies (Fedora)
+  package:
+    name:
+      - fish
+      - curl
+      - wget
+      - git
+      - gcc
+      - gcc-c++
+      - make
+      - openssl-devel
+      - pkg-config
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Check if user exists
+  user:
+    name: "{{ fish_user }}"
+    state: present
+  register: user_check
+  ignore_errors: yes
+
+- name: Create user if it doesn't exist
+  user:
+    name: "{{ fish_user }}"
+    shell: /usr/bin/fish
+    create_home: yes
+    groups: sudo
+    append: yes
+  when: user_check is failed
+
+- name: Set Fish as default shell for user
+  user:
+    name: "{{ fish_user }}"
+    shell: /usr/bin/fish
+  when: user_check is succeeded
+
+- name: Install modern CLI tools via package manager (Debian/Ubuntu)
+  package:
+    name:
+      - fzf
+      - fd-find  # Note: binary is 'fdfind' on Debian/Ubuntu
+    state: present
+  when: ansible_os_family == "Debian"
+  ignore_errors: yes  # These might not be available in all repos
+
+- name: Install modern CLI tools via package manager (Arch)
+  package:
+    name:
+      - fzf
+      - fd
+      - ripgrep
+      - bat
+      - dust
+      - bottom
+    state: present
+  when: ansible_os_family == "Archlinux"
+  ignore_errors: yes
+
+- name: Install modern CLI tools via package manager (Fedora)
+  package:
+    name:
+      - fzf
+      - fd-find
+      - ripgrep
+      - bat
+    state: present
+  when: ansible_os_family == "RedHat"
+  ignore_errors: yes

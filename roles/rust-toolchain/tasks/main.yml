@@ -1,0 +1,102 @@
+---
+- name: Check if rustup is already installed
+  stat:
+    path: "{{ fish_home }}/.cargo/bin/rustup"
+  register: rustup_exists
+  become: no
+
+- name: Download rustup installer
+  get_url:
+    url: https://sh.rustup.rs
+    dest: /tmp/rustup-init.sh
+    mode: '0755'
+  when: not rustup_exists.stat.exists
+  become: no
+
+- name: Install rustup (Rust toolchain installer)
+  shell: /tmp/rustup-init.sh -y --default-toolchain stable
+  environment:
+    CARGO_HOME: "{{ fish_home }}/.cargo"
+    RUSTUP_HOME: "{{ fish_home }}/.rustup"
+  when: not rustup_exists.stat.exists
+  become: no
+
+- name: Source cargo environment
+  shell: source "{{ fish_home }}/.cargo/env"
+  args:
+    executable: /bin/bash
+  when: not rustup_exists.stat.exists
+  become: no
+
+- name: Check if cargo-binstall is already installed
+  stat:
+    path: "{{ fish_home }}/.cargo/bin/cargo-binstall"
+  register: cargo_binstall_exists
+  become: no
+
+- name: Install cargo-binstall
+  shell: |
+    source "{{ fish_home }}/.cargo/env"
+    cargo install cargo-binstall
+  args:
+    executable: /bin/bash
+  environment:
+    CARGO_HOME: "{{ fish_home }}/.cargo"
+    RUSTUP_HOME: "{{ fish_home }}/.rustup"
+  when: not cargo_binstall_exists.stat.exists
+  become: no
+
+- name: Install Rust CLI tools via cargo-binstall
+  shell: |
+    source "{{ fish_home }}/.cargo/env"
+    cargo binstall -y {{ item }}
+  args:
+    executable: /bin/bash
+  environment:
+    CARGO_HOME: "{{ fish_home }}/.cargo"
+    RUSTUP_HOME: "{{ fish_home }}/.rustup"
+  with_items:
+    - ripgrep
+    - fd-find
+    - tokei
+    - bat
+    - du-dust
+    - bottom
+    - xh
+  become: no
+
+- name: Install additional modern CLI tools via cargo-binstall
+  shell: |
+    source "{{ fish_home }}/.cargo/env"
+    cargo binstall -y {{ item }}
+  args:
+    executable: /bin/bash
+  environment:
+    CARGO_HOME: "{{ fish_home }}/.cargo"
+    RUSTUP_HOME: "{{ fish_home }}/.rustup"
+  with_items:
+    - starship
+    - atuin
+    - zoxide
+    - lsd
+  become: no
+  ignore_errors: yes  # Some tools might already be installed via package manager
+
+- name: Add cargo bin to user PATH in fish config
+  lineinfile:
+    path: "{{ fish_home }}/.config/fish/fish_variables"
+    line: "SETUVAR fish_user_paths:{{ fish_home }}/\\.cargo/bin\\x1e{{ fish_home }}/\\.fzf/bin"
+    regexp: "^SETUVAR fish_user_paths:"
+    create: yes
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+  become: no
+
+- name: Ensure cargo bin directory is in PATH
+  lineinfile:
+    path: "{{ fish_home }}/.profile"
+    line: 'export PATH="$HOME/.cargo/bin:$PATH"'
+    create: yes
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+  become: no

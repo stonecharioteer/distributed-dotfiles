@@ -1,0 +1,46 @@
+---
+- name: Install fontconfig
+  package:
+    name: fontconfig
+    state: present
+
+- name: Create fonts directory
+  file:
+    path: /usr/share/fonts/truetype/jetbrainsmono
+    state: directory
+    mode: '0755'
+
+- name: Check if fonts directory exists
+  stat:
+    path: "{{ qtile_home }}/.config/qtile/install/fonts"
+  register: fonts_dir
+
+- name: Copy JetBrainsMono fonts to system fonts directory
+  copy:
+    src: "{{ qtile_home }}/.config/qtile/install/fonts/"
+    dest: /usr/share/fonts/truetype/jetbrainsmono/
+    mode: '0644'
+    remote_src: yes
+  when: fonts_dir.stat.exists
+  notify: update font cache
+
+- name: Install JetBrainsMono from package manager as fallback
+  package:
+    name: fonts-jetbrains-mono
+    state: present
+  when: not fonts_dir.stat.exists
+  ignore_errors: yes
+
+- name: Update font cache
+  command: fc-cache -fv
+  notify: update font cache
+
+- name: Display font installation status
+  debug:
+    msg: "JetBrainsMono Nerd Fonts installed from {{ qtile_home }}/.config/qtile/install/fonts/"
+  when: fonts_dir.stat.exists
+
+- name: Display font fallback message
+  debug:
+    msg: "INFO: install/fonts directory not found - installed from package manager instead. JetBrainsMono Nerd Font files should be in install/fonts/ for full icon support"
+  when: not fonts_dir.stat.exists

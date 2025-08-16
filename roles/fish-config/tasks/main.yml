@@ -1,0 +1,149 @@
+---
+- name: Create Fish configuration directories
+  file:
+    path: "{{ fish_home }}/.config/fish/{{ item }}"
+    state: directory
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+    mode: '0755'
+  with_items:
+    - conf.d
+    - functions
+    - completions
+  become: no
+
+- name: Copy Fish main configuration
+  copy:
+    src: "{{ playbook_dir }}/../config.fish"
+    dest: "{{ fish_home }}/.config/fish/config.fish"
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+    mode: '0644'
+    backup: yes
+  become: no
+
+- name: Copy Fish abbreviations configuration
+  copy:
+    src: "{{ playbook_dir }}/../conf.d/myabbrs.fish"
+    dest: "{{ fish_home }}/.config/fish/conf.d/myabbrs.fish"
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+    mode: '0644'
+    backup: yes
+  become: no
+
+- name: Copy Fish variables configuration  
+  copy:
+    src: "{{ playbook_dir }}/../fish_variables"
+    dest: "{{ fish_home }}/.config/fish/fish_variables"
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+    mode: '0644'
+    backup: yes
+  become: no
+
+- name: Copy Fish functions
+  copy:
+    src: "{{ playbook_dir }}/../functions/"
+    dest: "{{ fish_home }}/.config/fish/functions/"
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+    mode: '0644'
+    backup: yes
+  become: no
+
+- name: Copy other Fish configurations
+  copy:
+    src: "{{ playbook_dir }}/../conf.d/"
+    dest: "{{ fish_home }}/.config/fish/conf.d/"
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+    mode: '0644'
+    backup: yes
+  become: no
+
+- name: Install Fisher plugin manager
+  shell: |
+    fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher"
+  become: no
+  environment:
+    HOME: "{{ fish_home }}"
+  ignore_errors: yes  # Fisher might already be installed
+
+- name: Install Fish plugins from fish_plugins file
+  shell: |
+    fish -c "fisher update"
+  become: no
+  environment:
+    HOME: "{{ fish_home }}"
+  when: fish_plugins_file.stat.exists
+  ignore_errors: yes
+
+- name: Check if fish_plugins file exists
+  stat:
+    path: "{{ playbook_dir }}/../fish_plugins"
+  register: fish_plugins_file
+  become: no
+
+- name: Copy fish_plugins file if it exists
+  copy:
+    src: "{{ playbook_dir }}/../fish_plugins"
+    dest: "{{ fish_home }}/.config/fish/fish_plugins"
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+    mode: '0644'
+    backup: yes
+  when: fish_plugins_file.stat.exists
+  become: no
+
+- name: Initialize starship prompt
+  shell: |
+    fish -c "starship init fish | source"
+  become: no
+  environment:
+    HOME: "{{ fish_home }}"
+  ignore_errors: yes
+
+- name: Initialize atuin history
+  shell: |
+    fish -c "atuin init fish | source"
+  become: no
+  environment:
+    HOME: "{{ fish_home }}"
+  ignore_errors: yes
+
+- name: Initialize zoxide
+  shell: |
+    fish -c "zoxide init fish | source"
+  become: no
+  environment:
+    HOME: "{{ fish_home }}"
+  ignore_errors: yes
+
+- name: Create local bin directory for additional tools
+  file:
+    path: "{{ fish_home }}/.local/bin"
+    state: directory
+    owner: "{{ fish_user }}"
+    group: "{{ fish_user }}"
+    mode: '0755'
+  become: no
+
+- name: Download and install mise (runtime version manager)
+  shell: |
+    curl https://mise.run | sh
+  become: no
+  environment:
+    HOME: "{{ fish_home }}"
+  ignore_errors: yes
+
+- name: Install fx JSON viewer
+  shell: |
+    if command -v go >/dev/null 2>&1; then
+      go install github.com/antonmedv/fx@latest
+    fi
+  become: no
+  environment:
+    HOME: "{{ fish_home }}"
+    GOPATH: "{{ fish_home }}/go"
+  ignore_errors: yes

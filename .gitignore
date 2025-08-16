@@ -130,3 +130,9 @@ dmypy.json
 .vagrant/
 ansible.cfg
 
+# Personal inventory files - keep your network setup private
+inventory/my-*.yml
+inventory/home.yml
+inventory/personal.yml
+inventory/production.yml
+

@@ -1,0 +1,81 @@
+---
+# GUI environment setup playbook  
+# Provides Qtile window manager, fonts, and desktop applications
+- name: GUI Environment Setup
+  hosts: all
+  gather_facts: true
+  vars:
+    dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+    dev_home: "/home/{{ dev_user }}"
+    
+  pre_tasks:
+    - name: Install essential system packages for GUI
+      package:
+        name:
+          - curl
+          - wget
+          - git
+          - unzip
+          - tar
+          - gzip
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - python3-dev
+          - python3-pip
+          - python3-venv
+          - build-essential
+        state: present
+
+  roles:
+    - locale-setup
+    - base-system
+    - qtile-wm
+    - nerd-fonts
+    - alacritty
+    - desktop-integration
+
+  post_tasks:
+    - name: Display GUI environment setup completion
+      debug:
+        msg: |
+          🖥️ GUI Environment Setup Complete!
+          
+          ✓ System locale and base system configured
+            - Proper locale settings for GUI applications
+            - Essential system packages installed
+            
+          ✓ Qtile window manager installed
+            - Modern tiling window manager
+            - Python-based configuration
+            - Hardware-specific optimizations
+            
+          ✓ JetBrains Mono Nerd Font installed
+            - Programming font with icon support
+            - Multiple variants (Regular, Mono, Propo)
+            - Proper font cache refresh
+            
+          ✓ Alacritty terminal emulator
+            - GPU-accelerated terminal
+            - Modern terminal features
+            - Integrated with desktop environment
+            
+          ✓ Desktop integration completed
+            - Window manager session files
+            - Application launchers and menus
+            - Hardware-specific configurations
+            
+          📋 Next Steps:
+          1. Log out of current session
+          2. Select "Qtile" from display manager login screen  
+          3. Log in with your user account
+          4. Configure Qtile settings in ~/.config/qtile/config.py
+          
+          🔧 For complete workstation setup, also run:
+          - ansible-playbook playbooks/shell-environment.yml
+          - ansible-playbook playbooks/dev-environment.yml
+          
+          ⚡ Or run everything at once:
+          - ansible-playbook playbooks/complete-workstation.yml

@@ -1,0 +1,89 @@
+---
+# Server setup playbook for headless development servers
+# Combines shell environment and development tools without GUI
+- name: Development Server Setup
+  hosts: all
+  gather_facts: true
+  vars:
+    dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+    dev_home: "/home/{{ dev_user }}"
+    
+  pre_tasks:
+    - name: Install essential system packages for servers
+      package:
+        name:
+          - curl
+          - wget
+          - git
+          - unzip
+          - tar
+          - gzip
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - htop
+          - tree
+          - rsync
+          - openssh-server
+        state: present
+
+  roles:
+    # Shell Environment
+    - fish-shell
+    - mise-tools
+    - rust-toolchain
+    - fish-config
+    
+    # Development Environment  
+    - system-deps
+    - cli-tools
+    - dev-folders
+    - tmux-from-source
+    - neovim-latest
+    - tree-sitter-cli
+    - astronvim-config
+    - docker
+
+  post_tasks:
+    - name: Display server setup completion
+      debug:
+        msg: |
+          🖥️ Development Server Setup Complete!
+          
+          🐚 Shell Environment:
+          ✓ Fish shell with modern CLI features
+          ✓ mise runtime manager (Node.js, Python, Go, Rust)
+          ✓ Enhanced Rust toolchain with cargo-binstall
+          ✓ Fish configuration with server-optimized settings
+          
+          🛠️ Development Environment:
+          ✓ System dependencies and development headers
+          ✓ Modern CLI tools (ripgrep, fd, fzf, starship, etc.)
+          ✓ Development folder structure
+          ✓ tmux {{ tmux_version }} compiled from source
+          ✓ Neovim {{ neovim_version }} with vim symlink
+          ✓ tree-sitter CLI for syntax highlighting
+          ✓ AstroNvim configuration with headless plugin setup
+          ✓ Docker Engine with Compose plugin
+          ✓ SSH server for remote access
+          
+          📋 Next Steps:
+          1. Log out and log back in for shell/group changes
+          2. Test development environment:
+             - tmux new-session -d -s test
+             - docker run hello-world
+             - nvim --headless +qa (verify Neovim setup)
+             - mise list (verify language runtimes)
+          3. Configure SSH keys for remote access
+          4. Set up development projects in ~/code/
+          
+          🚀 Your headless development server is ready!
+          - Remote development via SSH + tmux
+          - Full language runtime support via mise
+          - Modern terminal-based development workflow
+          - Containerized application development with Docker
+          
+          💡 For GUI access, run:
+          - ansible-playbook playbooks/gui-environment.yml

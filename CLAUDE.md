@@ -4,28 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is an Ansible-based dotfiles and development environment automation repository for setting up Ubuntu/Debian-based machines with a consistent development environment. The project uses a **hybrid architecture** combining legacy task-based approaches with modern role-based automation.
+This is an Ansible-based dotfiles and development environment automation repository for setting up Ubuntu/Debian-based machines with a consistent development environment. The project uses a **consolidated role-based architecture** that brings together all environment automation into a single repository.
 
 ## Common Commands
 
 ### Running Playbooks
 
-**Complete system setup:**
+**Consolidated system setup (RECOMMENDED):**
 ```bash
-# For machines with displays (GUI)
-ansible-playbook --ask-become-pass playbooks/gui.yml
+# Complete workstation (shell + dev + GUI)
+ansible-playbook --ask-become-pass playbooks/complete-workstation.yml
 
-# For headless development servers
-ansible-playbook --ask-become-pass playbooks/servers.yml
-
-# For laptops
-ansible-playbook --ask-become-pass playbooks/laptops.yml
+# Development server (shell + dev, no GUI)
+ansible-playbook --ask-become-pass playbooks/server-setup.yml
 ```
 
-**Development environment only (NEW):**
+**Modular setup (step-by-step):**
 ```bash
-# Pure dev tools without legacy system setup
+# 1. Shell environment (fish + mise + languages)
+ansible-playbook --ask-become-pass playbooks/shell-environment.yml
+
+# 2. Development tools (tmux, neovim, docker)
 ansible-playbook --ask-become-pass playbooks/dev-environment.yml
+
+# 3. GUI environment (qtile + fonts + alacritty)
+ansible-playbook --ask-become-pass playbooks/gui-environment.yml
 ```
 
 ### Ansible Operations
@@ -76,33 +79,39 @@ ssh-keygen -R "192.168.60.4"
 
 ## Architecture
 
-### Hybrid Structure (Legacy + Modern)
+### Consolidated Role-Based Structure
 
-The repository uses **both** task-based and role-based approaches:
+The repository uses a **unified role-based architecture** with all functionality consolidated:
 
-**Legacy Tasks** (`playbooks/tasks/`):
-- Preserved for compatibility and system-level setup
-- Used for: build dependencies, Docker, Python compilation, Qtile, fonts
-
-**Modern Roles** (`roles/`):
-- New approach following qtile ansible pattern
-- Used for: development tools (tmux, neovim, astronvim)
-- Proper variable scoping, handlers, and modularity
+**All Components Now Use Roles** (`roles/`):
+- All external configurations migrated into this repository
+- Consistent role structure with proper variable scoping, handlers, and modularity
+- Single source of truth for all environment automation
 
 ### Main Playbooks
 
-- **playbooks/gui.yml**: Complete GUI setup (legacy tasks + modern roles)
-- **playbooks/servers.yml**: Complete server setup (legacy tasks + modern roles)
-- **playbooks/laptops.yml**: Complete laptop setup (legacy tasks + modern roles)
-- **playbooks/dev-environment.yml**: **NEW** - Pure development environment (roles only)
+- **playbooks/shell-environment.yml**: Fish shell + mise + language runtimes
+- **playbooks/dev-environment.yml**: Core development tools (tmux, neovim, docker)
+- **playbooks/gui-environment.yml**: Qtile + fonts + desktop applications
+- **playbooks/complete-workstation.yml**: Everything for full workstation setup
+- **playbooks/server-setup.yml**: Headless development server setup
 
-### Modern Roles (`roles/`)
+### Legacy Playbooks (DEPRECATED)
+- `playbooks/gui.yml`, `playbooks/servers.yml`, `playbooks/laptops.yml` - Replaced by modular approach
 
+### Consolidated Roles (`roles/`)
+
+**Shell Environment:**
+- **fish-shell**: Fish shell installation and setup
+- **mise-tools**: Runtime version manager (Node.js, Python, Go, Rust via mise)
+- **rust-toolchain**: Enhanced Rust toolchain with cargo-binstall
+- **fish-config**: Fish configuration and abbreviations
+
+**Development Tools:**
 - **system-deps**: Essential system dependencies and development headers
   - Core system tools (`curl`, `git`, `htop`, `build-essential`)
   - Development libraries (`libssl-dev`, `libffi-dev`, `pkg-config`)
-  - Python3 system packages (no compilation dependencies)
-  - Build tools (`gcc`, `make`, `cmake`, `autotools`)
+  - Python3 system packages and build tools
 
 - **cli-tools**: Modern CLI development tools
   - File/text search: `ripgrep`, `fd-find`, `fzf`, `tree`
@@ -117,60 +126,41 @@ The repository uses **both** task-based and role-based approaches:
   - `~/Pictures/screenshots/`, `~/.local/bin/`
 
 - **tmux-from-source**: Compiles tmux from latest GitHub release
-  - Downloads source, compiles with proper dependencies
-  - Installs to `/usr/local/bin/tmux`
-  - All required dependencies: `libevent-dev`, `ncurses-dev`, `build-essential`, `bison`, `pkg-config`
-
-- **neovim-latest**: Installs Neovim 0.11.2 binary
-  - Downloads from GitHub releases
-  - Installs to `/usr/local/bin/nvim`
-  - Creates `/usr/local/bin/vim` symlink
-
-- **tree-sitter-cli**: Installs tree-sitter CLI via npm
-  - **Dependency**: Requires Node.js from mise (fish ansible setup)
-  - Installs globally via npm in mise environment
-
-- **astronvim-config**: Sets up AstroNvim configuration
-  - **Dependencies**: neovim-latest, tree-sitter-cli
-  - Clones AstroNvim template to `~/.config/nvim`
-  - Runs headless plugin installation
-  - Installs clipboard dependencies (`xclip`, `wl-clipboard`)
-
+- **neovim-latest**: Installs Neovim 0.11.2 binary with vim symlink
+- **tree-sitter-cli**: Installs tree-sitter CLI via npm (uses mise Node.js)
+- **astronvim-config**: Sets up AstroNvim configuration with plugins
 - **docker**: Docker Engine installation with post-install configuration
-  - Latest Docker CE, CLI, containerd, buildx, and compose plugins
-  - Uses current official installation method (2024)
-  - Configures user permissions and service startup
-  - Includes all post-installation steps
 
-### Legacy Tasks (Preserved)
-
-Located in `playbooks/tasks/`:
-- **build-dependencies.yml**: Core build tools and dependencies
-- **dev-tools.yml**: Development velocity tools (starship, ripgrep, fzf, etc.)
-- **fish.yml**: Fish shell installation and configuration
-- **rust.yml**: Rust toolchain via rustup
-- **docker.yml**: Docker installation
-- **qtile.yml**: Qtile window manager setup
-- **gui-fonts.yml**: Font installation for GUI environments
-- **laptop.yml**: Laptop-specific tools (tlp, etc.)
-- **python/**: Python compilation and installation tasks
+**GUI Environment:**
+- **locale-setup**: System locale configuration
+- **base-system**: Essential system packages
+- **qtile-wm**: Qtile window manager installation
+- **nerd-fonts**: JetBrains Mono Nerd Font installation
+- **alacritty**: Alacritty terminal emulator
+- **desktop-integration**: Desktop session management
 
 ### Dependency Management
 
-**External Dependencies** (handled by separate ansible setups):
-- **Node.js/npm**: Managed by `~/.config/fish/ansible/` via mise
-- **Rust/Cargo**: Managed by fish ansible via mise
-- **Fonts**: Managed by `~/.config/qtile/ansible/roles/fonts/`
-- **Fish shell + tools**: Managed by fish ansible setup
+**All Dependencies Consolidated** (no external setups required):
+- **Node.js/npm**: Now managed by `mise-tools` role in this repository
+- **Rust/Cargo**: Now managed by `rust-toolchain` role in this repository
+- **Fonts**: Now managed by `nerd-fonts` role in this repository
+- **Fish shell + tools**: Now managed by fish roles in this repository
 
 **Role Dependencies**:
-- `tree-sitter-cli` → requires Node.js (fish setup)
+- `tree-sitter-cli` → requires Node.js (provided by `mise-tools`)
 - `astronvim-config` → requires `neovim-latest` + `tree-sitter-cli`
 - All roles use standard variables: `dev_user`, `dev_home`
 
 ### Key Tools Installed
 
-**Modern (via roles)**:
+**Shell Environment**:
+- **Fish shell**: Modern shell with syntax highlighting
+- **mise**: Runtime version manager (Node.js, Python, Go, Rust)
+- **Rust toolchain**: Enhanced with cargo-binstall
+- **Fish configuration**: Abbreviations and modern integrations
+
+**Development Tools**:
 - **System Dependencies**: Build tools, development headers, Python3 system packages
 - **CLI Tools**: ripgrep, fd-find, fzf, starship, gum, direnv, httpie, zoxide, watchexec
 - **tmux**: Latest version compiled from source
@@ -179,19 +169,18 @@ Located in `playbooks/tasks/`:
 - **tree-sitter CLI**: Via npm for syntax highlighting
 - **Docker**: Latest Engine with Compose, proper user setup
 
-**Legacy (via tasks)**:
-- **Shell**: Fish with starship prompt
-- **Languages**: Python (compiled from source), Rust (via mise)
-- **CLI Tools**: ripgrep, fd-find, fzf, exa, bottom, du-dust, tokei, zoxide
-- **Window Manager**: Qtile (for GUI machines)
-- **Containerization**: Docker
+**GUI Environment**:
+- **Qtile**: Modern tiling window manager
+- **JetBrains Mono Nerd Font**: Programming font with icons
+- **Alacritty**: GPU-accelerated terminal emulator
+- **Desktop Integration**: Session management and launchers
 
 ### Configuration Management
 
-- **Modern roles**: Self-contained with proper defaults and handlers
-- **Legacy tasks**: Use personal dotfiles repositories via git/symlinks
+- **Consolidated roles**: All self-contained with proper defaults and handlers
 - **Variable consistency**: All roles use `dev_user`/`dev_home` pattern
 - **Idempotency**: Roles check for existing installations before proceeding
+- **Single source of truth**: No external ansible configurations required
 
 ### Testing Environment
 
@@ -202,7 +191,8 @@ Located in `playbooks/tasks/`:
 
 ## Implementation Notes
 
-1. **Role Execution Order**: Roles run after legacy tasks in main playbooks
+1. **Consolidated Architecture**: All functionality now uses role-based approach
 2. **Error Handling**: Roles include rescue blocks and proper cleanup
 3. **Documentation**: See `GAMEPLAN.md` for detailed architecture decisions
-4. **Migration**: Legacy tasks preserved for compatibility during transition
+4. **SSH Config Integration**: Uses SSH hostnames for clean inventory management
+5. **Modular Playbooks**: Choose components based on system type and needs

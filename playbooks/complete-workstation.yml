@@ -1,0 +1,99 @@
+---
+# Complete workstation setup playbook
+# Combines shell environment, development tools, and GUI for full workstation
+- name: Complete Workstation Setup
+  hosts: all
+  gather_facts: true
+  vars:
+    dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+    dev_home: "/home/{{ dev_user }}"
+    
+  pre_tasks:
+    - name: Install essential system packages
+      package:
+        name:
+          - curl
+          - wget
+          - git
+          - unzip
+          - tar
+          - gzip
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - python3-dev
+          - python3-pip
+          - python3-venv
+          - build-essential
+        state: present
+
+  roles:
+    # Shell Environment (from fish config)
+    - fish-shell
+    - mise-tools
+    - rust-toolchain
+    - fish-config
+    
+    # Development Environment (current)
+    - system-deps
+    - cli-tools
+    - dev-folders
+    - tmux-from-source
+    - neovim-latest
+    - tree-sitter-cli
+    - astronvim-config
+    - docker
+    
+    # GUI Environment (from qtile config)
+    - locale-setup
+    - base-system
+    - qtile-wm
+    - nerd-fonts
+    - alacritty
+    - desktop-integration
+
+  post_tasks:
+    - name: Display complete workstation setup completion
+      debug:
+        msg: |
+          🚀 Complete Workstation Setup Finished!
+          
+          🐚 Shell Environment:
+          ✓ Fish shell with syntax highlighting and modern features
+          ✓ mise runtime manager (Node.js, Python, Go, Rust)
+          ✓ Enhanced Rust toolchain with cargo-binstall
+          ✓ Fish configuration with abbreviations and integrations
+          
+          🛠️ Development Environment:
+          ✓ System dependencies and development headers
+          ✓ Modern CLI tools (ripgrep, fd, fzf, starship, etc.)
+          ✓ Development folder structure
+          ✓ tmux compiled from latest source
+          ✓ Neovim {{ neovim_version }} with vim symlink
+          ✓ tree-sitter CLI for syntax highlighting
+          ✓ AstroNvim configuration with plugins
+          ✓ Docker Engine with Compose plugin
+          
+          🖥️ GUI Environment:
+          ✓ System locale and base packages
+          ✓ Qtile window manager with Python configuration
+          ✓ JetBrains Mono Nerd Font with icon support
+          ✓ Alacritty GPU-accelerated terminal
+          ✓ Desktop integration and session management
+          
+          📋 Next Steps:
+          1. Log out and log back in for shell/group changes
+          2. Select "Qtile" from display manager login screen
+          3. Log in with your user account
+          4. Test development environment:
+             - docker run hello-world
+             - nvim (complete plugin setup)
+             - mise list (verify language runtimes)
+          
+          🎯 Your complete development workstation is ready!
+          - Modern shell: Fish with mise for language management
+          - Development tools: tmux, Neovim/AstroNvim, Docker
+          - GUI desktop: Qtile window manager with Alacritty terminal
+          - All tools integrated and configured for productivity
