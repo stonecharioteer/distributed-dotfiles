@@ -1,39 +1,28 @@
 ---
 - name: Create Python virtual environment at /opt/qtile (if not exists)
-  pip:
-    name: pip
-    virtualenv: "{{ qtile_venv_path }}"
-    virtualenv_command: python3 -m venv
-  become_user: "{{ qtile_user }}"
+  shell: |
+    uv venv "{{ qtile_venv_path }}"
+  become_user: "{{ dev_user }}"
   when: not qtile_venv_ready
 
-- name: Ensure pip is present in virtual environment (no upgrade)
-  pip:
-    name: pip
-    virtualenv: "{{ qtile_venv_path }}"
-  become_user: "{{ qtile_user }}"
-  when: not qtile_already_installed
+# uv automatically ensures pip is present in virtual environments
 
 - name: Install qtile and dependencies in virtual environment (if not already installed)
-  pip:
-    name:
-      - qtile==0.33.0
-      - psutil
-    virtualenv: "{{ qtile_venv_path }}"
-  become_user: "{{ qtile_user }}"
+  shell: |
+    uv pip install --python "{{ qtile_venv_path }}/bin/python" qtile==0.33.0 psutil
+  become_user: "{{ dev_user }}"
   when: not qtile_already_installed
 
 - name: Check current qtile version (if already installed)
-  shell: "{{ qtile_venv_path }}/bin/pip list | grep qtile | awk '{print $2}'"
+  shell: "{{ qtile_venv_path }}/bin/python -c 'import qtile; print(qtile.__version__)' 2>/dev/null || echo 'not-found'"
   register: current_qtile_version
   when: qtile_already_installed
   changed_when: false
 
 - name: Upgrade qtile to 0.33.0 if version mismatch
-  pip:
-    name: qtile==0.33.0
-    virtualenv: "{{ qtile_venv_path }}"
-  become_user: "{{ qtile_user }}"
+  shell: |
+    uv pip install --python "{{ qtile_venv_path }}/bin/python" --upgrade qtile==0.33.0
+  become_user: "{{ dev_user }}"
   when: qtile_already_installed and current_qtile_version.stdout != "0.33.0"
 
 - name: Display qtile installation status

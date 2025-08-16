@@ -104,7 +104,7 @@
 
 - name: Check if mise is already installed
   stat:
-    path: "{{ fish_home }}/.local/bin/mise"
+    path: "{{ dev_home }}/.local/bin/mise"
   register: mise_exists
   become: no
 
@@ -113,57 +113,43 @@
     curl https://mise.run | sh
   become: no
   environment:
-    HOME: "{{ fish_home }}"
+    HOME: "{{ dev_home }}"
   when: not mise_exists.stat.exists
 
 - name: Create mise config directory
   file:
-    path: "{{ fish_home }}/.config/mise"
+    path: "{{ dev_home }}/.config/mise"
     state: directory
-    owner: "{{ fish_user }}"
-    group: "{{ fish_user }}"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
     mode: '0755'
   become: no
 
 - name: Install Node.js via mise
   shell: |
-    "{{ fish_home }}/.local/bin/mise" install node@lts
-    "{{ fish_home }}/.local/bin/mise" global node@lts
+    "{{ dev_home }}/.local/bin/mise" install node@lts
+    "{{ dev_home }}/.local/bin/mise" global node@lts
   environment:
-    HOME: "{{ fish_home }}"
+    HOME: "{{ dev_home }}"
   become: no
   ignore_errors: yes
 
-- name: Install Python via mise
-  shell: |
-    "{{ fish_home }}/.local/bin/mise" install python@latest
-    "{{ fish_home }}/.local/bin/mise" global python@latest
-  environment:
-    HOME: "{{ fish_home }}"
-  become: no
-  ignore_errors: yes
+# Python management handled separately via uv instead of mise
 
 - name: Install Go via mise
   shell: |
-    "{{ fish_home }}/.local/bin/mise" install go@latest
-    "{{ fish_home }}/.local/bin/mise" global go@latest
+    "{{ dev_home }}/.local/bin/mise" install go@latest
+    "{{ dev_home }}/.local/bin/mise" global go@latest
   environment:
-    HOME: "{{ fish_home }}"
+    HOME: "{{ dev_home }}"
   become: no
   ignore_errors: yes
 
-- name: Install Rust via mise
-  shell: |
-    "{{ fish_home }}/.local/bin/mise" install rust@latest
-    "{{ fish_home }}/.local/bin/mise" global rust@latest
-  environment:
-    HOME: "{{ fish_home }}"
-  become: no
-  ignore_errors: yes
+# Rust management handled separately via system installation
 
 - name: Install fx JSON viewer via Go (if Go is available)
   shell: |
-    eval "$("{{ fish_home }}/.local/bin/mise" activate bash)"
+    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
     if command -v go >/dev/null 2>&1; then
       go install github.com/antonmedv/fx@latest
     fi
@@ -171,7 +157,7 @@
     executable: /bin/bash
   become: no
   environment:
-    HOME: "{{ fish_home }}"
+    HOME: "{{ dev_home }}"
   ignore_errors: yes
 
 - name: Check if uv is already installed
@@ -184,16 +170,16 @@
   shell: |
     curl -LsSf https://astral.sh/uv/install.sh | sh
   environment:
-    HOME: "{{ fish_home }}"
+    HOME: "{{ dev_home }}"
   become: no
   when: uv_exists.rc != 0
 
 - name: Ensure mise is in PATH for fish shell
   lineinfile:
-    path: "{{ fish_home }}/.config/fish/fish_variables"
-    line: "SETUVAR fish_user_paths:{{ fish_home }}/\\.local/bin\\x1e{{ fish_home }}/\\.cargo/bin\\x1e{{ fish_home }}/\\.fzf/bin"
-    regexp: "^SETUVAR fish_user_paths:"
+    path: "{{ dev_home }}/.config/fish/fish_variables"
+    line: "SETUVAR dev_user_paths:{{ dev_home }}/\\.local/bin\\x1e{{ dev_home }}/\\.cargo/bin\\x1e{{ dev_home }}/\\.fzf/bin"
+    regexp: "^SETUVAR dev_user_paths:"
     create: yes
-    owner: "{{ fish_user }}"
-    group: "{{ fish_user }}"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
   become: no

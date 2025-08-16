@@ -1,0 +1,89 @@
+---
+# Safe scripts repository setup using information from failsafe-checks
+- name: Clone scripts repository (safe mode)
+  git:
+    repo: "{{ scripts_git_repo | default('git@github.com:stonecharioteer/scripts.git') }}"
+    dest: "{{ dev_home }}/code/checkouts/personal/scripts"
+    version: main
+    update: "{{ scripts_can_update | default(false) }}"  # Only update if on main branch with no unstaged changes
+    force: no  # Never force, to preserve local changes
+  become_user: "{{ dev_user }}"
+  when: not scripts_repo_exists
+
+- name: Leave existing scripts repository untouched (has local changes or not on main)
+  debug:
+    msg: |
+      Scripts repository already exists - skipping any git operations
+      {% if scripts_repo_exists and scripts_git_branch is defined %}
+      Current branch: {{ scripts_git_branch.stdout }}
+      {% endif %}
+      {% if scripts_repo_exists and scripts_unstaged_changes is defined and scripts_unstaged_changes.stdout != '0' %}
+      Unstaged changes detected - repository will not be updated
+      {% endif %}
+  when: scripts_repo_exists
+
+- name: Display git status for existing repository
+  shell: |
+    cd {{ dev_home }}/code/checkouts/personal/scripts
+    echo "=== Current Branch ==="
+    git branch --show-current
+    echo "=== Git Status ==="
+    git status --porcelain
+    echo "=== Uncommitted Changes ==="
+    git diff --name-only
+  become_user: "{{ dev_user }}"
+  when: scripts_repo_exists
+  register: scripts_git_status_result
+  changed_when: false
+
+- name: Show scripts repository status
+  debug:
+    msg: |
+      === SCRIPTS REPOSITORY STATUS ===
+      {% if scripts_repo_exists %}
+      Repository exists - preserved existing checkout
+      {{ scripts_git_status_result.stdout }}
+      {% else %}
+      Repository cloned fresh from GitHub
+      {% endif %}
+  when: scripts_repo_exists
+
+- name: Ensure scripts repository directory ownership
+  file:
+    path: "{{ dev_home }}/code/checkouts/personal/scripts"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    recurse: yes
+  when: scripts_repo_exists or (not scripts_repo_exists)
+
+- name: Make scripts executable
+  shell: |
+    find {{ dev_home }}/code/checkouts/personal/scripts -name "*.sh" -type f -exec chmod +x {} \;
+    find {{ dev_home }}/code/checkouts/personal/scripts -name "*.py" -type f -exec chmod +x {} \;
+  become_user: "{{ dev_user }}"
+  when: scripts_repo_exists or (not scripts_repo_exists)
+  ignore_errors: yes
+
+- name: Add scripts directory to PATH (fish shell)
+  lineinfile:
+    path: "{{ dev_home }}/.config/fish/config.fish"
+    line: "fish_add_path {{ dev_home }}/code/checkouts/personal/scripts"
+    regexp: "^fish_add_path.*scripts$"
+    create: yes
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+  when: scripts_repo_exists or (not scripts_repo_exists)
+  ignore_errors: yes
+
+- name: Display scripts repository setup status
+  debug:
+    msg: |
+      === SCRIPTS REPOSITORY SETUP COMPLETE ===
+      {% if scripts_repo_exists %}
+      Used existing repository (preserved local state)
+      {% else %}
+      Cloned fresh repository from GitHub
+      {% endif %}
+      Location: {{ dev_home }}/code/checkouts/personal/scripts
+      Scripts made executable: *.sh, *.py files
+      Added to fish PATH for easy access

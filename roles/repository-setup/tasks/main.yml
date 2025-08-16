@@ -3,11 +3,11 @@
 - name: Clone or update qtile dotfiles repository (safe mode)
   git:
     repo: "{{ qtile_git_repo | default('git@github.com:stonecharioteer/dotfiles-qtile.git') }}"
-    dest: "{{ qtile_home }}/.config/qtile"
+    dest: "{{ dev_home }}/.config/qtile"
     version: main
     update: "{{ not qtile_config_repo_exists }}"  # Only update if it's a new clone
     force: no  # Never force, to preserve local changes
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
   when: not qtile_config_repo_exists
 
 - name: Leave existing qtile repository untouched
@@ -17,14 +17,14 @@
 
 - name: Display git status for existing repository
   shell: |
-    cd {{ qtile_home }}/.config/qtile
+    cd {{ dev_home }}/.config/qtile
     echo "=== Current Branch ==="
     git branch --show-current
     echo "=== Git Status ==="
     git status --porcelain
     echo "=== Uncommitted Changes ==="
     git diff --name-only
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
   when: qtile_config_repo_exists
   register: git_status_result
   changed_when: false
@@ -43,19 +43,19 @@
 
 - name: Ensure qtile config directory ownership
   file:
-    path: "{{ qtile_home }}/.config/qtile"
-    owner: "{{ qtile_user }}"
-    group: "{{ qtile_user }}"
+    path: "{{ dev_home }}/.config/qtile"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
     recurse: yes
 
 - name: Clone Alacritty repository (fresh install only)
   git:
     repo: "{{ alacritty_git_repo | default('git@github.com:alacritty/alacritty.git') }}"
-    dest: "{{ qtile_home }}/code/tools/alacritty"
+    dest: "{{ dev_home }}/code/tools/alacritty"
     version: master
     update: no  # Never update existing repos
     force: no   # Never force, to preserve local changes
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
   when: not alacritty_source_repo_exists
 
 - name: Leave existing Alacritty repository untouched

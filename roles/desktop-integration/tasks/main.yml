@@ -4,22 +4,22 @@
 
 - name: Make scripts executable
   shell: |
-    find {{ qtile_home }}/.config/qtile -name "*.sh" -type f -exec chmod +x {} \;
-  become_user: "{{ qtile_user }}"
+    find {{ dev_home }}/.config/qtile -name "*.sh" -type f -exec chmod +x {} \;
+  become_user: "{{ dev_user }}"
 
 - name: Create user .config directory
   file:
-    path: "{{ qtile_home }}/.config"
+    path: "{{ dev_home }}/.config"
     state: directory
-    owner: "{{ qtile_user }}"
-    group: "{{ qtile_user }}"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
     mode: '0755'
 
 - name: Backup existing configuration directories
   block:
     - name: Check for existing config directories
       stat:
-        path: "{{ qtile_home }}/.config/{{ item }}"
+        path: "{{ dev_home }}/.config/{{ item }}"
       register: existing_configs
       loop:
         - dunst
@@ -28,20 +28,20 @@
         - conky
 
     - name: Backup existing directories that aren't symlinks
-      command: mv "{{ qtile_home }}/.config/{{ item.item }}" "{{ qtile_home }}/.config/{{ item.item }}.backup.{{ ansible_date_time.epoch }}"
+      command: mv "{{ dev_home }}/.config/{{ item.item }}" "{{ dev_home }}/.config/{{ item.item }}.backup.{{ ansible_date_time.epoch }}"
       when: item.stat.exists and not item.stat.islnk
       loop: "{{ existing_configs.results }}"
       loop_control:
         label: "{{ item.item }}"
-      become_user: "{{ qtile_user }}"
+      become_user: "{{ dev_user }}"
 
 - name: Create directory symlinks for configuration folders
   file:
-    src: "{{ qtile_home }}/.config/qtile/install/{{ item }}"
-    dest: "{{ qtile_home }}/.config/{{ item }}"
+    src: "{{ dev_home }}/.config/qtile/install/{{ item }}"
+    dest: "{{ dev_home }}/.config/{{ item }}"
     state: link
-    owner: "{{ qtile_user }}"
-    group: "{{ qtile_user }}"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
     force: yes  # Replace existing symlinks
   loop:
     - alacritty
@@ -52,38 +52,38 @@
     - redshift
     - rofi
     - touchegg
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
 
 - name: Check for existing standalone config files
   stat:
-    path: "{{ qtile_home }}/.config/{{ item }}"
+    path: "{{ dev_home }}/.config/{{ item }}"
   register: existing_files
   loop:
     - picom.conf
 
 - name: Backup existing standalone config files
-  command: mv "{{ qtile_home }}/.config/{{ item.item }}" "{{ qtile_home }}/.config/{{ item.item }}.backup.{{ ansible_date_time.epoch }}"
+  command: mv "{{ dev_home }}/.config/{{ item.item }}" "{{ dev_home }}/.config/{{ item.item }}.backup.{{ ansible_date_time.epoch }}"
   when: item.stat.exists and not item.stat.islnk
   loop: "{{ existing_files.results }}"
   loop_control:
     label: "{{ item.item }}"
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
 
 - name: Create file symlinks for standalone configurations
   file:
-    src: "{{ qtile_home }}/.config/qtile/install/{{ item }}"
-    dest: "{{ qtile_home }}/.config/{{ item }}"
+    src: "{{ dev_home }}/.config/qtile/install/{{ item }}"
+    dest: "{{ dev_home }}/.config/{{ item }}"
     state: link
-    owner: "{{ qtile_user }}"
-    group: "{{ qtile_user }}"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
     force: yes
   loop:
     - picom.conf
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
 
 - name: Copy X11 configuration files
   copy:
-    src: "{{ qtile_home }}/.config/qtile/install/X11/{{ item }}"
+    src: "{{ dev_home }}/.config/qtile/install/X11/{{ item }}"
     dest: "/etc/X11/xorg.conf.d/{{ item }}"
     mode: '0644'
     backup: yes
@@ -93,28 +93,28 @@
 
 - name: Set up systemd user services directory
   file:
-    path: "{{ qtile_home }}/.config/systemd/user"
+    path: "{{ dev_home }}/.config/systemd/user"
     state: directory
-    owner: "{{ qtile_user }}"
-    group: "{{ qtile_user }}"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
     mode: '0755'
 
 - name: Copy systemd user service files
   shell: |
-    find {{ qtile_home }}/.config/qtile/install -name "*.service" -type f -exec cp {} {{ qtile_home }}/.config/systemd/user/ \;
-    chown {{ qtile_user }}:{{ qtile_user }} {{ qtile_home }}/.config/systemd/user/*.service
+    find {{ dev_home }}/.config/qtile/install -name "*.service" -type f -exec cp {} {{ dev_home }}/.config/systemd/user/ \;
+    chown {{ dev_user }}:{{ dev_user }} {{ dev_home }}/.config/systemd/user/*.service
   ignore_errors: yes
 
 - name: Set up battery monitoring cron job (laptops only)
   cron:
     name: "Battery monitor"
     minute: "*/10"
-    job: "{{ qtile_home }}/.config/qtile/install/battery-monitor.sh"
-    user: "{{ qtile_user }}"
+    job: "{{ dev_home }}/.config/qtile/install/battery-monitor.sh"
+    user: "{{ dev_user }}"
   when: is_laptop
 
 - name: Run brightness permissions setup script
-  command: "{{ qtile_home }}/.config/qtile/install/setup-brightness-permissions.sh"
+  command: "{{ dev_home }}/.config/qtile/install/setup-brightness-permissions.sh"
   args:
     creates: /etc/udev/rules.d/90-backlight.rules
 
@@ -131,7 +131,7 @@
     enabled: yes
     scope: user
     daemon_reload: yes
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
   with_items:
     - auto-rotate.service
     - lock-on-suspend.service  
@@ -145,7 +145,7 @@
     enabled: yes
     scope: user
     daemon_reload: yes
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
   with_items:
     - monitor-manager.service
   ignore_errors: yes

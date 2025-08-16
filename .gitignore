@@ -128,7 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .vagrant/
-ansible.cfg
 
 # Personal inventory files - keep your network setup private
 inventory/my-*.yml

@@ -22,10 +22,10 @@
 
 - name: Create .local/share/applications directory for user
   file:
-    path: "{{ qtile_home }}/.local/share/applications"
+    path: "{{ dev_home }}/.local/share/applications"
     state: directory
-    owner: "{{ qtile_user }}"
-    group: "{{ qtile_user }}"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
     mode: '0755'
 
 # Alacritty desktop integration is handled in alacritty.yml

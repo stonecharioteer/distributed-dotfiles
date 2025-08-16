@@ -1,31 +1,37 @@
 ---
 # Comprehensive failsafe checks to prevent destructive operations
+
+# Set default variables for compatibility
+- name: Set default variables
+  set_fact:
+    qtile_venv_path: "/opt/qtile"
+  when: qtile_venv_path is not defined
 - name: Check if qtile config directory exists
   stat:
-    path: "{{ qtile_home }}/.config/qtile"
+    path: "{{ dev_home }}/.config/qtile"
   register: qtile_config_exists
 
 - name: Check if existing qtile directory is a git repository
   stat:
-    path: "{{ qtile_home }}/.config/qtile/.git"
+    path: "{{ dev_home }}/.config/qtile/.git"
   register: qtile_is_git_repo
   when: qtile_config_exists.stat.exists
 
 - name: Get git remote URL if it's a git repository
   shell: |
-    cd {{ qtile_home }}/.config/qtile
+    cd {{ dev_home }}/.config/qtile
     git remote get-url origin 2>/dev/null || echo "no-remote"
   register: qtile_git_remote
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
   when: qtile_config_exists.stat.exists and qtile_is_git_repo.stat.exists
   changed_when: false
 
 - name: Get current git branch if it's a git repository
   shell: |
-    cd {{ qtile_home }}/.config/qtile
+    cd {{ dev_home }}/.config/qtile
     git branch --show-current 2>/dev/null || echo "unknown"
   register: qtile_git_branch
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
   when: qtile_config_exists.stat.exists and qtile_is_git_repo.stat.exists
   changed_when: false
 
@@ -49,21 +55,21 @@
 
 - name: Check if Alacritty source directory exists
   stat:
-    path: "{{ qtile_home }}/code/tools/alacritty"
+    path: "{{ dev_home }}/code/tools/alacritty"
   register: alacritty_source_exists
 
 - name: Check if Alacritty directory is a git repository
   stat:
-    path: "{{ qtile_home }}/code/tools/alacritty/.git"
+    path: "{{ dev_home }}/code/tools/alacritty/.git"
   register: alacritty_is_git_repo
   when: alacritty_source_exists.stat.exists
 
 - name: Get Alacritty git remote URL
   shell: |
-    cd {{ qtile_home }}/code/tools/alacritty
+    cd {{ dev_home }}/code/tools/alacritty
     git remote get-url origin 2>/dev/null || echo "no-remote"
   register: alacritty_git_remote
-  become_user: "{{ qtile_user }}"
+  become_user: "{{ dev_user }}"
   when: alacritty_source_exists.stat.exists and alacritty_is_git_repo.stat.exists
   changed_when: false
 
@@ -106,7 +112,7 @@
     msg: |
       STOP: ~/.config/qtile exists but is not a git repository.
       This could be a different qtile configuration. Please backup or remove it manually.
-      Found at: {{ qtile_home }}/.config/qtile
+      Found at: {{ dev_home }}/.config/qtile
   when: 
     - qtile_config_exists.stat.exists
     - not qtile_is_git_repo.stat.exists
@@ -140,7 +146,7 @@
     msg: |
       STOP: ~/code/tools/alacritty exists but is not a git repository.
       This could be a different Alacritty installation. Please backup or remove it manually.
-      Found at: {{ qtile_home }}/code/tools/alacritty
+      Found at: {{ dev_home }}/code/tools/alacritty
   when:
     - alacritty_source_exists.stat.exists
     - not alacritty_is_git_repo.stat.exists
@@ -156,6 +162,68 @@
     - alacritty_source_exists.stat.exists
     - alacritty_is_git_repo.stat.exists
     - alacritty_git_remote.stdout not in ['https://github.com/alacritty/alacritty.git', 'git@github.com:alacritty/alacritty.git']
+
+# === SCRIPTS REPOSITORY CHECKS ===
+- name: Check if scripts repository directory exists
+  stat:
+    path: "{{ dev_home }}/code/checkouts/personal/scripts"
+  register: scripts_repo_exists
+
+- name: Check if existing scripts directory is a git repository
+  stat:
+    path: "{{ dev_home }}/code/checkouts/personal/scripts/.git"
+  register: scripts_is_git_repo
+  when: scripts_repo_exists.stat.exists
+
+- name: Get scripts git remote URL if it's a git repository
+  shell: |
+    cd {{ dev_home }}/code/checkouts/personal/scripts
+    git remote get-url origin 2>/dev/null || echo "no-remote"
+  register: scripts_git_remote
+  become_user: "{{ dev_user }}"
+  when: scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists
+  changed_when: false
+
+- name: Get scripts current git branch if it's a git repository
+  shell: |
+    cd {{ dev_home }}/code/checkouts/personal/scripts
+    git branch --show-current 2>/dev/null || echo "unknown"
+  register: scripts_git_branch
+  become_user: "{{ dev_user }}"
+  when: scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists
+  changed_when: false
+
+- name: Check for unstaged changes in scripts repository
+  shell: |
+    cd {{ dev_home }}/code/checkouts/personal/scripts
+    git status --porcelain 2>/dev/null | wc -l
+  register: scripts_unstaged_changes
+  become_user: "{{ dev_user }}"
+  when: scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists
+  changed_when: false
+
+# FAILSAFE: Stop if scripts repo exists but is not the correct repository
+- name: FAILSAFE - Stop if scripts repository exists but is not our repository
+  fail:
+    msg: |
+      STOP: ~/code/checkouts/personal/scripts exists but is not a git repository.
+      This could be a different scripts installation. Please backup or remove it manually.
+      Found at: {{ dev_home }}/code/checkouts/personal/scripts
+  when:
+    - scripts_repo_exists.stat.exists
+    - not scripts_is_git_repo.stat.exists
+
+- name: FAILSAFE - Stop if scripts repository is a different git repository
+  fail:
+    msg: |
+      STOP: ~/code/checkouts/personal/scripts is a git repository but not the expected one.
+      Expected: https://github.com/stonecharioteer/scripts.git
+      Found: {{ scripts_git_remote.stdout }}
+      Please backup or remove it manually, or update the remote URL.
+  when:
+    - scripts_repo_exists.stat.exists
+    - scripts_is_git_repo.stat.exists
+    - scripts_git_remote.stdout not in ['https://github.com/stonecharioteer/scripts.git', 'git@github.com:stonecharioteer/scripts.git']
 
 # === FISH CONFIGURATION REPOSITORY CHECKS ===
 - name: Check if fish config directory exists
@@ -219,6 +287,8 @@
     alacritty_source_repo_exists: "{{ alacritty_source_exists.stat.exists and alacritty_is_git_repo.stat.exists }}"
     alacritty_already_built: "{{ alacritty_binary_exists.stat.exists }}"
     fish_config_repo_exists: "{{ fish_config_exists.stat.exists and fish_is_git_repo.stat.exists }}"
+    scripts_repo_exists: "{{ scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists }}"
+    scripts_can_update: "{{ scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists and scripts_git_branch.stdout == 'main' and scripts_unstaged_changes.stdout == '0' }}"
 
 # Hardware Detection for conditional features
 - name: Hardware detection for conditional features
@@ -258,6 +328,7 @@
       === INSTALLATION PLAN ===
       Fish config: {{ 'USE existing repository' if fish_config_repo_exists else 'CLONE new repository' }}
       Qtile config: {{ 'USE existing repository' if qtile_config_repo_exists else 'CLONE new repository' }}
+      Scripts repo: {{ 'USE existing repository' if scripts_repo_exists else 'CLONE new repository' }}
       Python venv: {{ 'USE existing venv' if qtile_venv_ready else 'CREATE new venv' }}
       Qtile package: {{ 'SKIP - already installed' if qtile_already_installed else 'INSTALL qtile + psutil' }}
       Alacritty source: {{ 'USE existing repository' if alacritty_source_repo_exists else 'CLONE new repository' }}

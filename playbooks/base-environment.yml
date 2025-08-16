@@ -3,30 +3,56 @@
 # Includes shell environment, development tools, and core utilities
 - name: Base Development Environment Setup
   hosts: all
+  become: yes
   gather_facts: true
   vars:
     dev_user: "{{ ansible_user | default('stonecharioteer') }}"
     dev_home: "/home/{{ dev_user }}"
     
   pre_tasks:
-    - name: Install essential system packages
-      package:
-        name:
-          - curl
-          - wget
-          - git
-          - unzip
-          - tar
-          - gzip
-          - software-properties-common
-          - apt-transport-https
-          - ca-certificates
-          - gnupg
-          - lsb-release
-          - htop
-          - tree
-          - rsync
+    - name: Update package cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+        cache_valid_time: 86400
+      when: ansible_os_family == "Debian"
+      
+    - name: Check which packages are missing
+      shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
+      register: missing_packages_check
+      loop:
+        - curl
+        - wget
+        - git
+        - unzip
+        - tar
+        - gzip
+        - software-properties-common
+        - apt-transport-https
+        - ca-certificates
+        - gnupg
+        - lsb-release
+        - htop
+        - tree
+        - rsync
+      changed_when: false
+      failed_when: false
+      when: ansible_os_family == "Debian"
+
+    - name: Create list of packages to install
+      set_fact:
+        packages_to_install: "{{ missing_packages_check.results | selectattr('stdout', 'defined') | selectattr('stdout', '!=', '') | map(attribute='stdout') | list }}"
+      when: ansible_os_family == "Debian"
+
+    - name: Install missing system packages
+      apt:
+        name: "{{ packages_to_install }}"
         state: present
+        install_recommends: no
+        force_apt_get: yes
+      when: 
+        - ansible_os_family == "Debian"
+        - packages_to_install is defined
+        - packages_to_install | length > 0
 
   roles:
     # Failsafe checks for all components
@@ -35,6 +61,7 @@
     # Shell Environment
     - fish-shell
     - fish-repository-setup
+    - scripts-repository-setup
     - mise-tools
     - rust-toolchain
     - fish-config
@@ -58,6 +85,7 @@
           🐚 Shell Environment:
           ✓ Fish shell with syntax highlighting and modern features
           ✓ Fish dotfiles cloned from: git@github.com:stonecharioteer/dotfiles-fish.git
+          ✓ Personal scripts repository cloned from: git@github.com:stonecharioteer/scripts.git
           ✓ mise runtime manager (Node.js, Python, Go, Rust)
           ✓ Enhanced Rust toolchain with cargo-binstall
           ✓ Fish configuration with abbreviations and integrations

@@ -183,3 +183,4 @@ The repository uses a **unified role-based architecture** with all functionality
 3. **Documentation**: See `GAMEPLAN.md` for detailed architecture decisions
 4. **SSH Config Integration**: Uses SSH hostnames for clean inventory management
 5. **Modular Playbooks**: Choose components based on system type and needs
+- You must not use mise to install anything else. It's only to install node and go environments, and I use `node@latest` and `go@latest` as my global installs via mise.

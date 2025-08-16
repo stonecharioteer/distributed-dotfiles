@@ -72,15 +72,15 @@
 
 - name: Copy qtile.desktop session file
   copy:
-    src: "{{ qtile_home }}/.config/qtile/install/qtile.desktop"
+    src: "{{ dev_home }}/.config/qtile/install/qtile.desktop"
     dest: /usr/share/xsessions/qtile.desktop
     mode: '0644'
     remote_src: yes
 
 - name: Create .config directory for user
   file:
-    path: "{{ qtile_home }}/.config"
+    path: "{{ dev_home }}/.config"
     state: directory
-    owner: "{{ qtile_user }}"
-    group: "{{ qtile_user }}"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
     mode: '0755'

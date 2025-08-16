@@ -12,12 +12,12 @@
 
 - name: Check if fonts directory exists
   stat:
-    path: "{{ qtile_home }}/.config/qtile/install/fonts"
+    path: "{{ dev_home }}/.config/qtile/install/fonts"
   register: fonts_dir
 
 - name: Copy JetBrainsMono fonts to system fonts directory
   copy:
-    src: "{{ qtile_home }}/.config/qtile/install/fonts/"
+    src: "{{ dev_home }}/.config/qtile/install/fonts/"
     dest: /usr/share/fonts/truetype/jetbrainsmono/
     mode: '0644'
     remote_src: yes
@@ -37,7 +37,7 @@
 
 - name: Display font installation status
   debug:
-    msg: "JetBrainsMono Nerd Fonts installed from {{ qtile_home }}/.config/qtile/install/fonts/"
+    msg: "JetBrainsMono Nerd Fonts installed from {{ dev_home }}/.config/qtile/install/fonts/"
   when: fonts_dir.stat.exists
 
 - name: Display font fallback message
