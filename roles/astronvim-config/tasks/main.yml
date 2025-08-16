@@ -1,0 +1,137 @@
+---
+- name: Check if Neovim is available
+  command: nvim --version
+  register: nvim_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Fail if Neovim is not available
+  fail:
+    msg: |
+      Neovim is not installed or not in PATH.
+      Please run the neovim-latest role first.
+  when: nvim_check.rc != 0
+
+- name: Check if tree-sitter CLI is available
+  shell: |
+    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+    command -v tree-sitter
+  args:
+    executable: /bin/bash
+  register: tree_sitter_check
+  become_user: "{{ dev_user }}"
+  ignore_errors: yes
+  changed_when: false
+
+- name: Warn if tree-sitter CLI is not available
+  debug:
+    msg: |
+      WARNING: tree-sitter CLI not found. 
+      AstroNvim will work but some features may be limited.
+      Please run the tree-sitter-cli role first.
+  when: tree_sitter_check.rc != 0
+
+- name: Install AstroNvim dependencies
+  package:
+    name: "{{ astronvim_deps }}"
+    state: present
+  ignore_errors: yes  # Some packages might not be available on all systems
+
+- name: Check if AstroNvim is already installed
+  stat:
+    path: "{{ astronvim_config_dir }}/lua/astronvim"
+  register: astronvim_exists
+  become_user: "{{ dev_user }}"
+
+- name: Display AstroNvim status
+  debug:
+    msg: |
+      AstroNvim status:
+      {% if astronvim_exists.stat.exists %}
+      Already installed at {{ astronvim_config_dir }}
+      {% else %}
+      Not installed - will install AstroNvim template
+      {% endif %}
+
+- name: Install AstroNvim
+  block:
+    - name: Create backup of existing Neovim configuration
+      shell: |
+        if [ -d "{{ astronvim_config_dir }}" ]; then
+          mv "{{ astronvim_config_dir }}" "{{ astronvim_backup_dir }}"
+          echo "Backed up existing config to {{ astronvim_backup_dir }}"
+        fi
+      become_user: "{{ dev_user }}"
+
+    - name: Create backup of Neovim data directories
+      shell: |
+        for dir in {{ nvim_backup_dirs | join(' ') }}; do
+          if [ -d "$dir" ]; then
+            mv "$dir" "${dir}.bak"
+            echo "Backed up $dir to ${dir}.bak"
+          fi
+        done
+      become_user: "{{ dev_user }}"
+      ignore_errors: yes
+
+    - name: Clone AstroNvim template
+      git:
+        repo: "{{ astronvim_template_repo }}"
+        dest: "{{ astronvim_config_dir }}"
+        depth: 1
+      become_user: "{{ dev_user }}"
+
+    - name: Remove .git directory from template
+      file:
+        path: "{{ astronvim_config_dir }}/.git"
+        state: absent
+      become_user: "{{ dev_user }}"
+
+    - name: Run headless Neovim setup to install plugins
+      shell: |
+        timeout 300 nvim --headless "+Lazy! sync" +qa
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      register: nvim_setup
+      ignore_errors: yes
+
+    - name: Display setup results
+      debug:
+        msg: |
+          AstroNvim setup results:
+          {% if nvim_setup.rc == 0 %}
+          ✓ Plugin installation completed successfully
+          {% else %}
+          ⚠ Plugin installation may have timed out or failed
+          You can manually run 'nvim' and let plugins install
+          {% endif %}
+
+    - name: Verify AstroNvim installation
+      stat:
+        path: "{{ astronvim_config_dir }}/lua/astronvim"
+      register: astronvim_verify
+      become_user: "{{ dev_user }}"
+
+    - name: Display installation success
+      debug:
+        msg: |
+          AstroNvim installed successfully!
+          Configuration: {{ astronvim_config_dir }}
+          {% if astronvim_backup_dir is exists %}
+          Backup: {{ astronvim_backup_dir }}
+          {% endif %}
+          
+          Next steps:
+          1. Run 'nvim' to complete plugin installation
+          2. Install language servers with ':LspInstall <server>'
+          3. Install language parsers with ':TSInstall <language>'
+
+  when: not astronvim_exists.stat.exists
+  rescue:
+    - name: Display installation failure
+      debug:
+        msg: |
+          AstroNvim installation failed. 
+          You may need to manually install or check the logs.
+          Backups are preserved if they were created.

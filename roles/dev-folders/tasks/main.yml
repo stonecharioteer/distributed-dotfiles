@@ -1,0 +1,66 @@
+---
+- name: Create development directory structure
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "{{ item.mode }}"
+  loop: "{{ dev_directories }}"
+  become: no
+
+- name: Display created directories
+  debug:
+    msg: |
+      Development directories created:
+      {% for dir in dev_directories %}
+      - {{ dir.path }}
+      {% endfor %}
+
+- name: Verify directory ownership
+  stat:
+    path: "{{ dev_home }}/code"
+  register: code_dir_stat
+
+- name: Display directory status
+  debug:
+    msg: |
+      Directory ownership verification:
+      Path: {{ dev_home }}/code
+      Owner: {{ code_dir_stat.stat.pw_name }}
+      Group: {{ code_dir_stat.stat.gr_name }}
+      Mode: {{ code_dir_stat.stat.mode }}
+
+- name: Create useful symlinks
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+  loop:
+    - src: "{{ dev_home }}/code/checkouts/personal"
+      dest: "{{ dev_home }}/personal"
+    - src: "{{ dev_home }}/workspace/scratch"  
+      dest: "{{ dev_home }}/scratch"
+  become: no
+  ignore_errors: yes  # Don't fail if symlinks already exist
+
+- name: Display setup completion
+  debug:
+    msg: |
+      Development folder structure setup complete!
+      
+      Directory structure:
+      ~/code/
+      ├── checkouts/
+      │   ├── personal/    (symlinked to ~/personal)
+      │   └── work/
+      └── tools/
+      
+      ~/workspace/
+      ├── projects/
+      └── scratch/         (symlinked to ~/scratch)
+      
+      ~/Pictures/screenshots/
+      ~/.local/bin/

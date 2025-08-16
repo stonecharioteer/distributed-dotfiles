@@ -1,0 +1,233 @@
+---
+- name: Check which CLI packages are already installed
+  shell: dpkg -l | grep -E "^ii\s+({{ item }})\s" | wc -l
+  register: cli_package_check
+  loop: "{{ cli_packages }}"
+  changed_when: false
+  failed_when: false
+
+- name: Create list of CLI packages to install
+  set_fact:
+    cli_packages_to_install: "{{ cli_packages_to_install | default([]) + [item.item] }}"
+  loop: "{{ cli_package_check.results }}"
+  when: item.stdout == "0"
+
+- name: Install CLI development tools via package manager
+  package:
+    name: "{{ cli_packages_to_install }}"
+    state: present
+  when: cli_packages_to_install is defined and cli_packages_to_install | length > 0
+
+- name: Check if Starship is already installed
+  command: "{{ external_tools.starship.check_cmd }}"
+  register: starship_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install Starship prompt
+  block:
+    - name: Download Starship installer
+      get_url:
+        url: "{{ external_tools.starship.url }}"
+        dest: /tmp/install-starship.sh
+        mode: '0755'
+
+    - name: Install Starship
+      shell: /tmp/install-starship.sh --yes
+      environment:
+        BIN_DIR: /usr/local/bin
+
+    - name: Clean up Starship installer
+      file:
+        path: /tmp/install-starship.sh
+        state: absent
+
+    - name: Verify Starship installation
+      command: "{{ external_tools.starship.check_cmd }}"
+      register: starship_version
+      changed_when: false
+
+    - name: Display Starship installation success
+      debug:
+        msg: "✓ Starship installed: {{ starship_version.stdout }}"
+
+  when: starship_check.rc != 0
+  rescue:
+    - name: Display Starship installation failure
+      debug:
+        msg: "⚠ Starship installation failed - continuing with other tools"
+
+- name: Check if Gum is already installed
+  command: "{{ external_tools.gum.check_cmd }}"
+  register: gum_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install Gum terminal UI tools
+  block:
+    - name: Add Charm repository GPG key
+      apt_key:
+        url: "{{ external_tools.gum.repo_key }}"
+        state: present
+
+    - name: Add Charm repository
+      apt_repository:
+        repo: "{{ external_tools.gum.repo_line }}"
+        state: present
+
+    - name: Install Gum
+      package:
+        name: "{{ external_tools.gum.package }}"
+        state: present
+        update_cache: yes
+
+    - name: Verify Gum installation
+      command: "{{ external_tools.gum.check_cmd }}"
+      register: gum_version
+      changed_when: false
+
+    - name: Display Gum installation success
+      debug:
+        msg: "✓ Gum installed: {{ gum_version.stdout }}"
+
+  when: gum_check.rc != 0
+  rescue:
+    - name: Display Gum installation failure
+      debug:
+        msg: "⚠ Gum installation failed - continuing with other tools"
+
+- name: Check if Rust/cargo is available for cargo tools
+  shell: |
+    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+    command -v cargo
+  args:
+    executable: /bin/bash
+  register: cargo_check
+  become_user: "{{ dev_user }}"
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install cargo-based tools
+  block:
+    - name: Check if cargo-binstall is available
+      shell: |
+        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        command -v cargo-binstall
+      args:
+        executable: /bin/bash
+      register: cargo_binstall_check
+      become_user: "{{ dev_user }}"
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Install cargo-binstall if not available
+      shell: |
+        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        cargo install cargo-binstall
+      args:
+        executable: /bin/bash
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      when: cargo_binstall_check.rc != 0
+
+    - name: Check if watchexec is already installed
+      shell: |
+        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        command -v "{{ cargo_tools['watchexec-cli'].binary }}"
+      args:
+        executable: /bin/bash
+      register: watchexec_check
+      become_user: "{{ dev_user }}"
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Install watchexec-cli via cargo binstall
+      shell: |
+        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        cargo binstall -y "{{ cargo_tools['watchexec-cli'].package }}"
+      args:
+        executable: /bin/bash
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      when: watchexec_check.rc != 0
+
+    - name: Verify watchexec installation
+      shell: |
+        eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+        "{{ cargo_tools['watchexec-cli'].check_cmd }}"
+      args:
+        executable: /bin/bash
+      register: watchexec_version
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      changed_when: false
+
+    - name: Display watchexec installation success
+      debug:
+        msg: "✓ watchexec installed: {{ watchexec_version.stdout }}"
+
+  when: cargo_check.rc == 0
+  rescue:
+    - name: Display cargo tools installation failure
+      debug:
+        msg: "⚠ Cargo tools installation failed - ensure Rust is installed via mise"
+
+- name: Verify CLI tools installation
+  command: "{{ item }} --version"
+  loop:
+    - rg              # ripgrep
+    - fd              # fd-find  
+    - fzf
+    - zoxide
+    - direnv
+    - http            # httpie
+  register: cli_tool_versions
+  changed_when: false
+  ignore_errors: yes
+
+- name: Display CLI tools installation summary
+  debug:
+    msg: |
+      CLI Development Tools Installation Summary:
+      
+      Package-based tools:
+      {% if cli_packages_to_install is defined and cli_packages_to_install | length > 0 %}
+      Installed: {{ cli_packages_to_install | join(', ') }}
+      {% else %}
+      All package-based tools were already installed
+      {% endif %}
+      
+      External tools:
+      {% if starship_check.rc != 0 %}
+      ✓ Starship prompt installed
+      {% else %}
+      ✓ Starship already installed
+      {% endif %}
+      {% if gum_check.rc != 0 %}
+      ✓ Gum terminal UI tools installed
+      {% else %}
+      ✓ Gum already installed
+      {% endif %}
+      
+      Cargo tools:
+      {% if cargo_check.rc == 0 %}
+      {% if watchexec_check.rc != 0 %}
+      ✓ watchexec-cli installed via cargo binstall
+      {% else %}
+      ✓ watchexec already installed
+      {% endif %}
+      {% else %}
+      ⚠ Cargo not available - watchexec-cli skipped
+      {% endif %}
+      
+      Verified tools:
+      {% for result in cli_tool_versions.results %}
+      {% if result.rc == 0 %}
+      ✓ {{ result.item }}
+      {% else %}
+      ⚠ {{ result.item }} not available
+      {% endif %}
+      {% endfor %}

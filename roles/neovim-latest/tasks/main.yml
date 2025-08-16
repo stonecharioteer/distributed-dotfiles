@@ -1,0 +1,102 @@
+---
+- name: Check if Neovim is already installed
+  stat:
+    path: "{{ neovim_binary_path }}"
+  register: neovim_exists
+
+- name: Check installed Neovim version
+  shell: "{{ neovim_binary_path }} --version | head -n1"
+  register: installed_neovim_version
+  when: neovim_exists.stat.exists
+  changed_when: false
+  ignore_errors: yes
+
+- name: Display current Neovim status
+  debug:
+    msg: |
+      Neovim status:
+      {% if neovim_exists.stat.exists %}
+      Already installed: {{ installed_neovim_version.stdout }}
+      Target version: NVIM {{ neovim_version }}
+      {% else %}
+      Not installed - will install {{ neovim_version }}
+      {% endif %}
+
+- name: Install Neovim {{ neovim_version }}
+  block:
+    - name: Create download directory
+      file:
+        path: "{{ neovim_download_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download Neovim {{ neovim_version }}
+      get_url:
+        url: "{{ neovim_download_url }}"
+        dest: "{{ neovim_download_dir }}/nvim-linux64.tar.gz"
+        mode: '0644'
+
+    - name: Extract Neovim archive
+      unarchive:
+        src: "{{ neovim_download_dir }}/nvim-linux64.tar.gz"
+        dest: "{{ neovim_download_dir }}"
+        remote_src: yes
+
+    - name: Remove old Neovim installation if it exists
+      file:
+        path: "{{ neovim_install_prefix }}/share/nvim"
+        state: absent
+      when: neovim_exists.stat.exists
+
+    - name: Install Neovim binary
+      copy:
+        src: "{{ neovim_download_dir }}/nvim-linux64/bin/nvim"
+        dest: "{{ neovim_binary_path }}"
+        mode: '0755'
+        remote_src: yes
+
+    - name: Install Neovim share files
+      shell: |
+        cp -r "{{ neovim_download_dir }}/nvim-linux64/share/nvim" "{{ neovim_install_prefix }}/share/"
+        chmod -R 755 "{{ neovim_install_prefix }}/share/nvim"
+
+    - name: Install Neovim lib files  
+      shell: |
+        cp -r "{{ neovim_download_dir }}/nvim-linux64/lib/nvim" "{{ neovim_install_prefix }}/lib/"
+        chmod -R 755 "{{ neovim_install_prefix }}/lib/nvim"
+
+    - name: Create vim symlink to nvim
+      file:
+        src: "{{ neovim_binary_path }}"
+        dest: "{{ neovim_vim_symlink_path }}"
+        state: link
+
+    - name: Clean up download directory
+      file:
+        path: "{{ neovim_download_dir }}"
+        state: absent
+
+    - name: Verify Neovim installation
+      command: "{{ neovim_binary_path }} --version"
+      register: neovim_version_check
+      changed_when: false
+
+    - name: Display installation success
+      debug:
+        msg: |
+          Neovim {{ neovim_version }} installed successfully!
+          Binary: {{ neovim_binary_path }}
+          Vim symlink: {{ neovim_vim_symlink_path }}
+          Version: {{ neovim_version_check.stdout_lines[0] }}
+
+  when: not neovim_exists.stat.exists or (neovim_exists.stat.exists and neovim_version not in installed_neovim_version.stdout)
+  rescue:
+    - name: Clean up on failure
+      file:
+        path: "{{ neovim_download_dir }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: Display installation failure
+      fail:
+        msg: "Neovim installation failed. Download directory cleaned up."

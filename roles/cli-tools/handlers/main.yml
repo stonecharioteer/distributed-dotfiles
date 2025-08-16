@@ -1,0 +1,9 @@
+---
+# Handlers for cli-tools role
+- name: update package cache
+  package:
+    update_cache: yes
+
+- name: refresh shell environment
+  debug:
+    msg: "CLI tools installed - restart shell or source profile to use new tools"

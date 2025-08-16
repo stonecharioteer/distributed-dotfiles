@@ -1,0 +1,5 @@
+---
+# Handlers for neovim-latest role
+- name: update neovim sessions
+  debug:
+    msg: "Neovim updated - restart any running nvim sessions to use new version"

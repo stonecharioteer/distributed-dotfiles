@@ -1,0 +1,5 @@
+---
+# Handlers for tree-sitter-cli role
+- name: refresh shell environment
+  debug:
+    msg: "tree-sitter CLI installed - may need to restart shell to use new PATH"

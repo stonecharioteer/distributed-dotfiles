@@ -1,0 +1,14 @@
+---
+# Default variables for neovim-latest role
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+
+# Neovim installation configuration  
+neovim_version: "v0.11.2"
+neovim_install_prefix: "/usr/local"
+neovim_binary_path: "{{ neovim_install_prefix }}/bin/nvim"
+neovim_vim_symlink_path: "{{ neovim_install_prefix }}/bin/vim"
+
+# Download URLs for Neovim 0.11.2
+neovim_download_url: "https://github.com/neovim/neovim/releases/download/{{ neovim_version }}/nvim-linux64.tar.gz"
+neovim_download_dir: "/tmp/neovim-install"

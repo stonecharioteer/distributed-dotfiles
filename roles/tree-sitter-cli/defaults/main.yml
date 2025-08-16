@@ -1,0 +1,9 @@
+---
+# Default variables for tree-sitter-cli role
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+
+# tree-sitter CLI configuration
+# Depends on Node.js being installed via mise (from fish ansible roles)
+tree_sitter_package: "tree-sitter-cli"
+tree_sitter_binary_path: "{{ dev_home }}/.local/share/mise/installs/node/lts/bin/tree-sitter"
