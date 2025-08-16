@@ -156,6 +156,36 @@
   environment:
     DISPLAY: ":0"
 
+- name: Create .Xresources file with cursor size configuration
+  copy:
+    dest: "{{ dev_home }}/.Xresources"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: '0644'
+    content: |
+      ! X11 Cursor Configuration
+      Xcursor.size: 16
+      Xcursor.theme: Adwaita
+
+- name: Set XCURSOR environment variables
+  lineinfile:
+    path: "{{ dev_home }}/.profile"
+    line: "{{ item }}"
+    create: yes
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: '0644'
+  loop:
+    - "export XCURSOR_SIZE=16"
+    - "export XCURSOR_THEME=Adwaita"
+
+- name: Load .Xresources settings
+  command: xrdb -merge "{{ dev_home }}/.Xresources"
+  become_user: "{{ dev_user }}"
+  environment:
+    DISPLAY: ":0"
+  ignore_errors: yes
+
 - name: Display configuration symlinks status
   debug:
     msg: |
@@ -179,5 +209,6 @@
       {{ "- Sleep/suspend services" if is_laptop else "- No sleep services (desktop)" }}
       - Monitor management (all systems)
       - Dark mode preference for browsers
+      - Mouse cursor size set to 16px for high-DPI displays
       
       Repository is now the single source of truth for all configurations!
