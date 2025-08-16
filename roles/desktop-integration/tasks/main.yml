@@ -150,6 +150,12 @@
     - monitor-manager.service
   ignore_errors: yes
 
+- name: Set dark mode preference for browsers
+  command: gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+  become_user: "{{ dev_user }}"
+  environment:
+    DISPLAY: ":0"
+
 - name: Display configuration symlinks status
   debug:
     msg: |
@@ -172,5 +178,6 @@
       {{ "- Auto-rotation service" if is_laptop else "- No auto-rotation (desktop)" }}
       {{ "- Sleep/suspend services" if is_laptop else "- No sleep services (desktop)" }}
       - Monitor management (all systems)
+      - Dark mode preference for browsers
       
       Repository is now the single source of truth for all configurations!
