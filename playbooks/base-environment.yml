@@ -93,6 +93,7 @@
           🛠️ Development Environment:
           ✓ System dependencies and development headers
           ✓ Modern CLI tools (ripgrep, fd, fzf, starship, etc.)
+          ✓ Database tools (PostgreSQL client, pgcli)
           ✓ Development folder structure
           ✓ tmux compiled from latest source
           ✓ Neovim {{ neovim_version | default('latest') }} with vim symlink
@@ -107,6 +108,7 @@
              - docker run hello-world
              - nvim --version
              - mise list (verify language runtimes)
+             - psql --version && pgcli --version (database tools)
           
           🎯 Your base development environment is ready!
           - Modern shell: Fish with mise for language management

@@ -41,6 +41,10 @@ system_packages:
   - python3-venv
   - python3-virtualenv
   
+  # Database client tools
+  - postgresql-client
+  - postgresql-contrib
+
   # Utilities
   - sqlite3
   - tcl
