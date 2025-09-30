@@ -52,6 +52,7 @@
       - arandr  # GUI for monitor configuration
       - autorandr  # Automatic monitor configuration switching
       - adwaita-icon-theme  # Includes Adwaita cursor theme
+      - btop  # Modern system resource monitor
     state: present
   ignore_errors: yes  # Some packages might not be available on all systems
 

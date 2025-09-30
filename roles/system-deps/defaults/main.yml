@@ -29,6 +29,7 @@ system_packages:
   # Development libraries
   - libssl-dev
   - libffi-dev
+  - libyaml-dev
   - libreadline-dev
   - libsqlite3-dev
   - libbz2-dev
