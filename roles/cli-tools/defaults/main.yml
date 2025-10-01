@@ -15,6 +15,7 @@ cli_packages:
   # Development utilities
   - direnv         # Environment variable management
   - httpie         # Modern HTTP client
+  - pgcli          # Modern PostgreSQL client with syntax highlighting
   
   # System monitoring and utilities
   - htop           # Process viewer (if not in system-deps)
