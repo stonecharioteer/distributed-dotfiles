@@ -61,7 +61,7 @@
   roles:
     # Failsafe checks for all components
     - failsafe-checks
-    
+
     # Base Development Environment (shell + dev tools)
     - fish-shell
     - fish-repository-setup
@@ -75,9 +75,9 @@
     - tmux-from-source
     - neovim-latest
     - tree-sitter-cli
-    - astronvim-config
+    - nvim-config
     - docker
-    
+
     # GUI Environment
     - locale-setup
     - base-system
@@ -108,7 +108,7 @@
           ✓ tmux compiled from latest source
           ✓ Neovim {{ neovim_version | default('latest') }} with vim symlink
           ✓ tree-sitter CLI for syntax highlighting
-          ✓ AstroNvim configuration with plugins
+          ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
           ✓ Docker Engine with Compose plugin
           
           🖥️ GUI Environment:

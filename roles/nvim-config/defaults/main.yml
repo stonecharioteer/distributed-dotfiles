@@ -1,0 +1,15 @@
+---
+# Default variables for nvim-config role
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+
+# Neovim configuration
+nvim_config_dir: "{{ dev_home }}/.config/nvim"
+nvim_config_repo: "git@github.com:stonecharioteer/nvim-config.git"
+nvim_config_branch: "main"
+
+# Backup directories for clean installation
+nvim_backup_dirs:
+  - "{{ dev_home }}/.local/share/nvim"
+  - "{{ dev_home }}/.local/state/nvim"
+  - "{{ dev_home }}/.cache/nvim"

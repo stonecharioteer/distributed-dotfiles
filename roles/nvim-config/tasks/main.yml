@@ -1,0 +1,140 @@
+---
+- name: Check if Neovim is available
+  command: nvim --version
+  register: nvim_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Fail if Neovim is not available
+  fail:
+    msg: |
+      Neovim is not installed or not in PATH.
+      Please run the neovim-latest role first.
+  when: nvim_check.rc != 0
+
+- name: Check if nvim config directory exists
+  stat:
+    path: "{{ nvim_config_dir }}"
+  register: nvim_config_exists
+  become_user: "{{ dev_user }}"
+
+- name: Check if existing config is a git repository
+  stat:
+    path: "{{ nvim_config_dir }}/.git"
+  register: nvim_config_git
+  become_user: "{{ dev_user }}"
+  when: nvim_config_exists.stat.exists
+
+- name: Verify existing config is the correct repository
+  shell: git -C "{{ nvim_config_dir }}" config --get remote.origin.url
+  register: existing_repo_url
+  become_user: "{{ dev_user }}"
+  changed_when: false
+  failed_when: false
+  when: nvim_config_exists.stat.exists and nvim_config_git.stat.exists
+
+- name: Fail if existing config is not the correct repository
+  fail:
+    msg: |
+      ERROR: {{ nvim_config_dir }} exists but is not a clone of {{ nvim_config_repo }}
+      Found repository: {{ existing_repo_url.stdout | default('not a git repository') }}
+      Expected repository: {{ nvim_config_repo }}
+      Please backup and remove the existing configuration before running this role.
+  when:
+    - nvim_config_exists.stat.exists
+    - nvim_config_git.stat.exists
+    - existing_repo_url.stdout is defined
+    - nvim_config_repo not in existing_repo_url.stdout
+
+- name: Clone nvim-config repository (fresh install)
+  block:
+    - name: Create backup of existing non-git Neovim configuration
+      shell: |
+        if [ -d "{{ nvim_config_dir }}" ]; then
+          mv "{{ nvim_config_dir }}" "{{ nvim_config_dir }}.bak.$(date +%Y%m%d_%H%M%S)"
+          echo "Backed up existing config"
+        fi
+      become_user: "{{ dev_user }}"
+      when: nvim_config_exists.stat.exists and not nvim_config_git.stat.exists
+
+    - name: Clone nvim-config repository
+      git:
+        repo: "{{ nvim_config_repo }}"
+        dest: "{{ nvim_config_dir }}"
+        version: "{{ nvim_config_branch }}"
+        accept_hostkey: yes
+      become_user: "{{ dev_user }}"
+
+    - name: Run headless Neovim setup to install plugins
+      shell: |
+        timeout 300 nvim --headless "+Lazy! sync" +qa
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      register: nvim_fresh_setup
+      ignore_errors: yes
+
+    - name: Display fresh setup results
+      debug:
+        msg: |
+          nvim-config cloned and setup completed:
+          {% if nvim_fresh_setup.rc == 0 %}
+          ✓ Plugin installation completed successfully
+          {% else %}
+          ⚠ Plugin installation may have timed out or failed
+          You can manually run 'nvim' and let plugins install
+          {% endif %}
+
+  when: not nvim_config_exists.stat.exists or not nvim_config_git.stat.exists
+
+- name: Update existing nvim-config repository
+  block:
+    - name: Pull latest changes from nvim-config repository
+      git:
+        repo: "{{ nvim_config_repo }}"
+        dest: "{{ nvim_config_dir }}"
+        version: "{{ nvim_config_branch }}"
+        update: yes
+        accept_hostkey: yes
+      become_user: "{{ dev_user }}"
+      register: nvim_config_pull
+
+    - name: Run headless Neovim setup to update plugins
+      shell: |
+        timeout 300 nvim --headless "+Lazy! sync" +qa
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      register: nvim_update_setup
+      ignore_errors: yes
+      when: nvim_config_pull.changed
+
+    - name: Display update results
+      debug:
+        msg: |
+          nvim-config update completed:
+          {% if nvim_config_pull.changed %}
+          ✓ Configuration pulled from {{ nvim_config_branch }}
+          {% if nvim_update_setup.rc == 0 %}
+          ✓ Plugin sync completed successfully
+          {% else %}
+          ⚠ Plugin sync may have timed out or failed
+          You can manually run 'nvim' to complete setup
+          {% endif %}
+          {% else %}
+          ✓ Configuration already up to date
+          {% endif %}
+
+  when: nvim_config_exists.stat.exists and nvim_config_git.stat.exists and (existing_repo_url.stdout is not defined or nvim_config_repo in existing_repo_url.stdout)
+
+- name: Display nvim-config setup completion
+  debug:
+    msg: |
+      Neovim configuration setup complete!
+      Configuration: {{ nvim_config_dir }}
+      Repository: {{ nvim_config_repo }}
+
+      Next steps:
+      1. Run 'nvim' to verify setup
+      2. Install language servers with ':LspInstall <server>'
+      3. Install language parsers with ':TSInstall <language>'
