@@ -1,0 +1,6 @@
+---
+# Localhost inventory for macOS
+all:
+  hosts:
+    localhost:
+      ansible_connection: local

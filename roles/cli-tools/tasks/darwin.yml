@@ -1,0 +1,81 @@
+---
+# macOS-specific CLI tools installation
+- name: Install CLI development tools via Homebrew
+  shell: |
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    # Install packages one by one to show progress and handle already-installed gracefully
+    packages=(
+      ripgrep fd zoxide starship fzf direnv tree httpie
+      pgcli htop btop gum jq yq cowsay fortune lolcat neofetch lsd
+    )
+
+    for package in "${packages[@]}"; do
+      if ! brew list "$package" &>/dev/null; then
+        echo "Installing $package..."
+        brew install "$package" || echo "Warning: Failed to install $package"
+      else
+        echo "$package is already installed"
+      fi
+    done
+  args:
+    executable: /bin/bash
+  become: no
+  register: brew_install_result
+  changed_when: "'Installing' in brew_install_result.stdout"
+
+- name: Display Homebrew installation output
+  debug:
+    msg: "{{ brew_install_result.stdout_lines }}"
+  when: brew_install_result.stdout_lines is defined
+
+- name: Install watchexec via Homebrew (easier on macOS)
+  shell: |
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    if ! brew list watchexec &>/dev/null; then
+      echo "Installing watchexec..."
+      brew install watchexec || echo "Warning: Failed to install watchexec"
+    else
+      echo "watchexec is already installed"
+    fi
+  args:
+    executable: /bin/bash
+  become: no
+  register: watchexec_install_result
+  changed_when: "'Installing' in watchexec_install_result.stdout"
+  ignore_errors: yes
+
+- name: Verify CLI tools installation
+  command: "{{ item }} --version"
+  loop:
+    - rg
+    - fd
+    - fzf
+    - zoxide
+    - direnv
+    - http
+    - starship
+    - gum
+    - watchexec
+    - lsd
+  register: cli_tool_versions
+  changed_when: false
+  ignore_errors: yes
+  become: no
+
+- name: Display CLI tools installation summary
+  debug:
+    msg: |
+      ✓ CLI Development Tools installed via Homebrew on macOS
+
+      Verified tools:
+      {% for result in cli_tool_versions.results %}
+      {% if result.rc == 0 %}
+      ✓ {{ result.item }}
+      {% else %}
+      ⚠ {{ result.item }} not available
+      {% endif %}
+      {% endfor %}

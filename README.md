@@ -1,258 +1,188 @@
 # Distributed Dotfiles
 
-## TLDR - Quick Commands
+Ansible-based automation for setting up consistent development environments on **Ubuntu/Debian** and **macOS**.
 
-**Set up your inventory once:**
+## Quick Start
+
+### Ubuntu/Debian
+
 ```bash
-# Copy and customize the inventory template
-cp inventory/hosts.yml inventory/my-home.yml
-# Edit inventory/my-home.yml with your SSH hostnames
-```
-
-**Run on all systems (using environment variable):**
-```bash
-# Set environment variable (one time)
-export ANSIBLE_INVENTORY=inventory/my-home.yml
-
-# Base development environment (servers, workstations, laptops)
+# Base development environment (ALL systems)
 ansible-playbook --ask-become-pass playbooks/base-environment.yml
 
 # GUI workstation (includes base + desktop)
 ansible-playbook --ask-become-pass playbooks/gui-environment.yml
 ```
 
-**Or use -i flag each time:**
-```bash
-# Base development environment
-ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml
-
-# GUI workstation
-ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/gui-environment.yml
-```
-
-**Run on specific hosts:**
-```bash
-# Single machine by hostname
-ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit desktop
-ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/gui-environment.yml --limit laptop
-
-# Group of machines
-ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit servers
-ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/gui-environment.yml --limit workstations
-
-# Multiple specific hosts
-ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit "desktop,laptop,homelab"
-```
-
-**Test connectivity:**
-```bash
-# Using environment variable
-ansible all -m ping
-ansible desktop -m ping
-
-# Using -i flag
-ansible -i inventory/my-home.yml all -m ping
-ansible -i inventory/my-home.yml desktop -m ping
-```
-
----
-
-## Why
-
-I'm very particular about my tools. I want a great development environment that *I* control. This repository gives me replicable configurations for my tooling. The dotfiles themselves are *separate* from this repository. I'm not keeping any configurations here for my tools, besides the *choice* of the dotfiles and tools. With this repo, I'd like setting up any server with a simple ansible playbook run. That way, I have the exact same configuration *everywhere*.
-
-I've seen other developers maintain dotfile repositories, but I'm not very happy with *how* they use them. Installing the tools is half the trouble, and ansible solves them perfectly in my opinion.
-
-## Objectives
-
-* One command setup of any server I use with all the tools and configurations I prefer.
-* Replicable, *testable* and **idempotent** configurations that I can run on any server and/or laptop.
-* Continuously living configuration which I can use to remember how I set up my development machines.
-
-## Consolidated Development Environment
-
-This repository features a **consolidated role-based architecture** that provides complete environment setup with modular playbooks for different system types.
-
-### Available Playbooks
-
-Simple 2-playbook structure for all your development needs:
-
-#### 🛠️ Base Development Environment (`base-environment.yml`)
-Complete development setup for ALL systems (servers, workstations, laptops):
-* **Fish shell** - Modern shell with syntax highlighting + dotfiles repository
-* **mise** - Runtime version manager (Node.js, Python, Go, Rust)
-* **Rust toolchain** - Enhanced with cargo-binstall
-* **Fish configuration** - Cloned from your dotfiles repository
-* **System dependencies** - Build tools, development headers
-* **Modern CLI tools** - ripgrep, fd, fzf, starship, gum, direnv, watchexec
-* **Development structure** - Standardized folder layout
-* **tmux** - Latest version compiled from source
-* **Neovim + AstroNvim** - Modern editor with full configuration
-* **Docker** - Container development platform
+### macOS
 
 ```bash
-ansible-playbook --ask-become-pass playbooks/base-environment.yml
+# Base development environment (ALL systems)
+ansible-playbook playbooks/macos-base-environment.yml
+
+# GUI workstation (includes base + GUI apps)
+ansible-playbook playbooks/macos-gui-environment.yml
 ```
 
-#### 🖥️ GUI Workstation (`gui-environment.yml`)
-Complete GUI workstation setup (includes everything from base + GUI):
-* **Everything from base-environment.yml** 
-* **Qtile** - Modern tiling window manager + dotfiles repository
-* **JetBrains Mono Nerd Font** - Programming font with icons
-* **Alacritty** - GPU-accelerated terminal emulator
-* **Desktop integration** - Session management and launchers
+**Note:** macOS playbooks use Homebrew and don't require `--ask-become-pass`.
 
-```bash
-ansible-playbook --ask-become-pass playbooks/gui-environment.yml
-```
+## What Gets Installed
+
+### Base Environment (All Systems)
+
+**Ubuntu/Debian** (`base-environment.yml`):
+- Fish shell + dotfiles, mise (Node.js, Python, Go, Rust), Rust toolchain
+- CLI tools: ripgrep, fd, fzf, starship, gum, direnv, zoxide, watchexec
+- tmux (compiled from source) + oh-my-tmux with powerline separators
+- Neovim 0.11.2 + custom configuration
+- Docker Engine + Compose
+
+**macOS** (`macos-base-environment.yml`):
+- Homebrew (auto-installed), Fish shell + dotfiles
+- mise (Node.js, Python, Go, Rust), Rust toolchain
+- Same CLI tools via Homebrew
+- tmux (via Homebrew) + oh-my-tmux with powerline separators
+- Neovim (via Homebrew) + custom configuration
+- Docker Desktop
+
+### GUI Environment
+
+**Ubuntu/Debian** (`gui-environment.yml`):
+- Everything from base +
+- Qtile window manager, JetBrains Mono Nerd Font
+- Alacritty terminal, Desktop integration
+
+**macOS** (`macos-gui-environment.yml`):
+- Everything from base +
+- JetBrains Mono Nerd Font, Ghostty terminal
+- AeroSpace window manager (i3/sway-like)
 
 ## Setup
 
-**NOTE** - This configuration is currently only valid for Debian-based / Ubuntu-based machines.
-
-Install ansible and other dependencies on the host machine.
+### Ubuntu/Debian
 
 ```bash
 sudo apt-get install ansible
 ```
 
-Create an [ansible inventory](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html) file, and follow the instructions in the official documentation to use it.
-
-## Usage
-
-**NOTE:** Ensure you set `ANSIBLE_INVENTORY` before running any of these, or use the `-i` parameter to provide the path to it.
-
-### Quick Start
-
-Choose the setup that matches your system:
+Create an [ansible inventory](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html) file:
 
 ```bash
-# For ALL systems (servers, workstations, laptops)
-ansible-playbook --ask-become-pass playbooks/base-environment.yml
+cp inventory/hosts.yml inventory/my-home.yml
+# Edit with your SSH hostnames
 
-# For GUI systems (includes everything from base + desktop environment)  
-ansible-playbook --ask-become-pass playbooks/gui-environment.yml
+# Set environment variable (optional)
+export ANSIBLE_INVENTORY=inventory/my-home.yml
+
+# Or use -i flag
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml
 ```
 
-**That's it!** Two simple commands for any system type.
-
-### Ansible Tag Operations
-
-Run only specific components:
+### macOS
 
 ```bash
-ansible-playbook --ask-become-pass playbooks/gui.yml --tags docker
+# Install Ansible
+python3 -m pip install --user ansible
+
+# Install community modules
+ansible-galaxy collection install community.general
+
+# Run playbooks (no inventory needed for localhost)
+ansible-playbook playbooks/macos-base-environment.yml
 ```
 
-Skip certain components:
+## Advanced Usage
+
+### Run specific roles only
 
 ```bash
-ansible-playbook --ask-become-pass playbooks/gui.yml --skip-tags "qtile,docker"
+# Using tags
+ansible-playbook playbooks/base-environment.yml --tags tmux
+
+# Run oh-my-tmux configuration without sudo
+ansible-playbook playbooks/macos-base-environment.yml --tags oh-my-tmux
 ```
 
-List available tags:
+### Target specific hosts (Ubuntu/Debian)
 
 ```bash
-ansible-playbook playbooks/servers.yml --list-tags
+# Single host
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit desktop
+
+# Multiple hosts
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit "desktop,laptop"
+
+# Host groups
+ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit servers
 ```
 
-List all tasks and roles:
+### Test connectivity
 
 ```bash
-ansible-playbook playbooks/servers.yml --list-tasks
+# With ANSIBLE_INVENTORY set
+ansible all -m ping
+
+# With -i flag
+ansible -i inventory/my-home.yml all -m ping
+```
+
+### List available operations
+
+```bash
+# List all tags
+ansible-playbook playbooks/base-environment.yml --list-tags
+
+# List all tasks
+ansible-playbook playbooks/base-environment.yml --list-tasks
 ```
 
 ## Architecture
 
-This repository uses a **consolidated role-based architecture**:
+**Consolidated role-based structure** with cross-platform support:
 
-### Consolidated Roles (`roles/`)
-All functionality has been consolidated into this repository from external configs:
+- All roles support both Ubuntu/Debian (via apt) and macOS (via Homebrew)
+- Conditional task files: `main.yml` (Linux) and `darwin.yml` (macOS)
+- Single source of truth for all environment automation
+- No external ansible configurations required
 
-**Shell Environment:**
-- `fish-shell` - Fish shell installation and setup
-- `mise-tools` - Runtime version manager (Node.js, Python, Go, Rust)
-- `rust-toolchain` - Enhanced Rust toolchain with cargo-binstall
-- `fish-config` - Fish configuration and abbreviations
+**Key roles:**
+- Shell: `fish-shell`, `fish-config`, `mise-tools`, `rust-toolchain`
+- CLI: `system-deps`, `cli-tools`, `dev-folders`
+- Development: `tmux`, `neovim-latest`, `nvim-config`, `tree-sitter-cli`, `docker`
+- GUI (Linux): `qtile-wm`, `alacritty`, `desktop-integration`
+- GUI (macOS): `ghostty`, `aerospace-wm`, `nerd-fonts`
 
-**Development Tools:**
-- `system-deps` - System dependencies and development headers
-- `cli-tools` - Modern CLI utilities (ripgrep, fd, fzf, starship, etc.)
-- `dev-folders` - Standardized development directory structure
-- `tmux-from-source` - tmux compiled from latest source
-- `neovim-latest` - Neovim binary installation
-- `tree-sitter-cli` - Tree-sitter CLI for syntax highlighting
-- `astronvim-config` - AstroNvim configuration and plugins
-- `docker` - Docker Engine with complete setup
-
-**GUI Environment:**
-- `locale-setup` - System locale configuration
-- `base-system` - Essential system packages
-- `qtile-wm` - Qtile window manager
-- `nerd-fonts` - JetBrains Mono Nerd Font installation
-- `alacritty` - Alacritty terminal emulator
-- `desktop-integration` - Desktop session management
-
-### Modular Playbooks
-- **Focused playbooks** for different system types and use cases
-- **Dependency management** between components
-- **Idempotent and self-contained** role execution
-
-For detailed architecture information, see `CLAUDE.md` and `GAMEPLAN.md`.
+See `CLAUDE.md` for detailed documentation.
 
 ## Testing
 
-If you want to test the playbooks locally first, then install Virtualbox and Vagrant.
+Use Vagrant for local testing (Ubuntu/Debian only):
 
 ```bash
+# Install dependencies
 sudo apt-get install sshpass vagrant virtualbox
-```
 
-I've included the hosts file and the `ansible.cfg` file so that you can use them with it.
+# Start test VMs
+vagrant up
 
-**Note that I'm using `192.168.60.*` for the private network, so if your network uses it, be sure to select something else!**
+# Test playbooks
+ansible-playbook playbooks/base-environment.yml
 
-Then, run `vagrant up` to bring up the virtual machines. Next, run the following ansible command.
-
-```bash
-ansible-playbook playbooks/dev-environment.yml
-```
-
-You can test any of the playbooks, but `dev-environment.yml` is the most focused. Once you're done testing, or if you want to get rid of the machines, run the following command.
-
-```bash
+# Cleanup
 vagrant destroy -f
-```
-
-**Remember to remove the entries from your `known_hosts` files.** If you've used my values, you can run the following.
-
-```bash
 ssh-keygen -R "192.168.60.2"
 ssh-keygen -R "192.168.60.3"
 ssh-keygen -R "192.168.60.4"
 ```
 
-Note that I prefer either Ubuntu or Manjaro/Archlinux for my development machines, and mostly Ubuntu for my servers. My playbooks should reflect this. If you'd like to add additional OSes, you should also add to the Vagrantfile and associated files for easier testing. Additionally, testing ARM machines using Vagrant won't be possible. It might be better to spin up Raspbian using docker and then try the ansible files. However, since Raspbian uses Debian underneath, it might be easier to account for those packages which are Debian specific.
+**Note:** Vagrant testing is Linux-only. Test macOS playbooks on actual macOS systems.
 
-When doing this sort of testing repeatedly, you might want to use the `--flush-cache` flag for the ansible commands.
+## Why This Exists
 
-## Dependencies
+I want **replicable, testable, and idempotent** development environments across all my machines. This repository gives me:
 
-All dependencies have been consolidated into this repository. No external ansible setups are required.
+- One command setup for any Ubuntu/Debian server or macOS system
+- Consistent tool configurations everywhere
+- Living documentation of my development setup
 
-### Role Dependencies
-
-The roles have been designed with clear dependency chains:
-
-* **tree-sitter-cli** → requires Node.js (provided by `mise-tools`)
-* **astronvim-config** → requires `neovim-latest` + `tree-sitter-cli`
-* **Development tools** → require shell environment for proper operation
-* **GUI environment** → works independently but complements dev tools
-
-### Setup Order Recommendations
-
-1. **Shell first**: `shell-environment.yml` provides the foundation
-2. **Development tools**: `dev-environment.yml` adds coding capabilities  
-3. **GUI environment**: `gui-environment.yml` for desktop systems
-
-Or use the consolidated playbooks (`complete-workstation.yml` or `server-setup.yml`) which handle dependency order automatically.
+The dotfiles themselves live in separate repositories—this repo manages the **installation and setup** of tools, not the tool configurations.

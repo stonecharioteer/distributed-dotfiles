@@ -1,0 +1,90 @@
+# Ghostty Terminal Configuration
+# Documentation: https://ghostty.org/docs/config
+
+# Font Configuration
+# Using JetBrains Mono Nerd Font (installed via nerd-fonts role)
+font-family = "JetBrainsMono Nerd Font"
+font-size = 13
+
+# Theme & Colors
+# Use Rose Pine for dark mode, Rose Pine Dawn for light mode
+theme = "light:Rose Pine Dawn,dark:Rose Pine"
+
+# Ensure readable contrast
+minimum-contrast = 1.1
+
+# Shell Integration
+# Automatically inject shell support for working directory tracking
+shell-integration = detect
+
+# Automatically convert TERM for SSH connections
+shell-integration-features = cursor,sudo,title
+
+# Window Configuration
+window-padding-x = 4
+window-padding-y = 4
+
+# Save and restore window state
+window-save-state = always
+
+# Use native decorations on macOS
+window-decoration = auto
+
+# Cursor Configuration
+cursor-style = bar
+cursor-style-blink = true
+
+# Mouse Configuration
+mouse-hide-while-typing = true
+
+# Copy on Select (like tmux)
+copy-on-select = clipboard
+
+# Clipboard
+clipboard-read = allow
+clipboard-write = allow
+
+# Performance
+# Use hardware acceleration
+unfocused-split-fill = color
+
+# Keybindings
+# New window
+keybind = super+n=new_window
+
+# New tab
+keybind = super+t=new_tab
+
+# Close tab/window
+keybind = super+w=close_surface
+
+# Next/Previous tab
+keybind = super+shift+]>next_tab
+keybind = super+shift+[>previous_tab
+
+# Split panes (like tmux)
+keybind = super+d=new_split:right
+keybind = super+shift+d=new_split:down
+
+# Navigate splits
+keybind = super+h=goto_split:left
+keybind = super+j=goto_split:bottom
+keybind = super+k=goto_split:top
+keybind = super+l=goto_split:right
+
+# Resize splits
+keybind = super+ctrl+h=resize_split:left,10
+keybind = super+ctrl+j=resize_split:down,10
+keybind = super+ctrl+k=resize_split:up,10
+keybind = super+ctrl+l=resize_split:right,10
+
+# Font size adjustment
+keybind = super+equal=increase_font_size:1
+keybind = super+minus=decrease_font_size:1
+keybind = super+0=reset_font_size
+
+# Toggle fullscreen
+keybind = super+ctrl+f=toggle_fullscreen
+
+# Clear screen
+keybind = super+k=clear_screen

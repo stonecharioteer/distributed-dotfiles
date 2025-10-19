@@ -1,0 +1,103 @@
+---
+# macOS-specific mise installation
+- name: Install build dependencies via Homebrew
+  shell: |
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    packages=(pkg-config openssl@3 bison flex cmake autoconf automake libtool)
+
+    for package in "${packages[@]}"; do
+      if ! brew list "$package" &>/dev/null; then
+        echo "Installing $package..."
+        brew install "$package" || echo "Warning: Failed to install $package"
+      else
+        echo "$package is already installed"
+      fi
+    done
+  args:
+    executable: /bin/bash
+  become: no
+  register: mise_deps_install_result
+  changed_when: "'Installing' in mise_deps_install_result.stdout"
+
+- name: Display build dependencies installation output
+  debug:
+    msg: "{{ mise_deps_install_result.stdout_lines }}"
+  when: mise_deps_install_result.stdout_lines is defined
+
+- name: Check if mise is already installed
+  stat:
+    path: "{{ dev_home }}/.local/bin/mise"
+  register: mise_exists
+  become: no
+
+- name: Download and install mise (runtime version manager)
+  shell: |
+    curl https://mise.run | sh
+  become: no
+  environment:
+    HOME: "{{ dev_home }}"
+  when: not mise_exists.stat.exists
+
+- name: Create mise config directory
+  file:
+    path: "{{ dev_home }}/.config/mise"
+    state: directory
+    owner: "{{ dev_user }}"
+    mode: '0755'
+  become: no
+
+- name: Install Node.js via mise
+  shell: |
+    "{{ dev_home }}/.local/bin/mise" install node@latest
+    "{{ dev_home }}/.local/bin/mise" global node@latest
+  environment:
+    HOME: "{{ dev_home }}"
+  become: no
+  ignore_errors: yes
+
+- name: Install Go via mise
+  shell: |
+    "{{ dev_home }}/.local/bin/mise" install go@latest
+    "{{ dev_home }}/.local/bin/mise" global go@latest
+  environment:
+    HOME: "{{ dev_home }}"
+  become: no
+  ignore_errors: yes
+
+- name: Install fx JSON viewer via Go (if Go is available)
+  shell: |
+    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+    if command -v go >/dev/null 2>&1; then
+      go install github.com/antonmedv/fx@latest
+    fi
+  args:
+    executable: /bin/bash
+  become: no
+  environment:
+    HOME: "{{ dev_home }}"
+  ignore_errors: yes
+
+- name: Check if uv is already installed
+  command: which uv
+  register: uv_exists
+  ignore_errors: yes
+  become: no
+
+- name: Install uv Python package manager via official installer
+  shell: |
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+  environment:
+    HOME: "{{ dev_home }}"
+  become: no
+  when: uv_exists.rc != 0
+
+- name: Ensure mise is in PATH for fish shell
+  lineinfile:
+    path: "{{ dev_home }}/.config/fish/fish_variables"
+    line: "SETUVAR dev_user_paths:{{ dev_home }}/\\.local/bin\\x1e{{ dev_home }}/\\.cargo/bin\\x1e/opt/homebrew/bin\\x1e/opt/homebrew/sbin"
+    regexp: "^SETUVAR dev_user_paths:"
+    create: yes
+    owner: "{{ dev_user }}"
+  become: no

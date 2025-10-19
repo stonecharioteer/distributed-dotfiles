@@ -1,0 +1,56 @@
+---
+# macOS-specific Neovim installation via Homebrew
+- name: Install Neovim via Homebrew
+  shell: |
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    if ! brew list neovim &>/dev/null; then
+      echo "Installing neovim..."
+      brew install neovim
+    else
+      echo "neovim is already installed"
+    fi
+  args:
+    executable: /bin/bash
+  become: no
+  register: nvim_install_result
+  changed_when: "'Installing' in nvim_install_result.stdout"
+
+- name: Display Neovim installation output
+  debug:
+    msg: "{{ nvim_install_result.stdout_lines }}"
+  when: nvim_install_result.stdout_lines is defined
+
+- name: Get Neovim binary path
+  command: which nvim
+  register: nvim_path
+  changed_when: false
+  become: no
+
+- name: Check if vim symlink exists
+  stat:
+    path: /opt/homebrew/bin/vim
+  register: vim_symlink_check
+  become: no
+
+- name: Create vim symlink to nvim
+  file:
+    src: "{{ nvim_path.stdout }}"
+    dest: /opt/homebrew/bin/vim
+    state: link
+  become: no
+  when: not vim_symlink_check.stat.exists
+
+- name: Verify Neovim installation
+  command: nvim --version
+  register: neovim_version_check
+  changed_when: false
+  become: no
+
+- name: Display installation success
+  debug:
+    msg: |
+      ✓ Neovim installed via Homebrew!
+      Binary: {{ nvim_path.stdout }}
+      Version: {{ neovim_version_check.stdout_lines[0] }}

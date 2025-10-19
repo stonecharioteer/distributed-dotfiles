@@ -1,0 +1,128 @@
+---
+# Complete macOS GUI workstation setup playbook
+# Includes base development environment + GUI applications
+- name: Complete macOS GUI Workstation Setup
+  hosts: all
+  gather_facts: true
+  vars:
+    dev_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
+    dev_home: "{{ ansible_env.HOME | default('/Users/' + dev_user) }}"
+
+  pre_tasks:
+    - name: Verify running on macOS
+      assert:
+        that:
+          - ansible_os_family == "Darwin"
+        fail_msg: "This playbook is designed for macOS only"
+        success_msg: "✓ Running on macOS {{ ansible_distribution_version }}"
+
+    - name: Verify pbcopy is available (built-in on macOS)
+      command: which pbcopy
+      register: pbcopy_check
+      changed_when: false
+      failed_when: false
+
+    - name: Display pbcopy status
+      debug:
+        msg: |
+          {% if pbcopy_check.rc == 0 %}
+          ✓ pbcopy available at {{ pbcopy_check.stdout }}
+          {% else %}
+          ⚠ pbcopy not found (should be built-in on macOS)
+          {% endif %}
+
+    - name: Check if Homebrew is installed
+      stat:
+        path: /opt/homebrew/bin/brew
+      register: homebrew_check
+      become: no
+
+    - name: Display Homebrew status
+      debug:
+        msg: |
+          {% if homebrew_check.stat.exists %}
+          ✓ Homebrew is already installed
+          {% else %}
+          → Homebrew will be installed by roles
+          {% endif %}
+
+  roles:
+    # Base Development Environment (shell + dev tools)
+    - fish-shell
+    - fish-repository-setup
+    - scripts-repository-setup
+    - mise-tools
+    - rust-toolchain
+    - fish-config
+    - cli-tools
+    - dev-folders
+    - tmux
+    - neovim-latest
+    - tree-sitter-cli
+    - nvim-config
+    - docker
+
+    # macOS GUI Environment
+    - nerd-fonts
+    - ghostty
+    - aerospace-wm
+
+  post_tasks:
+    - name: Display complete GUI workstation setup completion
+      debug:
+        msg: |
+          🚀 Complete macOS GUI Workstation Setup Finished!
+
+          ⚠️  IMPORTANT: Some tasks required sudo access:
+          - Adding Fish to /etc/shells
+          - Setting Fish as default shell
+          You may have been prompted for your password during installation.
+
+          🐚 Shell Environment:
+          ✓ Homebrew package manager
+          ✓ Fish shell with syntax highlighting and modern features
+          ✓ Fish dotfiles cloned from: git@github.com:stonecharioteer/dotfiles-fish.git
+          ✓ Personal scripts repository cloned from: git@github.com:stonecharioteer/scripts.git
+          ✓ mise runtime manager (Node.js, Python, Go, Rust)
+          ✓ Enhanced Rust toolchain with cargo-binstall
+          ✓ Fish configuration with abbreviations and integrations
+
+          🛠️ Development Environment:
+          ✓ Modern CLI tools (ripgrep, fd, fzf, starship, gum, etc.)
+          ✓ Database tools (PostgreSQL client, pgcli)
+          ✓ Development folder structure
+          ✓ tmux via Homebrew
+          ✓ Neovim via Homebrew with vim symlink
+          ✓ tree-sitter CLI for syntax highlighting
+          ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
+          ✓ Docker Desktop installed
+
+          🖥️ macOS GUI Environment:
+          ✓ JetBrains Mono Nerd Font with icon support
+          ✓ Ghostty terminal emulator (GPU-accelerated, native macOS)
+          ✓ AeroSpace tiling window manager
+
+          📋 Next Steps:
+          1. Restart your terminal or run: exec fish
+          2. Launch Docker Desktop from Applications
+          3. Launch AeroSpace from Applications (grant Accessibility permissions)
+          4. Launch Ghostty terminal emulator
+          5. Test complete environment:
+             - tmux new-session -d -s test
+             - docker run hello-world (after launching Docker Desktop)
+             - nvim (complete plugin setup)
+             - mise list (verify language runtimes)
+             - psql --version && pgcli --version (database tools)
+
+          🎯 Your complete macOS GUI workstation is ready!
+          - Modern shell: Fish with mise for language management
+          - Development tools: tmux, Neovim, Docker
+          - GUI applications: Ghostty terminal, AeroSpace window manager
+          - All tools integrated and configured for maximum productivity
+
+          💡 AeroSpace Keyboard Shortcuts:
+          - Alt+h/j/k/l: Navigate between windows
+          - Alt+1-9: Switch workspaces
+          - Alt+Shift+1-9: Move windows to workspaces
+          - Alt+r: Resize mode
+          - Customize at: ~/.config/aerospace/aerospace.toml

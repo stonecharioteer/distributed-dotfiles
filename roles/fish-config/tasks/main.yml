@@ -70,7 +70,7 @@
     path: "{{ dev_home }}/.local/bin"
     state: directory
     owner: "{{ dev_user }}"
-    group: "{{ dev_user }}"
+    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
     mode: '0755'
   become: no
 

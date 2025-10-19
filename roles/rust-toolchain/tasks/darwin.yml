@@ -1,9 +1,5 @@
 ---
-# Include macOS-specific tasks
-- name: Include macOS-specific tasks
-  include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
-
+# macOS-specific Rust toolchain installation
 - name: Check if rustup is already installed
   stat:
     path: "{{ dev_home }}/.cargo/bin/rustup"
@@ -26,10 +22,10 @@
   when: not rustup_exists.stat.exists
   become: no
 
-- name: Source cargo environment
-  shell: source "{{ dev_home }}/.cargo/env"
-  args:
-    executable: /bin/bash
+- name: Clean up rustup installer
+  file:
+    path: /tmp/rustup-init.sh
+    state: absent
   when: not rustup_exists.stat.exists
   become: no
 
@@ -70,6 +66,7 @@
     - lsd          # LSDeluxe - another modern ls
     - procs        # Better ps
   become: no
+  ignore_errors: yes
 
 - name: Install additional modern CLI tools via cargo-binstall
   shell: |
@@ -89,24 +86,26 @@
   become: no
   ignore_errors: yes
 
-# Note: ripgrep, fd, zoxide, starship are installed via package manager in cli-tools role
-# This avoids conflicts and uses system package manager when available
-
-- name: Add cargo bin to user PATH in fish config
+- name: Add cargo bin to fish config
   lineinfile:
-    path: "{{ dev_home }}/.config/fish/fish_variables"
-    line: "SETUVAR dev_user_paths:{{ dev_home }}/\\.cargo/bin\\x1e{{ dev_home }}/\\.fzf/bin"
-    regexp: "^SETUVAR dev_user_paths:"
+    path: "{{ dev_home }}/.config/fish/config.fish"
+    line: 'fish_add_path {{ dev_home }}/.cargo/bin'
     create: yes
     owner: "{{ dev_user }}"
-    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
   become: no
 
-- name: Ensure cargo bin directory is in PATH
-  lineinfile:
-    path: "{{ dev_home }}/.profile"
-    line: 'export PATH="$HOME/.cargo/bin:$PATH"'
-    create: yes
-    owner: "{{ dev_user }}"
-    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
-  become: no
+- name: Display Rust toolchain installation summary
+  debug:
+    msg: |
+      ✓ Rust toolchain installed on macOS
+
+      Installed via rustup:
+      - rustc (Rust compiler)
+      - cargo (Package manager)
+      - cargo-binstall (Fast binary installer)
+
+      Essential CLI tools:
+      - bat, tokei, du-dust, bottom, xh, eza, lsd, procs
+      - sd, tealdeer, grex, gitui, atuin
+
+      Note: Some tools like ripgrep, fd, zoxide are installed via Homebrew in cli-tools role

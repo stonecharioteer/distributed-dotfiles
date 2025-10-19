@@ -1,0 +1,100 @@
+---
+# macOS-specific Fish shell installation
+- name: Check if Homebrew is installed
+  stat:
+    path: /opt/homebrew/bin/brew
+  register: homebrew_check
+  become: no
+
+- name: Display Homebrew installation status
+  debug:
+    msg: |
+      {% if homebrew_check.stat.exists %}
+      ✓ Homebrew is already installed
+      {% else %}
+      ⚠ Homebrew not found - installing...
+      {% endif %}
+
+- name: Install Homebrew if not present
+  shell: |
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  become: no
+  environment:
+    NONINTERACTIVE: "1"
+  when: not homebrew_check.stat.exists
+
+- name: Install Fish shell and dependencies via Homebrew
+  shell: |
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    packages=(fish curl wget git pkg-config openssl@3)
+
+    for package in "${packages[@]}"; do
+      if ! brew list "$package" &>/dev/null; then
+        echo "Installing $package..."
+        brew install "$package" || echo "Warning: Failed to install $package"
+      else
+        echo "$package is already installed"
+      fi
+    done
+  args:
+    executable: /bin/bash
+  become: no
+  register: fish_install_result
+  changed_when: "'Installing' in fish_install_result.stdout"
+
+- name: Display Fish installation output
+  debug:
+    msg: "{{ fish_install_result.stdout_lines }}"
+  when: fish_install_result.stdout_lines is defined
+
+- name: Get Fish shell path
+  command: which fish
+  register: fish_path
+  changed_when: false
+  become: no
+
+- name: Check if Fish is already in /etc/shells
+  shell: grep -q "^{{ fish_path.stdout }}$" /etc/shells
+  register: fish_in_shells
+  changed_when: false
+  failed_when: false
+  become: no
+
+- name: Add Fish to /etc/shells if not present
+  lineinfile:
+    path: /etc/shells
+    line: "{{ fish_path.stdout }}"
+    state: present
+  become: yes
+  when: fish_in_shells.rc != 0
+
+- name: Check current user shell
+  shell: dscl . -read /Users/{{ dev_user }} UserShell | awk '{print $2}'
+  register: current_shell
+  changed_when: false
+  become: no
+
+- name: Set Fish as default shell for user (macOS)
+  shell: |
+    dscl . -create /Users/{{ dev_user }} UserShell {{ fish_path.stdout }}
+  become: yes
+  register: set_shell_result
+  changed_when: set_shell_result.rc == 0
+  failed_when: set_shell_result.rc != 0
+  when: current_shell.stdout != fish_path.stdout
+
+- name: Verify Fish is set as default shell
+  shell: dscl . -read /Users/{{ dev_user }} UserShell
+  register: verify_shell
+  changed_when: false
+  become: no
+
+- name: Display shell configuration status
+  debug:
+    msg: |
+      ✓ Fish shell configured for {{ dev_user }}
+      Current shell: {{ verify_shell.stdout }}
+
+      Note: You may need to restart your terminal or run 'exec fish' to use the new shell.

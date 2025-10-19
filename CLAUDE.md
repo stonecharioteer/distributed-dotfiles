@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is an Ansible-based dotfiles and development environment automation repository for setting up Ubuntu/Debian-based machines with a consistent development environment. The project uses a **consolidated role-based architecture** that brings together all environment automation into a single repository.
+This is an Ansible-based dotfiles and development environment automation repository for setting up **Ubuntu/Debian-based machines** and **macOS** with a consistent development environment. The project uses a **consolidated role-based architecture** that brings together all environment automation into a single repository.
 
 ## Common Commands
 
 ### Running Playbooks
 
-**Simple 2-playbook setup:**
+**Ubuntu/Debian (Simple 2-playbook setup):**
 ```bash
 # Base development environment (for ALL systems)
 ansible-playbook --ask-become-pass playbooks/base-environment.yml
@@ -18,6 +18,17 @@ ansible-playbook --ask-become-pass playbooks/base-environment.yml
 # GUI workstation (includes base + desktop environment)
 ansible-playbook --ask-become-pass playbooks/gui-environment.yml
 ```
+
+**macOS (Simple 2-playbook setup):**
+```bash
+# Base development environment (for ALL macOS systems)
+ansible-playbook playbooks/macos-base-environment.yml
+
+# GUI workstation (includes base + GUI applications)
+ansible-playbook playbooks/macos-gui-environment.yml
+```
+
+Note: macOS playbooks use Homebrew and don't require `--ask-become-pass` for most operations.
 
 ### Ansible Operations
 
@@ -78,18 +89,30 @@ The repository uses a **unified role-based architecture** with all functionality
 
 ### Main Playbooks
 
-- **playbooks/base-environment.yml**: Complete development environment for ALL systems
+**Ubuntu/Debian:**
+- **playbooks/base-environment.yml**: Complete development environment for ALL Ubuntu/Debian systems
   - Fish shell + dotfiles, mise + languages, development tools, tmux, neovim, docker
 - **playbooks/gui-environment.yml**: Complete GUI workstation (includes base + desktop)
   - Everything from base-environment.yml + Qtile + fonts + Alacritty + desktop integration
 
+**macOS:**
+- **playbooks/macos-base-environment.yml**: Complete development environment for ALL macOS systems
+  - Fish shell + dotfiles, mise + languages, development tools, tmux (Homebrew), neovim (Homebrew), docker
+- **playbooks/macos-gui-environment.yml**: Complete GUI workstation (includes base + GUI apps)
+  - Everything from macos-base-environment.yml + JetBrains Mono Nerd Font + Ghostty + AeroSpace WM
+
 ### Legacy Playbooks (DEPRECATED)
-- All other playbooks replaced by the simple 2-playbook approach
+- All other playbooks replaced by the simple 2-playbook approach per platform
 
 ### Consolidated Roles (`roles/`)
 
+**Platform Support:**
+- All roles support Ubuntu/Debian via package managers (apt)
+- macOS support via Homebrew (roles include `darwin.yml` task files)
+- Conditional includes based on `ansible_os_family`
+
 **Shell Environment:**
-- **fish-shell**: Fish shell installation and setup
+- **fish-shell**: Fish shell installation and setup (apt/Homebrew)
 - **mise-tools**: Runtime version manager (Node.js, Python, Go, Rust via mise)
 - **rust-toolchain**: Enhanced Rust toolchain with cargo-binstall
 - **fish-config**: Fish configuration and abbreviations
@@ -112,19 +135,31 @@ The repository uses a **unified role-based architecture** with all functionality
   - `~/code/tools/`, `~/workspace/{projects,scratch}/`
   - `~/Pictures/screenshots/`, `~/.local/bin/`
 
-- **tmux-from-source**: Compiles tmux from latest GitHub release
-- **neovim-latest**: Installs Neovim 0.11.2 binary with vim symlink
+- **tmux**: Compiles tmux from latest GitHub release (Linux) or installs via Homebrew (macOS)
+  - Includes oh-my-tmux configuration with mouse mode and vi key bindings enabled
+  - Clones https://github.com/gpakosz/.tmux to ~/.tmux/
+  - Creates ~/.tmux.conf symlink and ~/.tmux.conf.local with sensible defaults
+  - Enables powerline separators (requires Nerd Fonts for proper display)
+- **neovim-latest**: Installs Neovim 0.11.2 binary with vim symlink (Linux) or via Homebrew (macOS)
 - **tree-sitter-cli**: Installs tree-sitter CLI via npm (uses mise Node.js)
-- **astronvim-config**: Sets up AstroNvim configuration with plugins
-- **docker**: Docker Engine installation with post-install configuration
+- **nvim-config**: Sets up custom Neovim configuration with plugins
+- **docker**: Docker Engine installation (Linux) or Docker Desktop via Homebrew (macOS)
 
-**GUI Environment:**
+**GUI Environment (Linux):**
 - **locale-setup**: System locale configuration
 - **base-system**: Essential system packages
 - **qtile-wm**: Qtile window manager installation + Adwaita cursor theme
-- **nerd-fonts**: JetBrains Mono Nerd Font installation
 - **alacritty**: Alacritty terminal emulator
 - **desktop-integration**: Desktop session management + dark mode preference + cursor configuration
+
+**GUI Environment (macOS):**
+- **nerd-fonts**: JetBrains Mono Nerd Font installation (via Homebrew cask)
+- **ghostty**: Ghostty terminal emulator (GPU-accelerated, native macOS)
+  - Config stored in `roles/ghostty/files/config`
+  - Installed to `~/.config/ghostty/config`
+  - Features: Rose Pine theme, shell integration, vim-style navigation
+  - Uses JetBrains Mono Nerd Font for icon support
+- **aerospace-wm**: AeroSpace tiling window manager (macOS-native)
 
 ### Dependency Management
 
@@ -150,23 +185,32 @@ The repository uses a **unified role-based architecture** with all functionality
 **Development Tools**:
 - **System Dependencies**: Build tools, development headers, Python3 system packages
 - **CLI Tools**: ripgrep, fd-find, fzf, starship, gum, direnv, httpie, zoxide, watchexec
-- **tmux**: Latest version compiled from source
-- **Neovim**: 0.11.2 binary with vim symlink
-- **AstroNvim**: Complete configuration with plugin setup
+- **tmux**: Latest version compiled from source (Linux) or via Homebrew (macOS)
+- **Neovim**: 0.11.2 binary with vim symlink (Linux) or via Homebrew (macOS)
+- **Custom Neovim config**: Complete configuration with plugin setup
 - **tree-sitter CLI**: Via npm for syntax highlighting
-- **Docker**: Latest Engine with Compose, proper user setup
+- **Docker**: Latest Engine with Compose (Linux) or Docker Desktop (macOS)
 
-**GUI Environment**:
+**GUI Environment (Linux)**:
 - **Qtile**: Modern tiling window manager
 - **JetBrains Mono Nerd Font**: Programming font with icons
 - **Alacritty**: GPU-accelerated terminal emulator
 - **Desktop Integration**: Session management, launchers, dark mode preference, cursor configuration
 - **Adwaita Cursor Theme**: 16px cursor theme for high-DPI displays
 
+**GUI Environment (macOS)**:
+- **JetBrains Mono Nerd Font**: Programming font with icons (via Homebrew)
+- **Ghostty**: GPU-accelerated terminal emulator (native macOS)
+- **AeroSpace**: Tiling window manager (native macOS, i3/sway-like keybindings)
+
 ### Configuration Management
 
 - **Consolidated roles**: All self-contained with proper defaults and handlers
+- **Cross-platform support**: Roles include both Linux (main.yml) and macOS (darwin.yml) task files
+- **Package managers**: apt (Ubuntu/Debian), Homebrew (macOS)
 - **Variable consistency**: All roles use `dev_user`/`dev_home` pattern
+  - Linux: `dev_home: "/home/{{ dev_user }}"`
+  - macOS: `dev_home: "{{ ansible_env.HOME }}"`
 - **Idempotency**: Roles check for existing installations before proceeding
 - **Single source of truth**: No external ansible configurations required
 
@@ -180,9 +224,18 @@ The repository uses a **unified role-based architecture** with all functionality
 ## Implementation Notes
 
 1. **Consolidated Architecture**: All functionality now uses role-based approach
-2. **Error Handling**: Roles include rescue blocks and proper cleanup
-3. **Documentation**: See `GAMEPLAN.md` for detailed architecture decisions
-4. **SSH Config Integration**: Uses SSH hostnames for clean inventory management
-5. **Modular Playbooks**: Choose components based on system type and needs
-- You must not use mise to install anything else. It's only to install node and go environments, and I use `node@latest` and `go@latest` as my global installs via mise.
-- The desktop-integration role sets browser dark mode preference via `gsettings` and configures 16px Adwaita cursor theme for high-DPI displays.
+2. **Cross-Platform Support**:
+   - Roles detect OS via `ansible_os_family` (Darwin for macOS, Debian for Ubuntu)
+   - Platform-specific tasks in separate files (main.yml for Linux, darwin.yml for macOS)
+   - Homebrew automatically installed on macOS if not present
+3. **Error Handling**: Roles include rescue blocks and proper cleanup
+4. **Documentation**: See `GAMEPLAN.md` for detailed architecture decisions
+5. **SSH Config Integration**: Uses SSH hostnames for clean inventory management
+6. **Modular Playbooks**: Choose components based on system type and needs
+7. **mise Usage**: Only for Node.js and Go environments (`node@latest` and `go@latest` as global installs)
+8. **Platform-Specific Features**:
+   - Linux: Desktop integration with gsettings, Adwaita cursor theme (16px), Qtile WM
+   - macOS: AeroSpace WM, Ghostty terminal, native Homebrew integration
+9. **Build Tools**:
+   - Linux: Compile tmux and Neovim from source for latest versions
+   - macOS: Use Homebrew for tmux and Neovim (simpler, maintained by Homebrew)
