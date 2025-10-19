@@ -70,7 +70,7 @@
     - system-deps
     - cli-tools
     - dev-folders
-    - tmux-from-source
+    - tmux
     - neovim-latest
     - tree-sitter-cli
     - nvim-config

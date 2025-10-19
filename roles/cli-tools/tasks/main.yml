@@ -1,22 +1,33 @@
 ---
+# Include macOS-specific tasks
+- name: Include macOS-specific tasks
+  include_tasks: darwin.yml
+  when: ansible_os_family == "Darwin"
+
 - name: Check which CLI packages are already installed
   shell: dpkg -l | grep -E "^ii\s+({{ item }})\s" | wc -l
   register: cli_package_check
   loop: "{{ cli_packages }}"
   changed_when: false
   failed_when: false
+  when: ansible_os_family == "Debian"
 
 - name: Create list of CLI packages to install
   set_fact:
     cli_packages_to_install: "{{ cli_packages_to_install | default([]) + [item.item] }}"
   loop: "{{ cli_package_check.results }}"
-  when: item.stdout == "0"
+  when:
+    - ansible_os_family == "Debian"
+    - item.stdout == "0"
 
 - name: Install CLI development tools via package manager
   package:
     name: "{{ cli_packages_to_install }}"
     state: present
-  when: cli_packages_to_install is defined and cli_packages_to_install | length > 0
+  when:
+    - ansible_os_family == "Debian"
+    - cli_packages_to_install is defined
+    - cli_packages_to_install | length > 0
 
 - name: Create fd symlink (Ubuntu packages fd-find as fdfind)
   file:
@@ -59,7 +70,9 @@
       debug:
         msg: "✓ Starship installed: {{ starship_version.stdout }}"
 
-  when: starship_check.rc != 0
+  when:
+    - ansible_os_family != "Darwin"
+    - starship_check.rc != 0
   rescue:
     - name: Display Starship installation failure
       debug:
@@ -98,7 +111,9 @@
       debug:
         msg: "✓ Gum installed: {{ gum_version.stdout }}"
 
-  when: gum_check.rc != 0
+  when:
+    - ansible_os_family == "Debian"
+    - gum_check.rc != 0
   rescue:
     - name: Display Gum installation failure
       debug:
@@ -177,7 +192,9 @@
       debug:
         msg: "✓ watchexec installed: {{ watchexec_version.stdout }}"
 
-  when: cargo_check.rc == 0
+  when:
+    - ansible_os_family != "Darwin"
+    - cargo_check.rc == 0
   rescue:
     - name: Display cargo tools installation failure
       debug:
@@ -200,37 +217,45 @@
   debug:
     msg: |
       CLI Development Tools Installation Summary:
-      
+
+      {% if ansible_os_family == "Darwin" %}
+      ✓ All CLI tools installed via Homebrew on macOS
+      {% else %}
       Package-based tools:
       {% if cli_packages_to_install is defined and cli_packages_to_install | length > 0 %}
       Installed: {{ cli_packages_to_install | join(', ') }}
       {% else %}
       All package-based tools were already installed
       {% endif %}
-      
+
       External tools:
+      {% if starship_check is defined %}
       {% if starship_check.rc != 0 %}
       ✓ Starship prompt installed
       {% else %}
       ✓ Starship already installed
       {% endif %}
+      {% endif %}
+      {% if gum_check is defined %}
       {% if gum_check.rc != 0 %}
       ✓ Gum terminal UI tools installed
       {% else %}
       ✓ Gum already installed
       {% endif %}
-      
+      {% endif %}
+
       Cargo tools:
-      {% if cargo_check.rc == 0 %}
-      {% if watchexec_check.rc != 0 %}
+      {% if cargo_check is defined and cargo_check.rc == 0 %}
+      {% if watchexec_check is defined and watchexec_check.rc != 0 %}
       ✓ watchexec-cli installed via cargo binstall
-      {% else %}
+      {% elif watchexec_check is defined %}
       ✓ watchexec already installed
       {% endif %}
       {% else %}
       ⚠ Cargo not available - watchexec-cli skipped
       {% endif %}
-      
+      {% endif %}
+
       Verified tools:
       {% for result in cli_tool_versions.results %}
       {% if result.rc == 0 %}

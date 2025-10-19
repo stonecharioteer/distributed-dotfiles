@@ -1,0 +1,47 @@
+---
+# macOS-specific Nerd Fonts installation
+- name: Tap Homebrew Cask Fonts repository and install JetBrains Mono Nerd Font
+  shell: |
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    # Tap the fonts repository if not already tapped
+    if ! brew tap | grep -q "^homebrew/cask-fonts$"; then
+      echo "Tapping homebrew/cask-fonts..."
+      brew tap homebrew/cask-fonts
+    else
+      echo "homebrew/cask-fonts is already tapped"
+    fi
+
+    # Install the font if not already installed
+    if ! brew list --cask font-jetbrains-mono-nerd-font &>/dev/null; then
+      echo "Installing font-jetbrains-mono-nerd-font..."
+      brew install --cask font-jetbrains-mono-nerd-font
+    else
+      echo "font-jetbrains-mono-nerd-font is already installed"
+    fi
+  args:
+    executable: /bin/bash
+  become: no
+  register: font_install_result
+  changed_when: "'Installing' in font_install_result.stdout or 'Tapping' in font_install_result.stdout"
+
+- name: Display font installation output
+  debug:
+    msg: "{{ font_install_result.stdout_lines }}"
+  when: font_install_result.stdout_lines is defined
+
+- name: Verify font installation
+  stat:
+    path: "{{ dev_home }}/Library/Fonts"
+  register: fonts_dir
+  become: no
+
+- name: Display font installation status
+  debug:
+    msg: |
+      ✓ JetBrains Mono Nerd Font installed via Homebrew
+      User fonts directory: {{ dev_home }}/Library/Fonts
+      System fonts: /Library/Fonts
+
+      Note: Font cache may need to refresh. Restart applications if font doesn't appear.

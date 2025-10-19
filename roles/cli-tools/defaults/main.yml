@@ -4,22 +4,27 @@ dev_user: "{{ ansible_user | default('stonecharioteer') }}"
 dev_home: "/home/{{ dev_user }}"
 
 # Modern CLI tools for development productivity
+# Note: Core Rust tools (ripgrep, fd, zoxide, starship) installed here via package manager
+# Additional Rust tools (bat, eza, tokei, etc.) installed in rust-toolchain role via cargo
 cli_packages:
-  # File and text search tools
+  # File and text search tools (Rust-based, via package manager)
   - ripgrep        # Fast text search
-  - fd-find        # Fast file search  
+  - fd-find        # Fast file search
   - tree           # Directory visualization
   - fzf            # Fuzzy finder
   - zoxide         # Smart directory navigation
-  
+
   # Development utilities
   - direnv         # Environment variable management
   - httpie         # Modern HTTP client
   - pgcli          # Modern PostgreSQL client with syntax highlighting
-  
+  - jq             # JSON processor
+  - yq             # YAML processor
+
   # System monitoring and utilities
   - htop           # Process viewer (if not in system-deps)
-  
+  - btop           # Modern system resource monitor (C++)
+
   # Fun tools
   - cowsay         # ASCII art messages
   - fortune-mod    # Random quotes

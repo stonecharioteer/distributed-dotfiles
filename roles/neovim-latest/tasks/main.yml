@@ -1,4 +1,9 @@
 ---
+# Include macOS-specific tasks
+- name: Include macOS-specific tasks
+  include_tasks: darwin.yml
+  when: ansible_os_family == "Darwin"
+
 - name: Check if Neovim is already installed
   stat:
     path: "{{ neovim_binary_path }}"
@@ -89,7 +94,9 @@
           Vim symlink: {{ neovim_vim_symlink_path }}
           Version: {{ neovim_version_check.stdout_lines[0] }}
 
-  when: not neovim_exists.stat.exists or (neovim_exists.stat.exists and neovim_version not in installed_neovim_version.stdout)
+  when:
+    - ansible_os_family != "Darwin"
+    - not neovim_exists.stat.exists or (neovim_exists.stat.exists and neovim_version not in installed_neovim_version.stdout)
   rescue:
     - name: Clean up on failure
       file:

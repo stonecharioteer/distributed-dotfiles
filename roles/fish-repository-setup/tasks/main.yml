@@ -1,5 +1,16 @@
 ---
 # Safe fish repository setup using information from failsafe-checks
+- name: Check if fish config directory exists
+  stat:
+    path: "{{ dev_home }}/.config/fish/.git"
+  register: fish_git_check
+  become: no
+
+- name: Set fish_config_repo_exists if not already set
+  set_fact:
+    fish_config_repo_exists: "{{ fish_git_check.stat.exists }}"
+  when: fish_config_repo_exists is not defined
+
 - name: Clone or update fish dotfiles repository (safe mode)
   git:
     repo: "{{ fish_git_repo | default('git@github.com:stonecharioteer/dotfiles-fish.git') }}"
@@ -45,5 +56,5 @@
   file:
     path: "{{ dev_home }}/.config/fish"
     owner: "{{ dev_user }}"
-    group: "{{ dev_user }}"
+    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
     recurse: yes

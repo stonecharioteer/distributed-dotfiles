@@ -1,0 +1,7 @@
+---
+# Default variables for ghostty role
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "{{ ansible_env.HOME | default('/Users/' + dev_user) }}"
+
+# Optional: Ghostty dotfiles repository
+# ghostty_dotfiles_repo: "git@github.com:stonecharioteer/dotfiles-ghostty.git"

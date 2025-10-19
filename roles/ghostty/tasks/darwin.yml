@@ -1,0 +1,106 @@
+---
+# macOS-specific Ghostty installation
+- name: Check if Ghostty is installed
+  stat:
+    path: /Applications/Ghostty.app
+  register: ghostty_check
+  become: no
+
+- name: Install Ghostty via Homebrew cask
+  shell: |
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    if ! brew list --cask ghostty &>/dev/null; then
+      echo "Installing Ghostty..."
+      brew install --cask ghostty
+    else
+      echo "Ghostty is already installed"
+    fi
+  args:
+    executable: /bin/bash
+  become: no
+  register: ghostty_install_result
+  changed_when: "'Installing' in ghostty_install_result.stdout"
+  when: not ghostty_check.stat.exists
+
+- name: Display Ghostty installation output
+  debug:
+    msg: "{{ ghostty_install_result.stdout_lines }}"
+  when: ghostty_install_result.stdout_lines is defined and not ghostty_check.stat.exists
+
+- name: Create Ghostty config directory
+  file:
+    path: "{{ dev_home }}/.config/ghostty"
+    state: directory
+    owner: "{{ dev_user }}"
+    mode: '0755'
+  become: no
+
+- name: Check if Ghostty config already exists
+  stat:
+    path: "{{ dev_home }}/.config/ghostty/config"
+  register: ghostty_config_exists
+  become: no
+
+- name: Copy Ghostty config from repository
+  copy:
+    src: config
+    dest: "{{ dev_home }}/.config/ghostty/config"
+    owner: "{{ dev_user }}"
+    mode: '0644'
+    force: no
+  become: no
+  when: not ghostty_config_exists.stat.exists
+
+- name: Display config status
+  debug:
+    msg: |
+      {% if not ghostty_config_exists.stat.exists %}
+      ✓ Ghostty config installed from repository
+      {% else %}
+      ✓ Ghostty config already exists (not overwritten)
+      {% endif %}
+      Location: {{ dev_home }}/.config/ghostty/config
+
+      Features configured:
+      - Font: JetBrains Mono Nerd Font (size 13)
+      - Theme: Rose Pine (dark/light mode auto-switch)
+      - Shell integration enabled
+      - Vim-style split navigation (super+h/j/k/l)
+      - Tmux-style split creation (super+d, super+shift+d)
+
+- name: Verify Ghostty installation
+  stat:
+    path: /Applications/Ghostty.app
+  register: ghostty_verify
+  become: no
+
+- name: Display Ghostty installation status
+  debug:
+    msg: |
+      {% if ghostty_verify.stat.exists %}
+      ✓ Ghostty terminal installed and configured!
+
+      Application: /Applications/Ghostty.app
+      Config: {{ dev_home }}/.config/ghostty/config
+
+      Key Features:
+      - Auto dark/light mode with Rose Pine theme
+      - JetBrains Mono Nerd Font with icon support
+      - Shell integration for better prompt tracking
+      - Vim-style split navigation
+      - macOS-native performance
+
+      Key Bindings (Cmd = super):
+      - Cmd+t: New tab
+      - Cmd+d: Split right | Cmd+Shift+d: Split down
+      - Cmd+h/j/k/l: Navigate splits (vim-style)
+      - Cmd+w: Close tab/window
+      - Cmd+=/−: Adjust font size
+
+      Customize: Edit ~/.config/ghostty/config
+      Docs: https://ghostty.org/docs/config
+      {% else %}
+      ⚠ Ghostty installation verification failed
+      {% endif %}

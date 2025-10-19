@@ -1,5 +1,17 @@
 ---
 # Safe scripts repository setup using information from failsafe-checks
+- name: Check if scripts repository directory exists
+  stat:
+    path: "{{ dev_home }}/code/checkouts/personal/scripts/.git"
+  register: scripts_git_check
+  become: no
+
+- name: Set scripts_repo_exists if not already set
+  set_fact:
+    scripts_repo_exists: "{{ scripts_git_check.stat.exists }}"
+    scripts_can_update: false  # Default to safe mode
+  when: scripts_repo_exists is not defined
+
 - name: Clone scripts repository (safe mode)
   git:
     repo: "{{ scripts_git_repo | default('git@github.com:stonecharioteer/scripts.git') }}"
@@ -52,7 +64,7 @@
   file:
     path: "{{ dev_home }}/code/checkouts/personal/scripts"
     owner: "{{ dev_user }}"
-    group: "{{ dev_user }}"
+    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
     recurse: yes
   when: scripts_repo_exists or (not scripts_repo_exists)
 
@@ -71,7 +83,7 @@
     regexp: "^fish_add_path.*scripts$"
     create: yes
     owner: "{{ dev_user }}"
-    group: "{{ dev_user }}"
+    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
   when: scripts_repo_exists or (not scripts_repo_exists)
   ignore_errors: yes
 
