@@ -1,0 +1,61 @@
+---
+# tasks file for hugo (Linux)
+
+- name: Include platform-specific tasks
+  include_tasks: "{{ ansible_os_family | lower }}.yml"
+  when: ansible_os_family == "Darwin"
+  tags: blog
+
+- name: Install Hugo Extended on Linux
+  when: ansible_os_family == "Debian"
+  tags: blog
+  block:
+    - name: Check if Hugo is already installed
+      command: hugo version
+      register: hugo_check
+      failed_when: false
+      changed_when: false
+
+    - name: Check installed Hugo version
+      set_fact:
+        hugo_installed_version: "{{ hugo_check.stdout | regex_search('v([0-9]+\\.[0-9]+\\.[0-9]+)', '\\1') | first }}"
+      when: hugo_check.rc == 0
+
+    - name: Display current Hugo version if installed
+      debug:
+        msg: "Hugo {{ hugo_installed_version }} is currently installed"
+      when: hugo_check.rc == 0
+
+    - name: Install Hugo Extended {{ hugo_version }}
+      when: hugo_check.rc != 0 or hugo_installed_version != hugo_version
+      block:
+        - name: Create temporary directory for Hugo download
+          tempfile:
+            state: directory
+            suffix: hugo
+          register: hugo_temp_dir
+
+        - name: Download Hugo Extended .deb package
+          get_url:
+            url: "https://github.com/gohugoio/hugo/releases/download/v{{ hugo_version }}/hugo_extended_{{ hugo_version }}_linux-amd64.deb"
+            dest: "{{ hugo_temp_dir.path }}/hugo_extended_{{ hugo_version }}_linux-amd64.deb"
+            mode: '0644'
+
+        - name: Install Hugo Extended from .deb package
+          apt:
+            deb: "{{ hugo_temp_dir.path }}/hugo_extended_{{ hugo_version }}_linux-amd64.deb"
+          become: yes
+
+        - name: Clean up temporary directory
+          file:
+            path: "{{ hugo_temp_dir.path }}"
+            state: absent
+
+        - name: Verify Hugo installation
+          command: hugo version
+          register: hugo_verify
+          changed_when: false
+
+        - name: Display installed Hugo version
+          debug:
+            msg: "{{ hugo_verify.stdout }}"

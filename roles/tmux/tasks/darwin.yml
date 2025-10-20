@@ -21,21 +21,25 @@
   become: no
   register: tmux_install_result
   changed_when: "'Installing' in tmux_install_result.stdout"
+  tags: blog
 
 - name: Display tmux installation output
   debug:
     msg: "{{ tmux_install_result.stdout_lines }}"
   when: tmux_install_result.stdout_lines is defined
+  tags: blog
 
 - name: Verify tmux installation
   command: tmux -V
   register: tmux_version
   changed_when: false
   become: no
+  tags: blog
 
 - name: Display tmux version
   debug:
     msg: "✓ tmux installed via Homebrew: {{ tmux_version.stdout }}"
+  tags: blog
 
 # Install oh-my-tmux configuration (same for all platforms)
 - name: Check if oh-my-tmux is already installed
@@ -43,10 +47,14 @@
     path: "{{ dev_home }}/.tmux/.git"
   register: oh_my_tmux_exists
   become: no
-  tags: oh-my-tmux
+  tags:
+    - oh-my-tmux
+    - blog
 
 - name: Install oh-my-tmux
-  tags: oh-my-tmux
+  tags:
+    - oh-my-tmux
+    - blog
   block:
     - name: Clone oh-my-tmux repository
       git:
@@ -121,7 +129,9 @@
   when: not oh_my_tmux_exists.stat.exists or oh_my_tmux_exists.stat.islnk is defined
 
 - name: Update oh-my-tmux if already installed
-  tags: oh-my-tmux
+  tags:
+    - oh-my-tmux
+    - blog
   block:
     - name: Pull latest oh-my-tmux changes
       git:

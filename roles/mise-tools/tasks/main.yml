@@ -3,6 +3,7 @@
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
   when: ansible_os_family == "Darwin"
+  tags: blog
 
 - name: Install essential build tools (Debian/Ubuntu)
   package:
@@ -112,6 +113,7 @@
     path: "{{ dev_home }}/.local/bin/mise"
   register: mise_exists
   become: no
+  tags: blog
 
 - name: Download and install mise (runtime version manager)
   shell: |
@@ -120,6 +122,7 @@
   environment:
     HOME: "{{ dev_home }}"
   when: not mise_exists.stat.exists
+  tags: blog
 
 - name: Create mise config directory
   file:
@@ -129,6 +132,7 @@
     group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
     mode: '0755'
   become: no
+  tags: blog
 
 - name: Install Node.js via mise
   shell: |
@@ -138,6 +142,7 @@
     HOME: "{{ dev_home }}"
   become: no
   ignore_errors: yes
+  tags: blog
 
 # Python management handled separately via uv instead of mise
 

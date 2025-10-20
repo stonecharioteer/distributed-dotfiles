@@ -1,0 +1,5 @@
+---
+# defaults file for hugo
+hugo_version: "0.146.7"
+dev_user: "{{ ansible_user_id }}"
+dev_home: "{{ ansible_env.HOME }}"

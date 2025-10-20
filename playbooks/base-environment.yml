@@ -74,6 +74,7 @@
     - neovim-latest
     - tree-sitter-cli
     - nvim-config
+    - hugo
     - docker
 
   post_tasks:
@@ -99,6 +100,7 @@
           ✓ Neovim {{ neovim_version | default('latest') }} with vim symlink
           ✓ tree-sitter CLI for syntax highlighting
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
+          ✓ Hugo Extended {{ hugo_version | default('0.146.7') }} static site generator
           ✓ Docker Engine with Compose plugin
           
           📋 Next Steps:
@@ -109,6 +111,7 @@
              - nvim --version
              - mise list (verify language runtimes)
              - psql --version && pgcli --version (database tools)
+             - hugo version (static site generator)
           
           🎯 Your base development environment is ready!
           - Modern shell: Fish with mise for language management

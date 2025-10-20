@@ -35,6 +35,7 @@ ansible-playbook playbooks/macos-gui-environment.yml
 - CLI tools: ripgrep, fd, fzf, starship, gum, direnv, zoxide, watchexec
 - tmux (compiled from source) + oh-my-tmux with powerline separators
 - Neovim 0.11.2 + custom configuration
+- Hugo Extended 0.146.7 (static site generator)
 - Docker Engine + Compose
 
 **macOS** (`macos-base-environment.yml`):
@@ -43,6 +44,7 @@ ansible-playbook playbooks/macos-gui-environment.yml
 - Same CLI tools via Homebrew
 - tmux (via Homebrew) + oh-my-tmux with powerline separators
 - Neovim (via Homebrew) + custom configuration
+- Hugo Extended (static site generator)
 - Docker Desktop
 
 ### GUI Environment
@@ -148,7 +150,7 @@ ansible-playbook playbooks/base-environment.yml --list-tasks
 **Key roles:**
 - Shell: `fish-shell`, `fish-config`, `mise-tools`, `rust-toolchain`
 - CLI: `system-deps`, `cli-tools`, `dev-folders`
-- Development: `tmux`, `neovim-latest`, `nvim-config`, `tree-sitter-cli`, `docker`
+- Development: `tmux`, `neovim-latest`, `nvim-config`, `tree-sitter-cli`, `hugo`, `docker`
 - GUI (Linux): `qtile-wm`, `alacritty`, `desktop-integration`
 - GUI (macOS): `ghostty`, `aerospace-wm`, `nerd-fonts`
 

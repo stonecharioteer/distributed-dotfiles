@@ -143,6 +143,9 @@ The repository uses a **unified role-based architecture** with all functionality
 - **neovim-latest**: Installs Neovim 0.11.2 binary with vim symlink (Linux) or via Homebrew (macOS)
 - **tree-sitter-cli**: Installs tree-sitter CLI via npm (uses mise Node.js)
 - **nvim-config**: Sets up custom Neovim configuration with plugins
+- **hugo**: Hugo Extended 0.146.7 static site generator
+  - Linux: Downloads .deb from GitHub releases and installs via apt
+  - macOS: Installs via Homebrew (always latest extended version)
 - **docker**: Docker Engine installation (Linux) or Docker Desktop via Homebrew (macOS)
 
 **GUI Environment (Linux):**
@@ -189,6 +192,7 @@ The repository uses a **unified role-based architecture** with all functionality
 - **Neovim**: 0.11.2 binary with vim symlink (Linux) or via Homebrew (macOS)
 - **Custom Neovim config**: Complete configuration with plugin setup
 - **tree-sitter CLI**: Via npm for syntax highlighting
+- **Hugo Extended**: 0.146.7 static site generator (Linux .deb) or via Homebrew (macOS)
 - **Docker**: Latest Engine with Compose (Linux) or Docker Desktop (macOS)
 
 **GUI Environment (Linux)**:

@@ -31,6 +31,7 @@
     path: "{{ dev_home }}/.local/bin/mise"
   register: mise_exists
   become: no
+  tags: blog
 
 - name: Download and install mise (runtime version manager)
   shell: |
@@ -39,6 +40,7 @@
   environment:
     HOME: "{{ dev_home }}"
   when: not mise_exists.stat.exists
+  tags: blog
 
 - name: Create mise config directory
   file:
@@ -47,6 +49,7 @@
     owner: "{{ dev_user }}"
     mode: '0755'
   become: no
+  tags: blog
 
 - name: Install Node.js via mise
   shell: |
@@ -56,6 +59,7 @@
     HOME: "{{ dev_home }}"
   become: no
   ignore_errors: yes
+  tags: blog
 
 - name: Install Go via mise
   shell: |
