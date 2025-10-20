@@ -62,6 +62,7 @@
     - neovim-latest
     - tree-sitter-cli
     - nvim-config
+    - hugo
     - docker
 
   post_tasks:
@@ -92,6 +93,7 @@
           ✓ Neovim via Homebrew with vim symlink
           ✓ tree-sitter CLI for syntax highlighting
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
+          ✓ Hugo Extended static site generator
           ✓ Docker Desktop installed
 
           📋 Next Steps:
@@ -103,6 +105,7 @@
              - nvim --version
              - mise list (verify language runtimes)
              - psql --version && pgcli --version (database tools)
+             - hugo version (static site generator)
 
           🎯 Your macOS base development environment is ready!
           - Modern shell: Fish with mise for language management

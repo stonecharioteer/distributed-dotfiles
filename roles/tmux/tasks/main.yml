@@ -3,18 +3,22 @@
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
   when: ansible_os_family == "Darwin"
+  tags: blog
 
 - name: Check if tmux is already installed
   stat:
     path: "{{ tmux_binary_path }}"
   register: tmux_exists
+  tags: blog
 
 - name: Display tmux installation status
   debug:
     msg: "tmux already installed at {{ tmux_binary_path }}"
   when: tmux_exists.stat.exists
+  tags: blog
 
 - name: Install tmux from source
+  tags: blog
   block:
     - name: Install tmux build dependencies
       package:
@@ -116,10 +120,14 @@
     path: "{{ dev_home }}/.tmux/.git"
   register: oh_my_tmux_exists
   become: no
-  tags: oh-my-tmux
+  tags:
+    - oh-my-tmux
+    - blog
 
 - name: Install oh-my-tmux
-  tags: oh-my-tmux
+  tags:
+    - oh-my-tmux
+    - blog
   block:
     - name: Clone oh-my-tmux repository
       git:
@@ -194,7 +202,9 @@
   when: not oh_my_tmux_exists.stat.exists or oh_my_tmux_exists.stat.islnk is defined
 
 - name: Update oh-my-tmux if already installed
-  tags: oh-my-tmux
+  tags:
+    - oh-my-tmux
+    - blog
   block:
     - name: Pull latest oh-my-tmux changes
       git:

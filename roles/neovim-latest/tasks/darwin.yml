@@ -16,23 +16,27 @@
   become: no
   register: nvim_install_result
   changed_when: "'Installing' in nvim_install_result.stdout"
+  tags: blog
 
 - name: Display Neovim installation output
   debug:
     msg: "{{ nvim_install_result.stdout_lines }}"
   when: nvim_install_result.stdout_lines is defined
+  tags: blog
 
 - name: Get Neovim binary path
   command: which nvim
   register: nvim_path
   changed_when: false
   become: no
+  tags: blog
 
 - name: Check if vim symlink exists
   stat:
     path: /opt/homebrew/bin/vim
   register: vim_symlink_check
   become: no
+  tags: blog
 
 - name: Create vim symlink to nvim
   file:
@@ -41,12 +45,14 @@
     state: link
   become: no
   when: not vim_symlink_check.stat.exists
+  tags: blog
 
 - name: Verify Neovim installation
   command: nvim --version
   register: neovim_version_check
   changed_when: false
   become: no
+  tags: blog
 
 - name: Display installation success
   debug:
@@ -54,3 +60,4 @@
       ✓ Neovim installed via Homebrew!
       Binary: {{ nvim_path.stdout }}
       Version: {{ neovim_version_check.stdout_lines[0] }}
+  tags: blog

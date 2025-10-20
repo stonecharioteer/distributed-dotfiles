@@ -3,11 +3,13 @@
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
   when: ansible_os_family == "Darwin"
+  tags: blog
 
 - name: Check if Neovim is already installed
   stat:
     path: "{{ neovim_binary_path }}"
   register: neovim_exists
+  tags: blog
 
 - name: Check installed Neovim version
   shell: "{{ neovim_binary_path }} --version | head -n1"
@@ -15,6 +17,7 @@
   when: neovim_exists.stat.exists
   changed_when: false
   ignore_errors: yes
+  tags: blog
 
 - name: Display current Neovim status
   debug:
@@ -26,8 +29,10 @@
       {% else %}
       Not installed - will install {{ neovim_version }}
       {% endif %}
+  tags: blog
 
 - name: Install Neovim {{ neovim_version }}
+  tags: blog
   block:
     - name: Create download directory
       file:

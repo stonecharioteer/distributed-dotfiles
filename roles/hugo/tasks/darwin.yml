@@ -1,0 +1,53 @@
+---
+# tasks file for hugo (macOS - Apple Silicon only)
+
+- name: Check if Homebrew is installed
+  stat:
+    path: /opt/homebrew/bin/brew
+  register: homebrew_exists
+  tags: blog
+
+- name: Install Homebrew if not present
+  when: not homebrew_exists.stat.exists
+  tags: blog
+  block:
+    - name: Download and install Homebrew
+      shell: |
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      become: no
+
+- name: Check if Hugo is already installed
+  command: /opt/homebrew/bin/brew list hugo
+  register: hugo_check
+  failed_when: false
+  changed_when: false
+  become: no
+  tags: blog
+
+- name: Install Hugo via Homebrew
+  shell: /opt/homebrew/bin/brew install hugo
+  when: hugo_check.rc != 0
+  become: no
+  register: hugo_install
+  tags: blog
+
+- name: Upgrade Hugo via Homebrew if already installed
+  shell: /opt/homebrew/bin/brew upgrade hugo
+  when: hugo_check.rc == 0
+  become: no
+  register: hugo_upgrade
+  failed_when: false
+  changed_when: "'Already installed' not in hugo_upgrade.stderr and hugo_upgrade.rc == 0"
+  tags: blog
+
+- name: Verify Hugo installation
+  command: hugo version
+  register: hugo_verify
+  changed_when: false
+  become: no
+  tags: blog
+
+- name: Display installed Hugo version
+  debug:
+    msg: "{{ hugo_verify.stdout }}"
+  tags: blog
