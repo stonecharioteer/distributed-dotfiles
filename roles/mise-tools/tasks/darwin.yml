@@ -5,7 +5,7 @@
     export HOMEBREW_NO_AUTO_UPDATE=1
     export PATH="/opt/homebrew/bin:$PATH"
 
-    packages=(pkg-config openssl@3 bison flex cmake autoconf automake libtool)
+    packages=(pkg-config openssl@3 bison flex cmake autoconf automake libtool libyaml)
 
     for package in "${packages[@]}"; do
       if ! brew list "$package" &>/dev/null; then

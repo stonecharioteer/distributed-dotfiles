@@ -20,6 +20,12 @@ outer.bottom = 8
 outer.top = 8
 outer.right = 8
 
+# Window rules - auto-assign windows to workspaces and set layout
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+if.window-title-regex-substring = 'btop'
+run = ['layout floating', 'move-node-to-workspace P']
+
 # Mode declarations
 [mode.main.binding]
 alt-slash = 'layout tiles horizontal vertical'
@@ -31,15 +37,15 @@ alt-j = 'focus down'
 alt-k = 'focus up'
 alt-l = 'focus right'
 
-# Focus monitor
-alt-ctrl-h = 'focus-monitor --wrap-around prev'
-alt-ctrl-l = 'focus-monitor --wrap-around next'
-
 # Move windows
 alt-shift-h = 'move left'
 alt-shift-j = 'move down'
 alt-shift-k = 'move up'
 alt-shift-l = 'move right'
+
+# Move workspace to monitor
+alt-ctrl-h = 'move-workspace-to-monitor --wrap-around prev'
+alt-ctrl-l = 'move-workspace-to-monitor --wrap-around next'
 
 # Workspaces
 alt-1 = 'workspace 1'
@@ -51,6 +57,7 @@ alt-6 = 'workspace 6'
 alt-7 = 'workspace 7'
 alt-8 = 'workspace 8'
 alt-9 = 'workspace 9'
+alt-p = 'workspace P'
 
 # Move windows to workspaces
 alt-shift-1 = 'move-node-to-workspace 1'
@@ -62,10 +69,6 @@ alt-shift-6 = 'move-node-to-workspace 6'
 alt-shift-7 = 'move-node-to-workspace 7'
 alt-shift-8 = 'move-node-to-workspace 8'
 alt-shift-9 = 'move-node-to-workspace 9'
-
-# Move workspace to monitor
-alt-shift-h = 'move-workspace-to-monitor --wrap-around prev'
-alt-shift-l = 'move-workspace-to-monitor --wrap-around next'
 
 # Resize mode
 alt-r = 'mode resize'

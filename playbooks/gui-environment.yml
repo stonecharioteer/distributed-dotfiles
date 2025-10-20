@@ -60,32 +60,54 @@
 
   roles:
     # Failsafe checks for all components
-    - failsafe-checks
+    - role: failsafe-checks
+      tags: [always]
 
     # Base Development Environment (shell + dev tools)
-    - fish-shell
-    - fish-repository-setup
-    - scripts-repository-setup
-    - mise-tools
-    - rust-toolchain
-    - fish-config
-    - system-deps
-    - cli-tools
-    - dev-folders
-    - tmux
-    - neovim-latest
-    - tree-sitter-cli
-    - nvim-config
-    - docker
+    - role: fish-shell
+      tags: [shell, fish]
+    - role: fish-repository-setup
+      tags: [shell, fish, dotfiles]
+    - role: scripts-repository-setup
+      tags: [shell, scripts]
+    - role: mise-tools
+      tags: [shell, mise, languages]
+    - role: rust-toolchain
+      tags: [shell, rust, languages]
+    - role: fish-config
+      tags: [shell, fish, config]
+    - role: system-deps
+      tags: [dev, deps]
+    - role: cli-tools
+      tags: [dev, cli]
+    - role: dev-folders
+      tags: [dev, folders]
+    - role: tmux
+      tags: [dev, tmux]
+    - role: neovim-latest
+      tags: [dev, neovim, editor]
+    - role: tree-sitter-cli
+      tags: [dev, neovim]
+    - role: nvim-config
+      tags: [dev, neovim, editor, config]
+    - role: docker
+      tags: [dev, docker, containers]
 
     # GUI Environment
-    - locale-setup
-    - base-system
-    - repository-setup
-    - qtile-wm
-    - nerd-fonts
-    - alacritty
-    - desktop-integration
+    - role: locale-setup
+      tags: [gui, system, locale]
+    - role: base-system
+      tags: [gui, system]
+    - role: repository-setup
+      tags: [gui, system, repos]
+    - role: qtile-wm
+      tags: [gui, wm, qtile]
+    - role: nerd-fonts
+      tags: [gui, fonts]
+    - role: alacritty
+      tags: [gui, terminal, alacritty]
+    - role: desktop-integration
+      tags: [gui, desktop, integration]
 
   post_tasks:
     - name: Display complete GUI workstation setup completion

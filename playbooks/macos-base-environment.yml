@@ -48,22 +48,36 @@
 
   roles:
     # Shell Environment
-    - fish-shell
-    - fish-repository-setup
-    - scripts-repository-setup
-    - mise-tools
-    - rust-toolchain
-    - fish-config
+    - role: fish-shell
+      tags: [shell, fish]
+    - role: fish-repository-setup
+      tags: [shell, fish, dotfiles]
+    - role: scripts-repository-setup
+      tags: [shell, scripts]
+    - role: mise-tools
+      tags: [shell, mise, languages]
+    - role: rust-toolchain
+      tags: [shell, rust, languages]
+    - role: fish-config
+      tags: [shell, fish, config]
 
     # Development Environment
-    - cli-tools
-    - dev-folders
-    - tmux
-    - neovim-latest
-    - tree-sitter-cli
-    - nvim-config
-    - hugo
-    - docker
+    - role: cli-tools
+      tags: [dev, cli]
+    - role: dev-folders
+      tags: [dev, folders]
+    - role: tmux
+      tags: [dev, tmux]
+    - role: neovim-latest
+      tags: [dev, neovim, editor]
+    - role: tree-sitter-cli
+      tags: [dev, neovim]
+    - role: nvim-config
+      tags: [dev, neovim, editor, config]
+    - role: hugo
+      tags: [dev, hugo, blog]
+    - role: docker
+      tags: [dev, docker, containers]
 
   post_tasks:
     - name: Display base environment setup completion

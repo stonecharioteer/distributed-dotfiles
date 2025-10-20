@@ -95,15 +95,75 @@ ansible-playbook playbooks/macos-base-environment.yml
 
 ## Advanced Usage
 
-### Run specific roles only
+### Run specific components using tags
+
+All playbooks support granular control through tags:
+
+#### Linux (Ubuntu/Debian)
 
 ```bash
-# Using tags
-ansible-playbook playbooks/base-environment.yml --tags tmux
+# Install only shell environment
+ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags shell
 
-# Run oh-my-tmux configuration without sudo
-ansible-playbook playbooks/macos-base-environment.yml --tags oh-my-tmux
+# Install only development tools (skip shell)
+ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags dev
+
+# Install specific tools
+ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags fish
+ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags neovim
+ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags docker
+
+# Install GUI only (skip base environment)
+ansible-playbook --ask-become-pass playbooks/gui-environment.yml --tags gui
+
+# Install specific GUI components
+ansible-playbook --ask-become-pass playbooks/gui-environment.yml --tags qtile
+ansible-playbook --ask-become-pass playbooks/gui-environment.yml --tags alacritty
+
+# Skip specific components
+ansible-playbook --ask-become-pass playbooks/base-environment.yml --skip-tags docker
+
+# Multiple tags
+ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags "fish,tmux,neovim"
 ```
+
+**Available Linux tags:**
+- **Shell:** `shell`, `fish`, `dotfiles`, `scripts`, `mise`, `rust`, `languages`, `config`
+- **Development:** `dev`, `deps`, `cli`, `folders`, `tmux`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
+- **GUI:** `gui`, `system`, `locale`, `repos`, `wm`, `qtile`, `fonts`, `terminal`, `alacritty`, `desktop`, `integration`
+
+#### macOS
+
+```bash
+# Install only shell environment
+ansible-playbook playbooks/macos-base-environment.yml --tags shell
+
+# Install only development tools (skip shell)
+ansible-playbook playbooks/macos-base-environment.yml --tags dev
+
+# Install specific tools
+ansible-playbook playbooks/macos-base-environment.yml --tags fish
+ansible-playbook playbooks/macos-base-environment.yml --tags neovim
+ansible-playbook playbooks/macos-base-environment.yml --tags docker
+
+# Install GUI only (skip base environment)
+ansible-playbook playbooks/macos-gui-environment.yml --tags gui
+
+# Install specific GUI components
+ansible-playbook playbooks/macos-gui-environment.yml --tags ghostty
+ansible-playbook playbooks/macos-gui-environment.yml --tags aerospace
+
+# Skip specific components
+ansible-playbook playbooks/macos-base-environment.yml --skip-tags docker
+
+# Multiple tags
+ansible-playbook playbooks/macos-base-environment.yml --tags "fish,tmux,neovim"
+```
+
+**Available macOS tags:**
+- **Shell:** `shell`, `fish`, `dotfiles`, `scripts`, `mise`, `rust`, `languages`, `config`
+- **Development:** `dev`, `cli`, `folders`, `tmux`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
+- **GUI:** `gui`, `fonts`, `terminal`, `ghostty`, `wm`, `aerospace`
 
 ### Target specific hosts (Ubuntu/Debian)
 
