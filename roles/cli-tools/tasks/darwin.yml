@@ -8,7 +8,7 @@
     # Install packages one by one to show progress and handle already-installed gracefully
     packages=(
       ripgrep fd zoxide starship fzf direnv tree httpie
-      pgcli htop btop gum jq yq cowsay fortune lolcat neofetch lsd
+      pgcli htop btop gum glow jq yq cowsay fortune lolcat neofetch lsd
     )
 
     for package in "${packages[@]}"; do
@@ -48,6 +48,24 @@
   changed_when: "'Installing' in watchexec_install_result.stdout"
   ignore_errors: yes
 
+- name: Install bandwhich via Homebrew (network bandwidth monitor)
+  shell: |
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    if ! brew list bandwhich &>/dev/null; then
+      echo "Installing bandwhich..."
+      brew install bandwhich || echo "Warning: Failed to install bandwhich"
+    else
+      echo "bandwhich is already installed"
+    fi
+  args:
+    executable: /bin/bash
+  become: no
+  register: bandwhich_install_result
+  changed_when: "'Installing' in bandwhich_install_result.stdout"
+  ignore_errors: yes
+
 - name: Verify CLI tools installation
   command: "{{ item }} --version"
   loop:
@@ -59,7 +77,9 @@
     - http
     - starship
     - gum
+    - glow
     - watchexec
+    - bandwhich
     - lsd
   register: cli_tool_versions
   changed_when: false
