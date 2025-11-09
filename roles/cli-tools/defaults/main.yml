@@ -45,18 +45,29 @@ external_tools:
     package: "gum"
     check_cmd: "gum --version"
 
+  glow:
+    repo_key: "https://repo.charm.sh/apt/gpg.key"
+    repo_line: "deb https://repo.charm.sh/apt/ * *"
+    package: "glow"
+    check_cmd: "glow --version"
+
 # Tools installed via cargo (requires Rust from mise/fish setup)
 cargo_tools:
   watchexec-cli:
     package: "watchexec-cli"
     binary: "watchexec"
     check_cmd: "watchexec --version"
-  
+
+  bandwhich:
+    package: "bandwhich"
+    binary: "bandwhich"
+    check_cmd: "bandwhich --version"
+
   just:
     package: "just"
     binary: "just"
     check_cmd: "just --version"
-  
+
   amdgpu_top:
     package: "amdgpu_top"
     binary: "amdgpu_top"

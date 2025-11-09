@@ -119,6 +119,47 @@
       debug:
         msg: "⚠ Gum installation failed - continuing with other tools"
 
+- name: Check if Glow is already installed
+  command: "{{ external_tools.glow.check_cmd }}"
+  register: glow_check
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install Glow markdown renderer
+  block:
+    - name: Add Charm repository GPG key (if not already added)
+      apt_key:
+        url: "{{ external_tools.glow.repo_key }}"
+        state: present
+
+    - name: Add Charm repository (if not already added)
+      apt_repository:
+        repo: "{{ external_tools.glow.repo_line }}"
+        state: present
+
+    - name: Install Glow
+      package:
+        name: "{{ external_tools.glow.package }}"
+        state: present
+        update_cache: yes
+
+    - name: Verify Glow installation
+      command: "{{ external_tools.glow.check_cmd }}"
+      register: glow_version
+      changed_when: false
+
+    - name: Display Glow installation success
+      debug:
+        msg: "✓ Glow installed: {{ glow_version.stdout }}"
+
+  when:
+    - ansible_os_family == "Debian"
+    - glow_check.rc != 0
+  rescue:
+    - name: Display Glow installation failure
+      debug:
+        msg: "⚠ Glow installation failed - continuing with other tools"
+
 - name: Check if Rust/cargo is available for cargo tools
   shell: |
     source {{ dev_home }}/.cargo/env
@@ -192,6 +233,55 @@
       debug:
         msg: "✓ watchexec installed: {{ watchexec_version.stdout }}"
 
+    - name: Check if bandwhich is already installed
+      shell: |
+        source {{ dev_home }}/.cargo/env
+        command -v "{{ cargo_tools['bandwhich'].binary }}"
+      args:
+        executable: /bin/bash
+      register: bandwhich_check
+      become_user: "{{ dev_user }}"
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Install bandwhich via cargo binstall
+      shell: |
+        source {{ dev_home }}/.cargo/env
+        cargo binstall -y "{{ cargo_tools['bandwhich'].package }}"
+      args:
+        executable: /bin/bash
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      when: bandwhich_check.rc != 0
+
+    - name: Verify bandwhich installation
+      shell: |
+        source {{ dev_home }}/.cargo/env
+        "{{ cargo_tools['bandwhich'].check_cmd }}"
+      args:
+        executable: /bin/bash
+      register: bandwhich_version
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      changed_when: false
+
+    - name: Display bandwhich installation success
+      debug:
+        msg: "✓ bandwhich installed: {{ bandwhich_version.stdout }}"
+
+    - name: Set capabilities for bandwhich (allows running without sudo)
+      command: setcap cap_sys_ptrace,cap_dac_read_search,cap_net_raw,cap_net_admin+ep {{ dev_home }}/.cargo/bin/bandwhich
+      register: bandwhich_setcap
+      ignore_errors: yes
+      when: bandwhich_version is defined and bandwhich_version.rc == 0
+
+    - name: Display bandwhich capabilities set
+      debug:
+        msg: "✓ Set capabilities for bandwhich - can run without sudo"
+      when: bandwhich_setcap is defined and bandwhich_setcap.rc == 0
+
   when:
     - ansible_os_family != "Darwin"
     - cargo_check.rc == 0
@@ -243,6 +333,13 @@
       ✓ Gum already installed
       {% endif %}
       {% endif %}
+      {% if glow_check is defined %}
+      {% if glow_check.rc != 0 %}
+      ✓ Glow markdown renderer installed
+      {% else %}
+      ✓ Glow already installed
+      {% endif %}
+      {% endif %}
 
       Cargo tools:
       {% if cargo_check is defined and cargo_check.rc == 0 %}
@@ -251,8 +348,13 @@
       {% elif watchexec_check is defined %}
       ✓ watchexec already installed
       {% endif %}
+      {% if bandwhich_check is defined and bandwhich_check.rc != 0 %}
+      ✓ bandwhich installed via cargo binstall
+      {% elif bandwhich_check is defined %}
+      ✓ bandwhich already installed
+      {% endif %}
       {% else %}
-      ⚠ Cargo not available - watchexec-cli skipped
+      ⚠ Cargo not available - cargo tools skipped
       {% endif %}
       {% endif %}
 
