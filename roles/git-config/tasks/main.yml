@@ -1,0 +1,81 @@
+---
+- name: Check if git is installed
+  command: git --version
+  register: git_version
+  changed_when: false
+  failed_when: false
+
+- name: Display git version
+  debug:
+    msg: |
+      {% if git_version.rc == 0 %}
+      ✓ Git is installed: {{ git_version.stdout }}
+      {% else %}
+      ⚠ Git is not installed - skipping configuration
+      {% endif %}
+
+- name: Configure git to use merge strategy for pulls
+  git_config:
+    name: pull.rebase
+    value: "false"
+    scope: global
+  become: no
+  when: git_version.rc == 0
+
+- name: Configure git aliases - common shortcuts
+  git_config:
+    name: "alias.{{ item.key }}"
+    value: "{{ item.value }}"
+    scope: global
+  become: no
+  loop:
+    - { key: 'st', value: 'status' }
+    - { key: 'co', value: 'checkout' }
+    - { key: 'br', value: 'branch' }
+    - { key: 'ci', value: 'commit' }
+  when: git_version.rc == 0
+
+- name: Configure git aliases - log visualization
+  git_config:
+    name: "alias.{{ item.key }}"
+    value: "{{ item.value }}"
+    scope: global
+  become: no
+  loop:
+    - { key: 'lg', value: 'log --graph --oneline --all --decorate' }
+    - { key: 'lol', value: 'log --oneline' }
+    - { key: 'last', value: 'log -1 HEAD' }
+  when: git_version.rc == 0
+
+- name: Verify git pull configuration
+  command: git config --global --get pull.rebase
+  register: pull_rebase_config
+  become: no
+  changed_when: false
+  failed_when: false
+  when: git_version.rc == 0
+
+- name: Display git configuration status
+  debug:
+    msg: |
+      ✓ Git configuration complete!
+      {% if pull_rebase_config.stdout is defined %}
+      - pull.rebase = {{ pull_rebase_config.stdout }}
+      {% endif %}
+
+      📝 Configured Git Aliases:
+
+      Common Shortcuts:
+      - git st    → git status
+      - git co    → git checkout
+      - git br    → git branch
+      - git ci    → git commit
+
+      Log Visualization:
+      - git lg    → git log --graph --oneline --all --decorate
+      - git lol   → git log --oneline
+      - git last  → git log -1 HEAD
+
+      This configuration ensures git pull uses merge strategy by default
+      and provides convenient shortcuts for common git commands.
+  when: git_version.rc == 0
