@@ -4,8 +4,9 @@
 # Start AeroSpace at login
 start-at-login = true
 
-# Start applications after AeroSpace launches
-after-login-command = ['exec-and-forget open -na Ghostty --args -e btop']
+# Start applications after AeroSpace starts
+# Note: after-login-command was deprecated in 0.19.0, using after-startup-command instead
+after-startup-command = ['exec-and-forget open -na Ghostty --args -e btop']
 
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
 enable-normalization-flatten-containers = true

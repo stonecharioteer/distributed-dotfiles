@@ -13,6 +13,19 @@
   changed_when: false
   become: no
 
+- name: Ensure directories required by Docker cask exist and are writable
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user_id }}"
+    group: admin
+  become: yes
+  loop:
+    - /usr/local/bin
+    - /usr/local/cli-plugins
+  when: not docker_desktop_check.stat.exists
+
 - name: Install Docker Desktop via Homebrew cask
   shell: |
     export HOMEBREW_NO_AUTO_UPDATE=1

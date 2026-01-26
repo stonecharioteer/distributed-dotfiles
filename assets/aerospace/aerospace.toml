@@ -4,6 +4,10 @@
 # Start AeroSpace at login
 start-at-login = true
 
+# Start applications after AeroSpace starts
+# Note: after-login-command was deprecated in 0.19.0, using after-startup-command instead
+after-startup-command = ['exec-and-forget open -na Ghostty --args -e btop']
+
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
@@ -13,18 +17,18 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
 # Gaps between windows
 [gaps]
-inner.horizontal = 8
-inner.vertical = 8
-outer.left = 8
-outer.bottom = 8
-outer.top = 8
-outer.right = 8
+inner.horizontal = 0
+inner.vertical = 0
+outer.left = 0
+outer.bottom = 0
+outer.top = 0
+outer.right = 0
 
 # Window rules - auto-assign windows to workspaces and set layout
 [[on-window-detected]]
 if.app-id = 'com.mitchellh.ghostty'
 if.window-title-regex-substring = 'btop'
-run = ['layout floating', 'move-node-to-workspace P']
+run = ['move-node-to-workspace P', 'layout floating']
 
 # Mode declarations
 [mode.main.binding]
@@ -46,8 +50,6 @@ alt-shift-l = 'move right'
 # Move workspace to monitor
 alt-ctrl-h = 'move-workspace-to-monitor --wrap-around prev'
 alt-ctrl-l = 'move-workspace-to-monitor --wrap-around next'
-alt-ctrl-j = 'focus-monitor --wrap-around next'
-alt-ctrl-k = 'focus-monitor --wrap-around prev'
 
 # Workspaces
 alt-1 = 'workspace 1'
@@ -71,20 +73,6 @@ alt-shift-6 = 'move-node-to-workspace 6'
 alt-shift-7 = 'move-node-to-workspace 7'
 alt-shift-8 = 'move-node-to-workspace 8'
 alt-shift-9 = 'move-node-to-workspace 9'
-
-# Summon Workspaces to Monitor
-alt-ctrl-shift-1 = 'summon-workspace 1'
-alt-ctrl-shift-2 = 'summon-workspace 2'
-alt-ctrl-shift-3 = 'summon-workspace 3'
-alt-ctrl-shift-4 = 'summon-workspace 4'
-alt-ctrl-shift-5 = 'summon-workspace 5'
-alt-ctrl-shift-6 = 'summon-workspace 6'
-alt-ctrl-shift-7 = 'summon-workspace 7'
-alt-ctrl-shift-8 = 'summon-workspace 8'
-alt-ctrl-shift-9 = 'summon-workspace 9'
-
-
-alt-tab = 'workspace-back-and-forth'
 
 # Resize mode
 alt-r = 'mode resize'
