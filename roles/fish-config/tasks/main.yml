@@ -41,25 +41,15 @@
   when: fish_plugins_file.stat.exists
   ignore_errors: yes
 
-- name: Initialize starship prompt
+- name: Initialize shell tool integrations
   shell: |
-    fish -c "starship init fish | source"
-  become: no
-  environment:
-    HOME: "{{ dev_home }}"
-  ignore_errors: yes
-
-- name: Initialize atuin history
-  shell: |
-    fish -c "atuin init fish | source"
-  become: no
-  environment:
-    HOME: "{{ dev_home }}"
-  ignore_errors: yes
-
-- name: Initialize zoxide
-  shell: |
-    fish -c "zoxide init fish | source"
+    fish -c "{{ item.cmd }}"
+  loop:
+    - { cmd: "starship init fish | source" }
+    - { cmd: "atuin init fish | source" }
+    - { cmd: "zoxide init fish | source" }
+  loop_control:
+    label: "{{ item.cmd }}"
   become: no
   environment:
     HOME: "{{ dev_home }}"

@@ -4,30 +4,11 @@
   include_tasks: darwin.yml
   when: ansible_os_family == "Darwin"
 
-- name: Check which CLI packages are already installed
-  shell: dpkg -l | grep -E "^ii\s+({{ item }})\s" | wc -l
-  register: cli_package_check
-  loop: "{{ cli_packages }}"
-  changed_when: false
-  failed_when: false
-  when: ansible_os_family == "Debian"
-
-- name: Create list of CLI packages to install
-  set_fact:
-    cli_packages_to_install: "{{ cli_packages_to_install | default([]) + [item.item] }}"
-  loop: "{{ cli_package_check.results }}"
-  when:
-    - ansible_os_family == "Debian"
-    - item.stdout == "0"
-
 - name: Install CLI development tools via package manager
   package:
-    name: "{{ cli_packages_to_install }}"
+    name: "{{ cli_packages }}"
     state: present
-  when:
-    - ansible_os_family == "Debian"
-    - cli_packages_to_install is defined
-    - cli_packages_to_install | length > 0
+  when: ansible_os_family == "Debian"
 
 - name: Create fd symlink (Ubuntu packages fd-find as fdfind)
   file:
@@ -195,92 +176,31 @@
         HOME: "{{ dev_home }}"
       when: cargo_binstall_check.rc != 0
 
-    - name: Check if watchexec is already installed
+    - name: Install cargo tools via binstall
       shell: |
         source {{ dev_home }}/.cargo/env
-        command -v "{{ cargo_tools['watchexec-cli'].binary }}"
+        if ! command -v "{{ item.value.binary }}" &>/dev/null; then
+          echo "Installing {{ item.value.package }}..."
+          cargo binstall -y "{{ item.value.package }}"
+        else
+          echo "{{ item.value.binary }} is already installed"
+        fi
+        {{ item.value.check_cmd }}
       args:
         executable: /bin/bash
-      register: watchexec_check
-      become_user: "{{ dev_user }}"
-      ignore_errors: yes
-      changed_when: false
-
-    - name: Install watchexec-cli via cargo binstall
-      shell: |
-        source {{ dev_home }}/.cargo/env
-        cargo binstall -y "{{ cargo_tools['watchexec-cli'].package }}"
-      args:
-        executable: /bin/bash
+      loop: "{{ cargo_tools | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
       become_user: "{{ dev_user }}"
       environment:
         HOME: "{{ dev_home }}"
-      when: watchexec_check.rc != 0
-
-    - name: Verify watchexec installation
-      shell: |
-        source {{ dev_home }}/.cargo/env
-        "{{ cargo_tools['watchexec-cli'].check_cmd }}"
-      args:
-        executable: /bin/bash
-      register: watchexec_version
-      become_user: "{{ dev_user }}"
-      environment:
-        HOME: "{{ dev_home }}"
-      changed_when: false
-
-    - name: Display watchexec installation success
-      debug:
-        msg: "✓ watchexec installed: {{ watchexec_version.stdout }}"
-
-    - name: Check if bandwhich is already installed
-      shell: |
-        source {{ dev_home }}/.cargo/env
-        command -v "{{ cargo_tools['bandwhich'].binary }}"
-      args:
-        executable: /bin/bash
-      register: bandwhich_check
-      become_user: "{{ dev_user }}"
-      ignore_errors: yes
-      changed_when: false
-
-    - name: Install bandwhich via cargo binstall
-      shell: |
-        source {{ dev_home }}/.cargo/env
-        cargo binstall -y "{{ cargo_tools['bandwhich'].package }}"
-      args:
-        executable: /bin/bash
-      become_user: "{{ dev_user }}"
-      environment:
-        HOME: "{{ dev_home }}"
-      when: bandwhich_check.rc != 0
-
-    - name: Verify bandwhich installation
-      shell: |
-        source {{ dev_home }}/.cargo/env
-        "{{ cargo_tools['bandwhich'].check_cmd }}"
-      args:
-        executable: /bin/bash
-      register: bandwhich_version
-      become_user: "{{ dev_user }}"
-      environment:
-        HOME: "{{ dev_home }}"
-      changed_when: false
-
-    - name: Display bandwhich installation success
-      debug:
-        msg: "✓ bandwhich installed: {{ bandwhich_version.stdout }}"
+      register: cargo_tool_results
+      changed_when: "'Installing' in item.stdout | default('')"
 
     - name: Set capabilities for bandwhich (allows running without sudo)
       command: setcap cap_sys_ptrace,cap_dac_read_search,cap_net_raw,cap_net_admin+ep {{ dev_home }}/.cargo/bin/bandwhich
-      register: bandwhich_setcap
       ignore_errors: yes
-      when: bandwhich_version is defined and bandwhich_version.rc == 0
-
-    - name: Display bandwhich capabilities set
-      debug:
-        msg: "✓ Set capabilities for bandwhich - can run without sudo"
-      when: bandwhich_setcap is defined and bandwhich_setcap.rc == 0
+      when: "'bandwhich' in (cargo_tools | list)"
 
   when:
     - ansible_os_family != "Darwin"
@@ -311,49 +231,18 @@
       {% if ansible_os_family == "Darwin" %}
       ✓ All CLI tools installed via Homebrew on macOS
       {% else %}
-      Package-based tools:
-      {% if cli_packages_to_install is defined and cli_packages_to_install | length > 0 %}
-      Installed: {{ cli_packages_to_install | join(', ') }}
-      {% else %}
-      All package-based tools were already installed
-      {% endif %}
-
-      External tools:
-      {% if starship_check is defined %}
-      {% if starship_check.rc != 0 %}
-      ✓ Starship prompt installed
-      {% else %}
-      ✓ Starship already installed
-      {% endif %}
-      {% endif %}
-      {% if gum_check is defined %}
-      {% if gum_check.rc != 0 %}
-      ✓ Gum terminal UI tools installed
-      {% else %}
-      ✓ Gum already installed
-      {% endif %}
-      {% endif %}
-      {% if glow_check is defined %}
-      {% if glow_check.rc != 0 %}
-      ✓ Glow markdown renderer installed
-      {% else %}
-      ✓ Glow already installed
-      {% endif %}
-      {% endif %}
+      Package-based tools: {{ cli_packages | join(', ') }}
 
       Cargo tools:
-      {% if cargo_check is defined and cargo_check.rc == 0 %}
-      {% if watchexec_check is defined and watchexec_check.rc != 0 %}
-      ✓ watchexec-cli installed via cargo binstall
-      {% elif watchexec_check is defined %}
-      ✓ watchexec already installed
-      {% endif %}
-      {% if bandwhich_check is defined and bandwhich_check.rc != 0 %}
-      ✓ bandwhich installed via cargo binstall
-      {% elif bandwhich_check is defined %}
-      ✓ bandwhich already installed
-      {% endif %}
+      {% if cargo_tool_results is defined %}
+      {% for result in cargo_tool_results.results %}
+      {% if 'Installing' in result.stdout | default('') %}
+      ✓ {{ result.item.key }} installed via cargo binstall
       {% else %}
+      ✓ {{ result.item.key }} already installed
+      {% endif %}
+      {% endfor %}
+      {% elif cargo_check is defined and cargo_check.rc != 0 %}
       ⚠ Cargo not available - cargo tools skipped
       {% endif %}
       {% endif %}
