@@ -77,3 +77,7 @@ cargo_tools:
     package: "ast-grep"
     binary: "sg"
     check_cmd: "sg --version"
+
+# Cargo tools to install via cargo binstall on macOS (others use Homebrew)
+macos_cargo_tools:
+  - ast-grep

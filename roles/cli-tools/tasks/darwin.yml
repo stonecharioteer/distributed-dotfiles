@@ -5,10 +5,10 @@
     export HOMEBREW_NO_AUTO_UPDATE=1
     export PATH="/opt/homebrew/bin:$PATH"
 
-    # Install packages one by one to show progress and handle already-installed gracefully
     packages=(
       ripgrep fd zoxide starship fzf direnv tree httpie
       pgcli htop btop gum glow jq yq cowsay fortune lolcat neofetch lsd
+      watchexec bandwhich
     )
 
     for package in "${packages[@]}"; do
@@ -30,81 +30,27 @@
     msg: "{{ brew_install_result.stdout_lines }}"
   when: brew_install_result.stdout_lines is defined
 
-- name: Install watchexec via Homebrew (easier on macOS)
-  shell: |
-    export HOMEBREW_NO_AUTO_UPDATE=1
-    export PATH="/opt/homebrew/bin:$PATH"
-
-    if ! brew list watchexec &>/dev/null; then
-      echo "Installing watchexec..."
-      brew install watchexec || echo "Warning: Failed to install watchexec"
-    else
-      echo "watchexec is already installed"
-    fi
-  args:
-    executable: /bin/bash
-  become: no
-  register: watchexec_install_result
-  changed_when: "'Installing' in watchexec_install_result.stdout"
-  ignore_errors: yes
-
-- name: Install bandwhich via Homebrew (network bandwidth monitor)
-  shell: |
-    export HOMEBREW_NO_AUTO_UPDATE=1
-    export PATH="/opt/homebrew/bin:$PATH"
-
-    if ! brew list bandwhich &>/dev/null; then
-      echo "Installing bandwhich..."
-      brew install bandwhich || echo "Warning: Failed to install bandwhich"
-    else
-      echo "bandwhich is already installed"
-    fi
-  args:
-    executable: /bin/bash
-  become: no
-  register: bandwhich_install_result
-  changed_when: "'Installing' in bandwhich_install_result.stdout"
-  ignore_errors: yes
-
-- name: Check if ast-grep is already installed
-  shell: |
-    export PATH="{{ ansible_env.HOME }}/.cargo/bin:/opt/homebrew/bin:$PATH"
-    command -v sg
-  args:
-    executable: /bin/bash
-  register: ast_grep_check
-  become: no
-  ignore_errors: yes
-  changed_when: false
-
-- name: Install ast-grep via cargo binstall
+- name: Install cargo-based tools on macOS
   shell: |
     source {{ ansible_env.HOME }}/.cargo/env
-    cargo binstall -y ast-grep
+    if ! command -v "{{ item.value.binary }}" &>/dev/null; then
+      echo "Installing {{ item.value.package }}..."
+      cargo binstall -y "{{ item.value.package }}"
+    else
+      echo "{{ item.value.binary }} is already installed"
+    fi
+    {{ item.value.check_cmd }}
   args:
     executable: /bin/bash
+  loop: "{{ cargo_tools | dict2items | selectattr('key', 'in', macos_cargo_tools) | list }}"
+  loop_control:
+    label: "{{ item.key }}"
   become: no
   environment:
     HOME: "{{ ansible_env.HOME }}"
-  register: ast_grep_install_result
-  changed_when: "'Installed' in ast_grep_install_result.stdout"
-  when: ast_grep_check.rc != 0
-
-- name: Verify ast-grep installation
-  shell: |
-    export PATH="{{ ansible_env.HOME }}/.cargo/bin:$PATH"
-    sg --version
-  args:
-    executable: /bin/bash
-  register: ast_grep_version
-  become: no
-  changed_when: false
+  register: macos_cargo_results
+  changed_when: "'Installing' in item.stdout | default('')"
   ignore_errors: yes
-
-- name: Display ast-grep installation success
-  debug:
-    msg: "✓ ast-grep installed: {{ ast_grep_version.stdout }}"
-  when: ast_grep_version is defined and ast_grep_version.rc == 0
 
 - name: Verify CLI tools installation
   command: "{{ item }} --version"
@@ -130,7 +76,7 @@
 - name: Display CLI tools installation summary
   debug:
     msg: |
-      ✓ CLI Development Tools installed via Homebrew on macOS
+      CLI Development Tools installed on macOS
 
       Verified tools:
       {% for result in cli_tool_versions.results %}

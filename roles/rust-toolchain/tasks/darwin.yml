@@ -47,7 +47,7 @@
   when: not cargo_binstall_exists.stat.exists
   become: no
 
-- name: Install essential Rust CLI tools via cargo-binstall
+- name: Install Rust CLI tools via cargo-binstall
   shell: |
     source "{{ dev_home }}/.cargo/env"
     cargo binstall -y {{ item }}
@@ -65,19 +65,6 @@
     - eza          # Better ls (replaces exa)
     - lsd          # LSDeluxe - another modern ls
     - procs        # Better ps
-  become: no
-  ignore_errors: yes
-
-- name: Install additional modern CLI tools via cargo-binstall
-  shell: |
-    source "{{ dev_home }}/.cargo/env"
-    cargo binstall -y {{ item }}
-  args:
-    executable: /bin/bash
-  environment:
-    CARGO_HOME: "{{ dev_home }}/.cargo"
-    RUSTUP_HOME: "{{ dev_home }}/.rustup"
-  with_items:
     - sd           # Better sed
     - tealdeer     # tldr client
     - grex         # Regex generator
