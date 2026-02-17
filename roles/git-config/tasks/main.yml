@@ -19,6 +19,17 @@
   become: no
   when: ansible_os_family != "Darwin"
 
+- name: Configure git aliases
+  community.general.git_config:
+    name: "alias.{{ item.key }}"
+    scope: global
+    value: "{{ item.value }}"
+  loop: "{{ git_aliases }}"
+  loop_control:
+    label: "alias.{{ item.key }}"
+  become: no
+  when: ansible_os_family != "Darwin"
+
 - name: Display git configuration status
   debug:
     msg: |
@@ -26,4 +37,5 @@
       - push.autoSetupRemote: {{ git_config.push.autoSetupRemote }}
       - pull.rebase: {{ git_config.pull.rebase }}
       - init.defaultBranch: {{ git_config.init.defaultBranch }}
+      Aliases: {{ git_aliases | map(attribute='key') | join(', ') }}
   when: ansible_os_family != "Darwin"

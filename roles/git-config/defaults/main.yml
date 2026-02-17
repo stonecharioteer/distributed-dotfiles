@@ -1,5 +1,9 @@
 ---
-# Git configuration defaults
+# Default variables for git-config role
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "{{ ansible_env.HOME | default('/home/' + dev_user) }}"
+
+# Git configuration settings
 git_config:
   push:
     autoSetupRemote: true
@@ -7,3 +11,15 @@ git_config:
     rebase: false
   init:
     defaultBranch: main
+
+# Git aliases
+git_aliases:
+  # Common shortcuts
+  - { key: "st", value: "status" }
+  - { key: "co", value: "checkout" }
+  - { key: "br", value: "branch" }
+  - { key: "ci", value: "commit" }
+  # Log visualization
+  - { key: "lg", value: "log --graph --oneline --all --decorate" }
+  - { key: "lol", value: "log --oneline" }
+  - { key: "last", value: "log -1 HEAD" }
