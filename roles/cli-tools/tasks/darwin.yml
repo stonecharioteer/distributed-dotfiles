@@ -66,6 +66,46 @@
   changed_when: "'Installing' in bandwhich_install_result.stdout"
   ignore_errors: yes
 
+- name: Check if ast-grep is already installed
+  shell: |
+    export PATH="{{ ansible_env.HOME }}/.cargo/bin:/opt/homebrew/bin:$PATH"
+    command -v sg
+  args:
+    executable: /bin/bash
+  register: ast_grep_check
+  become: no
+  ignore_errors: yes
+  changed_when: false
+
+- name: Install ast-grep via cargo binstall
+  shell: |
+    source {{ ansible_env.HOME }}/.cargo/env
+    cargo binstall -y ast-grep
+  args:
+    executable: /bin/bash
+  become: no
+  environment:
+    HOME: "{{ ansible_env.HOME }}"
+  register: ast_grep_install_result
+  changed_when: "'Installed' in ast_grep_install_result.stdout"
+  when: ast_grep_check.rc != 0
+
+- name: Verify ast-grep installation
+  shell: |
+    export PATH="{{ ansible_env.HOME }}/.cargo/bin:$PATH"
+    sg --version
+  args:
+    executable: /bin/bash
+  register: ast_grep_version
+  become: no
+  changed_when: false
+  ignore_errors: yes
+
+- name: Display ast-grep installation success
+  debug:
+    msg: "✓ ast-grep installed: {{ ast_grep_version.stdout }}"
+  when: ast_grep_version is defined and ast_grep_version.rc == 0
+
 - name: Verify CLI tools installation
   command: "{{ item }} --version"
   loop:
@@ -81,6 +121,7 @@
     - watchexec
     - bandwhich
     - lsd
+    - sg
   register: cli_tool_versions
   changed_when: false
   ignore_errors: yes

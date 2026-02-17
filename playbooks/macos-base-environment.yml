@@ -62,6 +62,8 @@
       tags: [shell, fish, config]
 
     # Development Environment
+    - role: git-config
+      tags: [dev, git, config]
     - role: cli-tools
       tags: [dev, cli]
     - role: dev-folders

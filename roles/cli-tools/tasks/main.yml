@@ -282,6 +282,44 @@
         msg: "✓ Set capabilities for bandwhich - can run without sudo"
       when: bandwhich_setcap is defined and bandwhich_setcap.rc == 0
 
+    - name: Check if ast-grep is already installed
+      shell: |
+        source {{ dev_home }}/.cargo/env
+        command -v "{{ cargo_tools['ast-grep'].binary }}"
+      args:
+        executable: /bin/bash
+      register: ast_grep_check
+      become_user: "{{ dev_user }}"
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Install ast-grep via cargo binstall
+      shell: |
+        source {{ dev_home }}/.cargo/env
+        cargo binstall -y "{{ cargo_tools['ast-grep'].package }}"
+      args:
+        executable: /bin/bash
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      when: ast_grep_check.rc != 0
+
+    - name: Verify ast-grep installation
+      shell: |
+        source {{ dev_home }}/.cargo/env
+        {{ cargo_tools['ast-grep'].check_cmd }}
+      args:
+        executable: /bin/bash
+      register: ast_grep_version
+      become_user: "{{ dev_user }}"
+      environment:
+        HOME: "{{ dev_home }}"
+      changed_when: false
+
+    - name: Display ast-grep installation success
+      debug:
+        msg: "✓ ast-grep installed: {{ ast_grep_version.stdout }}"
+
   when:
     - ansible_os_family != "Darwin"
     - cargo_check.rc == 0
@@ -352,6 +390,11 @@
       ✓ bandwhich installed via cargo binstall
       {% elif bandwhich_check is defined %}
       ✓ bandwhich already installed
+      {% endif %}
+      {% if ast_grep_check is defined and ast_grep_check.rc != 0 %}
+      ✓ ast-grep installed via cargo binstall
+      {% elif ast_grep_check is defined %}
+      ✓ ast-grep already installed
       {% endif %}
       {% else %}
       ⚠ Cargo not available - cargo tools skipped

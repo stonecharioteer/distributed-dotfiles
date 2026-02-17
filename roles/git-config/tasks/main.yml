@@ -1,0 +1,39 @@
+---
+# Git global configuration tasks for Ubuntu/Debian
+
+- name: Include platform-specific tasks
+  include_tasks: "{{ ansible_os_family | lower }}.yml"
+  when: ansible_os_family == "Darwin"
+
+- name: Configure git push.autoSetupRemote
+  community.general.git_config:
+    name: push.autoSetupRemote
+    scope: global
+    value: "{{ git_config.push.autoSetupRemote | string | lower }}"
+  become: no
+  when: ansible_os_family != "Darwin"
+
+- name: Configure git pull.rebase
+  community.general.git_config:
+    name: pull.rebase
+    scope: global
+    value: "{{ git_config.pull.rebase | string | lower }}"
+  become: no
+  when: ansible_os_family != "Darwin"
+
+- name: Configure git init.defaultBranch
+  community.general.git_config:
+    name: init.defaultBranch
+    scope: global
+    value: "{{ git_config.init.defaultBranch }}"
+  become: no
+  when: ansible_os_family != "Darwin"
+
+- name: Display git configuration status
+  debug:
+    msg: |
+      Git global configuration applied:
+      - push.autoSetupRemote: {{ git_config.push.autoSetupRemote }}
+      - pull.rebase: {{ git_config.pull.rebase }}
+      - init.defaultBranch: {{ git_config.init.defaultBranch }}
+  when: ansible_os_family != "Darwin"

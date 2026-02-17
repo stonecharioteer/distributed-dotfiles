@@ -1,0 +1,9 @@
+---
+# Git configuration defaults
+git_config:
+  push:
+    autoSetupRemote: true
+  pull:
+    rebase: false
+  init:
+    defaultBranch: main
