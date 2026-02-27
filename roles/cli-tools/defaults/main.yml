@@ -72,3 +72,12 @@ cargo_tools:
     package: "amdgpu_top"
     binary: "amdgpu_top"
     check_cmd: "amdgpu_top --version"
+
+  ast-grep:
+    package: "ast-grep"
+    binary: "sg"
+    check_cmd: "sg --version"
+
+# Cargo tools to install via cargo binstall on macOS (others use Homebrew)
+macos_cargo_tools:
+  - ast-grep

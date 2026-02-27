@@ -4,34 +4,10 @@
     update_cache: yes
   changed_when: false
 
-- name: Check which system packages are already installed
-  shell: dpkg -l | grep -E "^ii\s+({{ item }})\s" | wc -l
-  register: package_check
-  loop: "{{ system_packages }}"
-  changed_when: false
-  failed_when: false
-
-- name: Create list of packages to install
-  set_fact:
-    packages_to_install: "{{ packages_to_install | default([]) + [item.item] }}"
-  loop: "{{ package_check.results }}"
-  when: item.stdout == "0"
-
-- name: Display packages that will be installed
-  debug:
-    msg: |
-      System packages to install: 
-      {% if packages_to_install is defined and packages_to_install | length > 0 %}
-      {{ packages_to_install | join(', ') }}
-      {% else %}
-      All required packages are already installed
-      {% endif %}
-
 - name: Install required system packages
   package:
-    name: "{{ packages_to_install }}"
+    name: "{{ system_packages }}"
     state: present
-  when: packages_to_install is defined and packages_to_install | length > 0
 
 - name: Verify essential tools are available
   command: "{{ item }} --version"
@@ -56,14 +32,3 @@
       ✗ {{ result.item }}: Not available
       {% endif %}
       {% endfor %}
-
-- name: Ensure development environment is ready
-  debug:
-    msg: |
-      System dependencies installation complete!
-      
-      ✓ Core system tools (curl, git, htop)
-      ✓ Build essentials (gcc, make, cmake, autotools)
-      ✓ Development headers (ssl, ffi, readline, sqlite)
-      ✓ Python3 system packages (no compilation dependencies)
-      ✓ Essential utilities (sqlite3, vim, pkg-config)
