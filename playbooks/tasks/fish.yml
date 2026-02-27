@@ -18,12 +18,12 @@
             pkg: fish
         - name: Set fish as the user's default shell.
           user:
-            name: '{{ansible_env.USER}}'
+            name: '{{ansible_facts.env.USER}}'
             shell: /usr/bin/fish
     - name: Download my personal fish config and symlink it to the config folder
       shell:
         cmd: |
-          if [ -L '{{ansible_env.HOME}}/code/tools/dotfiles/fish' ]; then 
-            git clone 'git@github.com:stonecharioteer/dotfiles-fish' '{{ansible_env.HOME}}/code/tools/dotfiles/fish'
+          if [ -L '{{ansible_facts.env.HOME}}/code/tools/dotfiles/fish' ]; then 
+            git clone 'git@github.com:stonecharioteer/dotfiles-fish' '{{ansible_facts.env.HOME}}/code/tools/dotfiles/fish'
           fi
-          rm -rf '{{ansible_env.HOME}}/.config/fish' && ln -s '{{ansible_env.HOME}}/code/tools/dotfiles/fish/fish' '{{ansible_env.HOME}}/.config/fish'
+          rm -rf '{{ansible_facts.env.HOME}}/.config/fish' && ln -s '{{ansible_facts.env.HOME}}/code/tools/dotfiles/fish/fish' '{{ansible_facts.env.HOME}}/.config/fish'

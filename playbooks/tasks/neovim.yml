@@ -15,14 +15,14 @@
     - name: Checkout astronvim
       git:
         repo: 'https://github.com/AstroNvim/AstroNvim'
-        dest: '{{ansible_env.HOME}}/.config/nvim'
+        dest: '{{ansible_facts.env.HOME}}/.config/nvim'
         update: yes
     - name: Download my personal astronvim config and symlink it to the config folder
       # TODO: I need to use ssh to download these, but I can't do that if the
       # key is encrypted. I'm not sure how to do that.
       shell:
         cmd: |
-          if [ -L '{{ansible_env.HOME}}/code/tools/dotfiles/astronvim' ]; then 
-            git clone 'git@github.com:stonecharioteer/dotfiles-astronvim' '{{ansible_env.HOME}}/code/tools/dotfiles/astronvim'
+          if [ -L '{{ansible_facts.env.HOME}}/code/tools/dotfiles/astronvim' ]; then 
+            git clone 'git@github.com:stonecharioteer/dotfiles-astronvim' '{{ansible_facts.env.HOME}}/code/tools/dotfiles/astronvim'
           fi
-          rm -rf '{{ansible_env.HOME}}/.config/nvim/lua/user' && ln -s '{{ansible_env.HOME}}/code/tools/dotfiles/astronvim/user' '{{ansible_env.HOME}}/.config/nvim/lua/user'
+          rm -rf '{{ansible_facts.env.HOME}}/.config/nvim/lua/user' && ln -s '{{ansible_facts.env.HOME}}/code/tools/dotfiles/astronvim/user' '{{ansible_facts.env.HOME}}/.config/nvim/lua/user'

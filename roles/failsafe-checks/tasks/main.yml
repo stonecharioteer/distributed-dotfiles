@@ -255,13 +255,19 @@
   when: fish_config_exists.stat.exists and fish_is_git_repo.stat.exists
   changed_when: false
 
-# FAILSAFE: Stop if fish config exists but is not the correct repository
-- name: FAILSAFE - Stop if fish config exists but is not our repository
-  fail:
+# FAILSAFE: If fish config exists but is not a git repo, back it up so the clone can proceed
+- name: FAILSAFE - Back up non-git fish config directory
+  command: mv {{ dev_home }}/.config/fish {{ dev_home }}/.config/fish.bak.{{ ansible_date_time.iso8601_basic_short }}
+  become_user: "{{ dev_user }}"
+  when:
+    - fish_config_exists.stat.exists
+    - not fish_is_git_repo.stat.exists
+
+- name: Notify about fish config backup
+  debug:
     msg: |
-      STOP: ~/.config/fish exists but is not a git repository.
-      This could be a different fish configuration. Please backup or remove it manually.
-      Found at: {{ dev_home }}/.config/fish
+      ~/.config/fish existed but was not a git repository.
+      It has been backed up to: {{ dev_home }}/.config/fish.bak.{{ ansible_date_time.iso8601_basic_short }}
   when:
     - fish_config_exists.stat.exists
     - not fish_is_git_repo.stat.exists

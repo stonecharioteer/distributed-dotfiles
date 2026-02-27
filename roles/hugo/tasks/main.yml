@@ -2,12 +2,12 @@
 # tasks file for hugo (Linux)
 
 - name: Include platform-specific tasks
-  include_tasks: "{{ ansible_os_family | lower }}.yml"
-  when: ansible_os_family == "Darwin"
+  include_tasks: "{{ ansible_facts['os_family'] | lower }}.yml"
+  when: ansible_facts["os_family"] == "Darwin"
   tags: blog
 
 - name: Install Hugo Extended on Linux
-  when: ansible_os_family == "Debian"
+  when: ansible_facts["os_family"] == "Debian"
   tags: blog
   block:
     - name: Check if Hugo is already installed

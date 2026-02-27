@@ -2,20 +2,20 @@
 # Include macOS-specific tasks
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
+  when: ansible_facts["os_family"] == "Darwin"
 
 - name: Install CLI development tools via package manager
   package:
     name: "{{ cli_packages }}"
     state: present
-  when: ansible_os_family == "Debian"
+  when: ansible_facts["os_family"] == "Debian"
 
 - name: Create fd symlink (Ubuntu packages fd-find as fdfind)
   file:
     src: /usr/bin/fdfind
     dest: /usr/local/bin/fd
     state: link
-  when: ansible_os_family == "Debian"
+  when: ansible_facts["os_family"] == "Debian"
   ignore_errors: yes
 
 - name: Check if Starship is already installed
@@ -52,7 +52,7 @@
         msg: "✓ Starship installed: {{ starship_version.stdout }}"
 
   when:
-    - ansible_os_family != "Darwin"
+    - ansible_facts["os_family"] != "Darwin"
     - starship_check.rc != 0
   rescue:
     - name: Display Starship installation failure
@@ -93,7 +93,7 @@
         msg: "✓ Gum installed: {{ gum_version.stdout }}"
 
   when:
-    - ansible_os_family == "Debian"
+    - ansible_facts["os_family"] == "Debian"
     - gum_check.rc != 0
   rescue:
     - name: Display Gum installation failure
@@ -134,7 +134,7 @@
         msg: "✓ Glow installed: {{ glow_version.stdout }}"
 
   when:
-    - ansible_os_family == "Debian"
+    - ansible_facts["os_family"] == "Debian"
     - glow_check.rc != 0
   rescue:
     - name: Display Glow installation failure
@@ -185,7 +185,7 @@
         else
           echo "{{ item.value.binary }} is already installed"
         fi
-        {{ item.value.check_cmd }}
+        {{ item.value.check_cmd }} || true
       args:
         executable: /bin/bash
       loop: "{{ cargo_tools | dict2items }}"
@@ -203,7 +203,7 @@
       when: "'bandwhich' in (cargo_tools | list)"
 
   when:
-    - ansible_os_family != "Darwin"
+    - ansible_facts["os_family"] != "Darwin"
     - cargo_check.rc == 0
   rescue:
     - name: Display cargo tools installation failure
@@ -228,7 +228,7 @@
     msg: |
       CLI Development Tools Installation Summary:
 
-      {% if ansible_os_family == "Darwin" %}
+      {% if ansible_facts['os_family'] == "Darwin" %}
       ✓ All CLI tools installed via Homebrew on macOS
       {% else %}
       Package-based tools: {{ cli_packages | join(', ') }}

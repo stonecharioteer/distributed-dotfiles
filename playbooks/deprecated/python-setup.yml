@@ -18,7 +18,7 @@
             validate_certs: no
             repo: "ppa:deadsnakes"
             state: present
-          when: ansible_distribution_major_version|int >= 18 and ansible_distribution_major_version|int < 21
+          when: ansible_facts["distribution_major_version"]|int >= 18 and ansible_facts["distribution_major_version"]|int < 21
           register: add_deadsnakes
           tags:
             - python
@@ -34,7 +34,7 @@
             # TODO: I need to also add the public key https://ubuntuforums.org/showthread.php?t=1263676
             content: |
               deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu/ focal main
-          when: ansible_distribution_major_version|int == 21
+          when: ansible_facts["distribution_major_version"]|int == 21
           tags:
             - python
             - python3.8
@@ -45,7 +45,7 @@
             - deadsnakes
         - name: Add the public key for the deadsnakes ppa
           command: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776 
-          when:  ansible_distribution_major_version|int == 21
+          when:  ansible_facts["distribution_major_version"]|int == 21
           tags:
             - python
             - python3.8
@@ -107,7 +107,7 @@
             - python
             - python3.8
             - ubuntu
-          when: ansible_distribution_major_version|int == 18
+          when: ansible_facts["distribution_major_version"]|int == 18
         - name: Check if libmpdec2 has been installed (for Python 3.9)
           command: dpkg-query -W libmpdec2
           register: libmpdec2_installed
@@ -129,20 +129,20 @@
         - name: Download libmpdec2.deb
           get_url:
             url="http://archive.ubuntu.com/ubuntu/pool/main/m/mpdecimal/libmpdec2_2.4.2-3_amd64.deb"
-            dest="{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
+            dest="{{ ansible_facts.env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
           when: libmpdec2_installed.rc == 1
           tags:
             - python3.9
             - libmpdec2
         - name: Install libmpdec2 from deb file (for Python 3.9)
-          apt: deb="{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
+          apt: deb="{{ ansible_facts.env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
           when: libmpdec2_installed.rc == 1
           tags:
             - python3.9
             - libmpdec2
         - name: Remove libmpdec2 installation file (for Python 3.9)
           file:
-            path: "{{ ansible_env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
+            path: "{{ ansible_facts.env.HOME }}/libmpdec2_2.4.2-3_amd64.deb"
             state: absent
           tags:
             - python3.9
@@ -182,5 +182,5 @@
             - ubuntu
     - name: Setup virtual environments folders
       file:
-        path: "{{ ansible_env.HOME }}/.venvs"
+        path: "{{ ansible_facts.env.HOME }}/.venvs"
         state: directory

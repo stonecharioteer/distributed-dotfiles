@@ -19,6 +19,7 @@
     version: main
     update: "{{ scripts_can_update | default(false) }}"  # Only update if on main branch with no unstaged changes
     force: no  # Never force, to preserve local changes
+    accept_hostkey: yes
   become_user: "{{ dev_user }}"
   when: not scripts_repo_exists
 
@@ -64,7 +65,7 @@
   file:
     path: "{{ dev_home }}/code/checkouts/personal/scripts"
     owner: "{{ dev_user }}"
-    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
     recurse: yes
   when: scripts_repo_exists or (not scripts_repo_exists)
 
@@ -83,7 +84,7 @@
     regexp: "^fish_add_path.*scripts$"
     create: yes
     owner: "{{ dev_user }}"
-    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
   when: scripts_repo_exists or (not scripts_repo_exists)
   ignore_errors: yes
 

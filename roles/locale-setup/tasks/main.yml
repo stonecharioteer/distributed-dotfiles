@@ -3,7 +3,7 @@
   package:
     name: locales
     state: present
-  when: ansible_os_family == "Debian"
+  when: ansible_facts["os_family"] == "Debian"
 
 - name: Generate en_US.UTF-8 locale
   locale_gen:

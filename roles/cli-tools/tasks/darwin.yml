@@ -32,7 +32,7 @@
 
 - name: Install cargo-based tools on macOS
   shell: |
-    source {{ ansible_env.HOME }}/.cargo/env
+    source {{ ansible_facts.env.HOME }}/.cargo/env
     if ! command -v "{{ item.value.binary }}" &>/dev/null; then
       echo "Installing {{ item.value.package }}..."
       cargo binstall -y "{{ item.value.package }}"
@@ -47,7 +47,7 @@
     label: "{{ item.key }}"
   become: no
   environment:
-    HOME: "{{ ansible_env.HOME }}"
+    HOME: "{{ ansible_facts.env.HOME }}"
   register: macos_cargo_results
   changed_when: "'Installing' in item.stdout | default('')"
   ignore_errors: yes

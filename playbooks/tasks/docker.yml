@@ -22,7 +22,7 @@
         state: present
     - name: Add Docker respository
       apt_repository:
-        repo: 'deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable'
+        repo: 'deb https://download.docker.com/linux/ubuntu {{ ansible_facts["distribution_release"] }} stable'
         state: present
     - name: Install docker engine, containerd and Docker Compose
       apt:
@@ -37,8 +37,8 @@
       group:
         name: docker
         state: present
-    - name: Add '{{ansible_env.USER }}' to `docker` group
+    - name: Add '{{ansible_facts.env.USER }}' to `docker` group
       user:
-        name: '{{ansible_env.USER }}'
+        name: '{{ansible_facts.env.USER }}'
         groups: docker
         append: yes

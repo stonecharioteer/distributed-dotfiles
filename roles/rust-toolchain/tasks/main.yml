@@ -2,7 +2,7 @@
 # Include macOS-specific tasks
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
+  when: ansible_facts["os_family"] == "Darwin"
 
 - name: Check if rustup is already installed
   stat:
@@ -87,7 +87,7 @@
     regexp: "^SETUVAR dev_user_paths:"
     create: yes
     owner: "{{ dev_user }}"
-    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
   become: no
 
 - name: Ensure cargo bin directory is in PATH
@@ -96,5 +96,5 @@
     line: 'export PATH="$HOME/.cargo/bin:$PATH"'
     create: yes
     owner: "{{ dev_user }}"
-    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
   become: no

@@ -5,25 +5,25 @@
   block:
     - name: Create $HOME/code
       file:
-        path: "{{ansible_env.HOME}}/code"
+        path: "{{ansible_facts.env.HOME}}/code"
         state: directory
     - name: Create $HOME/code/checkouts
       file:
-        path: "{{ansible_env.HOME}}/code/checkouts"
+        path: "{{ansible_facts.env.HOME}}/code/checkouts"
         state: directory
     - name: Create $HOME/code/checkouts/personal
       file:
-        path: "{{ansible_env.HOME}}/code/checkouts/personal"
+        path: "{{ansible_facts.env.HOME}}/code/checkouts/personal"
         state: directory
     - name: Create $HOME/code/checkouts/work
       file:
-        path: "{{ansible_env.HOME}}/code/checkouts/work"
+        path: "{{ansible_facts.env.HOME}}/code/checkouts/work"
         state: directory
     - name: Create $HOME/code/tools/
       file:
-        path: "{{ansible_env.HOME}}/code/tools"
+        path: "{{ansible_facts.env.HOME}}/code/tools"
         state: directory
     - name: Create $HOME/code/tools/dotfiles/
       file:
-        path: "{{ansible_env.HOME}}/code/tools/dotfiles/"
+        path: "{{ansible_facts.env.HOME}}/code/tools/dotfiles/"
         state: directory

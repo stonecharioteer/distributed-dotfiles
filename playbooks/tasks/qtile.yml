@@ -24,7 +24,7 @@
           tar -xvf Python-3.9.15.tar.xz
           cd Python-3.9.15
           ./configure --prefix=/opt/qtile --enable-optimizations
-          make -s -j'{{ansible_processor_vcpus}}'
+          make -s -j'{{ansible_facts["processor_vcpus"]}}'
           make altinstall
         chdir: /tmp
     - name: Download and install the pystonecharioteer config.
@@ -49,26 +49,26 @@
           - xscreensaver
     - name: Create the qtile configuration folder
       file:
-        path: "{{ansible_env.HOME}}/.config/qtile/"
+        path: "{{ansible_facts.env.HOME}}/.config/qtile/"
         state: directory
     - name: Checkout the pystonecharioteer repo and link the config
       shell:
         cmd: |
-          if [o-L '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer' ]; then 
-            git clone 'git@github.com:stonecharioteer/pystonecharioteer.git' '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer'
+          if [o-L '{{ansible_facts.env.HOME}}/code/checkouts/personal/pystonecharioteer' ]; then 
+            git clone 'git@github.com:stonecharioteer/pystonecharioteer.git' '{{ansible_facts.env.HOME}}/code/checkouts/personal/pystonecharioteer'
           fi
-          rm -rf '{{ansible_env.HOME}}/.config/qtile/config.py'
-          ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/config.py' '{{ansible_env.HOME}}/.config/qtile/config.py'
-          rm -rf '{{ansible_env.HOME}}/.config/qtile/stonecharioteer.json'
-          ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/stonecharioteer.json' '{{ansible_env.HOME}}/.config/qtile/stonecharioteer.json'
-          rm -rf '{{ansible_env.HOME}}/.config/qtile/autostart.sh'
-          ln -s '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/autostart.sh' '{{ansible_env.HOME}}/.config/qtile/autostart.sh'
+          rm -rf '{{ansible_facts.env.HOME}}/.config/qtile/config.py'
+          ln -s '{{ansible_facts.env.HOME}}/code/checkouts/personal/pystonecharioteer/config.py' '{{ansible_facts.env.HOME}}/.config/qtile/config.py'
+          rm -rf '{{ansible_facts.env.HOME}}/.config/qtile/stonecharioteer.json'
+          ln -s '{{ansible_facts.env.HOME}}/code/checkouts/personal/pystonecharioteer/stonecharioteer.json' '{{ansible_facts.env.HOME}}/.config/qtile/stonecharioteer.json'
+          rm -rf '{{ansible_facts.env.HOME}}/.config/qtile/autostart.sh'
+          ln -s '{{ansible_facts.env.HOME}}/code/checkouts/personal/pystonecharioteer/autostart.sh' '{{ansible_facts.env.HOME}}/.config/qtile/autostart.sh'
       tags:
         - debug
     - name: Copy the qtile.desktop file
       become: true
       copy:
-        src: '{{ansible_env.HOME}}/code/checkouts/personal/pystonecharioteer/qtile.desktop'
+        src: '{{ansible_facts.env.HOME}}/code/checkouts/personal/pystonecharioteer/qtile.desktop'
         dest: '/usr/share/xsessions/qtile.desktop'
         remote_src: true
       tags:

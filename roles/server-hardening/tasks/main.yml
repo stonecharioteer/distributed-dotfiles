@@ -1,0 +1,63 @@
+---
+# Server hardening: timezone, automatic security updates, needrestart
+# Only runs on Debian/Ubuntu systems
+
+- name: Set timezone
+  timezone:
+    name: "{{ server_timezone }}"
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Install server hardening packages
+  apt:
+    name:
+      - needrestart
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+    install_recommends: no
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Configure unattended-upgrades
+  template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart unattended-upgrades
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Configure auto-upgrades schedule
+  template:
+    src: 20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart unattended-upgrades
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Configure needrestart for automatic restarts
+  template:
+    src: needrestart-autorestart.conf.j2
+    dest: /etc/needrestart/conf.d/50-autorestart.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Configure apt-listchanges
+  template:
+    src: apt-listchanges.conf.j2
+    dest: /etc/apt/listchanges.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Enable and start unattended-upgrades service
+  systemd:
+    name: unattended-upgrades
+    enabled: yes
+    state: started
+  when: ansible_facts["os_family"] == "Debian"

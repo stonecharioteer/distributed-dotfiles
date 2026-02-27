@@ -2,7 +2,7 @@
 # Include macOS-specific tasks
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
+  when: ansible_facts["os_family"] == "Darwin"
   tags: blog
 
 - name: Check if Neovim is already installed
@@ -43,12 +43,12 @@
     - name: Download Neovim {{ neovim_version }}
       get_url:
         url: "{{ neovim_download_url }}"
-        dest: "{{ neovim_download_dir }}/nvim-linux64.tar.gz"
+        dest: "{{ neovim_download_dir }}/nvim-linux-x86_64.tar.gz"
         mode: '0644'
 
     - name: Extract Neovim archive
       unarchive:
-        src: "{{ neovim_download_dir }}/nvim-linux64.tar.gz"
+        src: "{{ neovim_download_dir }}/nvim-linux-x86_64.tar.gz"
         dest: "{{ neovim_download_dir }}"
         remote_src: yes
 
@@ -60,19 +60,19 @@
 
     - name: Install Neovim binary
       copy:
-        src: "{{ neovim_download_dir }}/nvim-linux64/bin/nvim"
+        src: "{{ neovim_download_dir }}/nvim-linux-x86_64/bin/nvim"
         dest: "{{ neovim_binary_path }}"
         mode: '0755'
         remote_src: yes
 
     - name: Install Neovim share files
       shell: |
-        cp -r "{{ neovim_download_dir }}/nvim-linux64/share/nvim" "{{ neovim_install_prefix }}/share/"
+        cp -r "{{ neovim_download_dir }}/nvim-linux-x86_64/share/nvim" "{{ neovim_install_prefix }}/share/"
         chmod -R 755 "{{ neovim_install_prefix }}/share/nvim"
 
     - name: Install Neovim lib files  
       shell: |
-        cp -r "{{ neovim_download_dir }}/nvim-linux64/lib/nvim" "{{ neovim_install_prefix }}/lib/"
+        cp -r "{{ neovim_download_dir }}/nvim-linux-x86_64/lib/nvim" "{{ neovim_install_prefix }}/lib/"
         chmod -R 755 "{{ neovim_install_prefix }}/lib/nvim"
 
     - name: Create vim symlink to nvim
@@ -100,7 +100,7 @@
           Version: {{ neovim_version_check.stdout_lines[0] }}
 
   when:
-    - ansible_os_family != "Darwin"
+    - ansible_facts["os_family"] != "Darwin"
     - not neovim_exists.stat.exists or (neovim_exists.stat.exists and neovim_version not in installed_neovim_version.stdout)
   rescue:
     - name: Clean up on failure

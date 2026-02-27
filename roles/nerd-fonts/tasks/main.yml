@@ -2,7 +2,7 @@
 # Include macOS-specific tasks
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
+  when: ansible_facts["os_family"] == "Darwin"
 
 - name: Install fonts on Linux
   block:
@@ -52,4 +52,4 @@
         msg: "INFO: install/fonts directory not found - installed from package manager instead. JetBrainsMono Nerd Font files should be in install/fonts/ for full icon support"
       when: not fonts_dir.stat.exists
 
-  when: ansible_os_family != "Darwin"
+  when: ansible_facts["os_family"] != "Darwin"

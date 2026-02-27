@@ -2,7 +2,7 @@
 # Include macOS-specific tasks
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
+  when: ansible_facts["os_family"] == "Darwin"
   tags: blog
 
 - name: Check if tmux is already installed
@@ -24,7 +24,7 @@
       package:
         name: "{{ tmux_build_deps }}"
         state: present
-      when: ansible_os_family != "Darwin"
+      when: ansible_facts["os_family"] != "Darwin"
 
     - name: Create build directory
       file:
@@ -74,7 +74,7 @@
     - name: Compile tmux
       shell: |
         cd "{{ tmux_source_dir.files[0].path }}"
-        make -j{{ ansible_processor_vcpus }}
+        make -j{{ ansible_facts['processor_vcpus'] }}
       args:
         chdir: "{{ tmux_source_dir.files[0].path }}"
 
@@ -102,7 +102,7 @@
           Version: {{ tmux_version_check.stdout }}
           Location: {{ tmux_binary_path }}
 
-  when: not tmux_exists.stat.exists and ansible_os_family != "Darwin"
+  when: not tmux_exists.stat.exists and ansible_facts["os_family"] != "Darwin"
   rescue:
     - name: Clean up on failure
       file:
@@ -117,7 +117,7 @@
 # Install/update oh-my-tmux configuration (shared across platforms)
 - name: Configure oh-my-tmux
   include_tasks: configure.yml
-  when: ansible_os_family != "Darwin"
+  when: ansible_facts["os_family"] != "Darwin"
   tags:
     - oh-my-tmux
     - blog

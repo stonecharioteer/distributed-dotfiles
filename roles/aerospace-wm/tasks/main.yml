@@ -2,10 +2,10 @@
 # AeroSpace tiling window manager installation
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
+  when: ansible_facts["os_family"] == "Darwin"
 
 # AeroSpace is macOS-only
 - name: Display message for non-macOS systems
   debug:
     msg: "AeroSpace is a macOS-only tiling window manager"
-  when: ansible_os_family != "Darwin"
+  when: ansible_facts["os_family"] != "Darwin"

@@ -6,22 +6,22 @@
   block:
     - name: Check if Python 3.9 is already installed
       stat:
-        path: '{{ansible_env.HOME}}/.python/py3.9/bin/python3'
+        path: '{{ansible_facts.env.HOME}}/.python/py3.9/bin/python3'
       register: python39
     - name: Create Python 3.9 directory
       when: not python39.stat.exists
       file:
-        path: '{{ansible_env.HOME}}/.python/py3.9/'
+        path: '{{ansible_facts.env.HOME}}/.python/py3.9/'
         state: directory
     - name: Install Python 3.9
       when: not python39.stat.exists
       shell:
         cmd: |
-          echo "Ansible processor vcpus = {{ansible_processor_vcpus}}"
+          echo "Ansible processor vcpus = {{ansible_facts["processor_vcpus"]}}"
           wget --quiet https://www.python.org/ftp/python/3.9.15/Python-3.9.15.tar.xz
           tar -xvf Python-3.9.15.tar.xz
           cd Python-3.9.15
-          ./configure --prefix='{{ansible_env.HOME}}/.python/py3.9/' --enable-optimizations
-          make -s -j'{{ansible_processor_vcpus}}'
+          ./configure --prefix='{{ansible_facts.env.HOME}}/.python/py3.9/' --enable-optimizations
+          make -s -j'{{ansible_facts["processor_vcpus"]}}'
           make altinstall
         chdir: /tmp

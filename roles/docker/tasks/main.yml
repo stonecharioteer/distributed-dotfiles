@@ -2,7 +2,7 @@
 # Include macOS-specific tasks
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
+  when: ansible_facts["os_family"] == "Darwin"
 
 - name: Check if Docker is already installed
   command: docker --version
@@ -98,7 +98,7 @@
         msg: "✓ Docker installed: {{ docker_version_verify.stdout }}"
 
   when:
-    - ansible_os_family != "Darwin"
+    - ansible_facts["os_family"] != "Darwin"
     - docker_version_check.rc != 0
   rescue:
     - name: Display Docker installation failure
@@ -148,13 +148,13 @@
       file:
         path: "{{ dev_home }}/.docker"
         owner: "{{ dev_user }}"
-        group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
+        group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
         recurse: yes
         mode: 'g+rwx'
       when: user_in_docker_group.rc != 0
       ignore_errors: yes
 
-  when: ansible_os_family != "Darwin"
+  when: ansible_facts["os_family"] != "Darwin"
 
 - name: Verify Docker installation and configuration
   block:
@@ -190,4 +190,4 @@
           2. After re-login, test with: docker run hello-world
           3. No sudo required for docker commands after re-login
 
-  when: ansible_os_family != "Darwin"
+  when: ansible_facts["os_family"] != "Darwin"
