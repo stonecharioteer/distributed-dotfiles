@@ -2,10 +2,10 @@
 # Ghostty terminal emulator installation
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
+  when: ansible_facts["os_family"] == "Darwin"
 
 # Ghostty is macOS-only for now
 - name: Display message for non-macOS systems
   debug:
     msg: "Ghostty is currently only available for macOS"
-  when: ansible_os_family != "Darwin"
+  when: ansible_facts["os_family"] != "Darwin"

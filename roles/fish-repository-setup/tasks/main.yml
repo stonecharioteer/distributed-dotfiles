@@ -18,6 +18,7 @@
     version: main
     update: "{{ not fish_config_repo_exists }}"  # Only update if it's a new clone
     force: no  # Never force, to preserve local changes
+    accept_hostkey: yes
   become_user: "{{ dev_user }}"
   when: not fish_config_repo_exists
 
@@ -56,5 +57,5 @@
   file:
     path: "{{ dev_home }}/.config/fish"
     owner: "{{ dev_user }}"
-    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
     recurse: yes

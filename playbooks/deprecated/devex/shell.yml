@@ -18,7 +18,7 @@
         - name: Make fish the default shell
           shell:
             cmd: |
-              usermod --shell /usr/bin/fish {{ansible_env.USER}}
+              usermod --shell /usr/bin/fish {{ansible_facts.env.USER}}
     - name: Install Star Ship Prompt
       block:
         - name: Download Starship Installer

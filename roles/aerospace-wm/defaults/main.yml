@@ -1,7 +1,7 @@
 ---
 # Default variables for aerospace-wm role
 dev_user: "{{ ansible_user | default('stonecharioteer') }}"
-dev_home: "{{ ansible_env.HOME | default('/Users/' + dev_user) }}"
+dev_home: "{{ ansible_facts.env.HOME | default('/Users/' + dev_user) }}"
 
 # Optional: AeroSpace dotfiles repository
 # aerospace_dotfiles_repo: "git@github.com:stonecharioteer/dotfiles-aerospace.git"

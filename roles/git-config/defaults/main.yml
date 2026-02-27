@@ -1,7 +1,7 @@
 ---
 # Default variables for git-config role
 dev_user: "{{ ansible_user | default('stonecharioteer') }}"
-dev_home: "{{ ansible_env.HOME | default('/home/' + dev_user) }}"
+dev_home: "{{ ansible_facts.env.HOME | default('/home/' + dev_user) }}"
 
 # Git configuration settings
 git_config:

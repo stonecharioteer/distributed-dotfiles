@@ -17,15 +17,15 @@
     - name: Checkout astronvim
       git:
         repo: 'https://github.com/AstroNvim/AstroNvim'
-        dest: '{{ansible_env.HOME}}/.config/nvim'
+        dest: '{{ansible_facts.env.HOME}}/.config/nvim'
         update: yes
     - name: Checkout My personal neovim config
       git:
         repo: 'https://github.com/stonecharioteer/dotfiles-astronvim'
-        dest: '{{ansible_env.HOME}}/code/tools/dotfiles/astronvim'
+        dest: '{{ansible_facts.env.HOME}}/code/tools/dotfiles/astronvim'
         update: yes
     - name: Symlink the user config into the astronvim folder
       file:
-        src: '{{ansible_env.HOME}}/code/tools/dotfiles/astronvim/user'
-        dest: '{{ansible_env.HOME}}/.config/nvim/lua/user'
+        src: '{{ansible_facts.env.HOME}}/code/tools/dotfiles/astronvim/user'
+        dest: '{{ansible_facts.env.HOME}}/.config/nvim/lua/user'
         state: link

@@ -2,18 +2,18 @@
 # Include macOS-specific tasks
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
-  when: ansible_os_family == "Darwin"
+  when: ansible_facts["os_family"] == "Darwin"
 
 - name: Update package cache (Debian/Ubuntu)
   apt:
     update_cache: yes
     cache_valid_time: 86400
-  when: ansible_os_family == "Debian"
+  when: ansible_facts["os_family"] == "Debian"
 
 - name: Update package cache (Arch)
   pacman:
     update_cache: yes
-  when: ansible_os_family == "Archlinux"
+  when: ansible_facts["os_family"] == "Archlinux"
 
 - name: Install Fish shell and dependencies (Debian/Ubuntu)
   package:
@@ -26,7 +26,7 @@
       - pkg-config
       - libssl-dev
     state: present
-  when: ansible_os_family == "Debian"
+  when: ansible_facts["os_family"] == "Debian"
 
 - name: Install Fish shell and dependencies (Arch)
   package:
@@ -39,7 +39,7 @@
       - openssl
       - pkg-config
     state: present
-  when: ansible_os_family == "Archlinux"
+  when: ansible_facts["os_family"] == "Archlinux"
 
 - name: Install Fish shell and dependencies (Fedora)
   package:
@@ -54,7 +54,7 @@
       - openssl-devel
       - pkg-config
     state: present
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts["os_family"] == "RedHat"
 
 - name: Check if user exists
   user:
@@ -62,7 +62,7 @@
     state: present
   register: user_check
   ignore_errors: yes
-  when: ansible_os_family != "Darwin"
+  when: ansible_facts["os_family"] != "Darwin"
 
 - name: Create user if it doesn't exist
   user:
@@ -72,7 +72,7 @@
     groups: sudo
     append: yes
   when:
-    - ansible_os_family != "Darwin"
+    - ansible_facts["os_family"] != "Darwin"
     - user_check is failed
 
 - name: Set Fish as default shell for user
@@ -80,7 +80,7 @@
     name: "{{ dev_user }}"
     shell: /usr/bin/fish
   when:
-    - ansible_os_family != "Darwin"
+    - ansible_facts["os_family"] != "Darwin"
     - user_check is succeeded
 
 - name: Install modern CLI tools via package manager (Debian/Ubuntu)
@@ -89,7 +89,7 @@
       - fzf
       - fd-find  # Note: binary is 'fdfind' on Debian/Ubuntu
     state: present
-  when: ansible_os_family == "Debian"
+  when: ansible_facts["os_family"] == "Debian"
   ignore_errors: yes  # These might not be available in all repos
 
 - name: Install modern CLI tools via package manager (Arch)
@@ -102,7 +102,7 @@
       - dust
       - bottom
     state: present
-  when: ansible_os_family == "Archlinux"
+  when: ansible_facts["os_family"] == "Archlinux"
   ignore_errors: yes
 
 - name: Install modern CLI tools via package manager (Fedora)
@@ -113,5 +113,5 @@
       - ripgrep
       - bat
     state: present
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts["os_family"] == "RedHat"
   ignore_errors: yes

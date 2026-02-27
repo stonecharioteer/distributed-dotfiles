@@ -14,7 +14,7 @@
       apt:
         update_cache: yes
         cache_valid_time: 86400
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
       
     - name: Check which packages are missing
       shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
@@ -36,12 +36,12 @@
         - rsync
       changed_when: false
       failed_when: false
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Create list of packages to install
       set_fact:
         packages_to_install: "{{ missing_packages_check.results | selectattr('stdout', 'defined') | selectattr('stdout', '!=', '') | map(attribute='stdout') | list }}"
-      when: ansible_os_family == "Debian"
+      when: ansible_facts["os_family"] == "Debian"
 
     - name: Install missing system packages
       apt:
@@ -50,7 +50,7 @@
         install_recommends: no
         force_apt_get: yes
       when: 
-        - ansible_os_family == "Debian"
+        - ansible_facts["os_family"] == "Debian"
         - packages_to_install is defined
         - packages_to_install | length > 0
 
@@ -72,6 +72,10 @@
       tags: [shell, rust, languages]
     - role: fish-config
       tags: [shell, fish, config]
+
+    # Server Hardening (Debian/Ubuntu only)
+    - role: server-hardening
+      tags: [server, security, hardening]
 
     # Development Environment
     - role: system-deps

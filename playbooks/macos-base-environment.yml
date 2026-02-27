@@ -6,15 +6,15 @@
   gather_facts: true
   vars:
     dev_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
-    dev_home: "{{ ansible_env.HOME | default('/Users/' + dev_user) }}"
+    dev_home: "{{ ansible_facts.env.HOME | default('/Users/' + dev_user) }}"
 
   pre_tasks:
     - name: Verify running on macOS
       assert:
         that:
-          - ansible_os_family == "Darwin"
+          - ansible_facts["os_family"] == "Darwin"
         fail_msg: "This playbook is designed for macOS only"
-        success_msg: "✓ Running on macOS {{ ansible_distribution_version }}"
+        success_msg: "✓ Running on macOS {{ ansible_facts['distribution_version'] }}"
 
     - name: Verify pbcopy is available (built-in on macOS)
       command: which pbcopy

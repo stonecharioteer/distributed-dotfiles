@@ -4,7 +4,7 @@
     path: "{{ item.path }}"
     state: directory
     owner: "{{ dev_user }}"
-    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
     mode: "{{ item.mode }}"
   loop: "{{ dev_directories }}"
   become: no
@@ -37,7 +37,7 @@
     dest: "{{ item.dest }}"
     state: link
     owner: "{{ dev_user }}"
-    group: "{{ 'staff' if ansible_os_family == 'Darwin' else dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
   loop:
     - src: "{{ dev_home }}/code/checkouts/personal"
       dest: "{{ dev_home }}/personal"

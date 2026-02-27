@@ -1,0 +1,15 @@
+---
+# Server hardening defaults
+
+# Timezone
+server_timezone: "Asia/Kolkata"
+
+# Locale
+server_locale: "en_US.UTF-8"
+
+# Unattended upgrades: auto-reboot time (24h format)
+auto_reboot_time: "07:00"
+
+# Only apply security updates automatically
+unattended_upgrades_origins:
+  - "${distro_id}:${distro_codename}-security"
