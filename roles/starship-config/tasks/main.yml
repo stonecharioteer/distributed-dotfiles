@@ -14,7 +14,7 @@
     group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
     mode: '0644'
     content: |
-      format = "$username$hostname$directory$git_branch$status\n$character"
+      format = "$username$hostname$time$directory$git_branch$cmd_duration$status\n$character"
       add_newline = false
 
       [username]
@@ -30,15 +30,26 @@
       style = "bold blue"
       trim_at = ""
 
+      [time]
+      disabled = false
+      format = "[$time]($style) "
+      style = "bold white"
+      time_format = "%H:%M:%S"
+
       [directory]
-      format = "[$path]($style) "
+      format = "[dir:$path]($style) "
       style = "bold cyan"
       truncation_length = 3
       truncate_to_repo = false
 
       [git_branch]
-      format = "[$branch]($style) "
+      format = "[git:$branch]($style) "
       style = "bold purple"
+
+      [cmd_duration]
+      min_time = 0
+      format = "[$duration]($style) "
+      style = "bold yellow"
 
       [status]
       disabled = false
