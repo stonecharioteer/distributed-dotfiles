@@ -14,7 +14,7 @@
     group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
     mode: '0644'
     content: |
-      format = "$username$hostname$status$character"
+      format = "$username$hostname$directory$status$character"
       add_newline = false
 
       [username]
@@ -29,6 +29,12 @@
       format = "[@$hostname$ssh_symbol]($style) "
       style = "bold blue"
       trim_at = ""
+
+      [directory]
+      format = "[$path]($style) "
+      style = "bold cyan"
+      truncation_length = 3
+      truncate_to_repo = false
 
       [status]
       disabled = false
