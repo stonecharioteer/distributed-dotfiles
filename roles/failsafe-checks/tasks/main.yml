@@ -4,18 +4,22 @@
 # Set default variables for compatibility
 - name: Set default variables
   set_fact:
-    qtile_venv_path: "/opt/qtile"
-  when: qtile_venv_path is not defined
+    qtile_venv_path: "{{ qtile_venv_path | default('/opt/qtile') }}"
+    run_gui_failsafe_checks: "{{ run_gui_failsafe_checks | default(false) | bool }}"
+
 - name: Check if qtile config directory exists
   stat:
     path: "{{ dev_home }}/.config/qtile"
   register: qtile_config_exists
+  when: run_gui_failsafe_checks
 
 - name: Check if existing qtile directory is a git repository
   stat:
     path: "{{ dev_home }}/.config/qtile/.git"
   register: qtile_is_git_repo
-  when: qtile_config_exists.stat.exists
+  when:
+    - run_gui_failsafe_checks
+    - qtile_config_exists.stat.exists
 
 - name: Get git remote URL if it's a git repository
   shell: |
@@ -23,7 +27,10 @@
     git remote get-url origin 2>/dev/null || echo "no-remote"
   register: qtile_git_remote
   become_user: "{{ dev_user }}"
-  when: qtile_config_exists.stat.exists and qtile_is_git_repo.stat.exists
+  when:
+    - run_gui_failsafe_checks
+    - qtile_config_exists.stat.exists
+    - qtile_is_git_repo.stat.exists
   changed_when: false
 
 - name: Get current git branch if it's a git repository
@@ -32,37 +39,49 @@
     git branch --show-current 2>/dev/null || echo "unknown"
   register: qtile_git_branch
   become_user: "{{ dev_user }}"
-  when: qtile_config_exists.stat.exists and qtile_is_git_repo.stat.exists
+  when:
+    - run_gui_failsafe_checks
+    - qtile_config_exists.stat.exists
+    - qtile_is_git_repo.stat.exists
   changed_when: false
 
 - name: Check if /opt/qtile directory exists
   stat:
     path: "{{ qtile_venv_path }}"
   register: qtile_venv_exists
+  when: run_gui_failsafe_checks
 
 - name: Check if /opt/qtile is a valid Python virtual environment
   stat:
     path: "{{ qtile_venv_path }}/bin/python"
   register: qtile_venv_valid
-  when: qtile_venv_exists.stat.exists
+  when:
+    - run_gui_failsafe_checks
+    - qtile_venv_exists.stat.exists
 
 - name: Check if qtile is already installed in venv
   shell: |
     {{ qtile_venv_path }}/bin/python -c "import qtile; print('installed')" 2>/dev/null || echo "not-installed"
   register: qtile_installed_check
-  when: qtile_venv_exists.stat.exists and qtile_venv_valid.stat.exists
+  when:
+    - run_gui_failsafe_checks
+    - qtile_venv_exists.stat.exists
+    - qtile_venv_valid.stat.exists
   changed_when: false
 
 - name: Check if Alacritty source directory exists
   stat:
     path: "{{ dev_home }}/code/tools/alacritty"
   register: alacritty_source_exists
+  when: run_gui_failsafe_checks
 
 - name: Check if Alacritty directory is a git repository
   stat:
     path: "{{ dev_home }}/code/tools/alacritty/.git"
   register: alacritty_is_git_repo
-  when: alacritty_source_exists.stat.exists
+  when:
+    - run_gui_failsafe_checks
+    - alacritty_source_exists.stat.exists
 
 - name: Get Alacritty git remote URL
   shell: |
@@ -70,13 +89,17 @@
     git remote get-url origin 2>/dev/null || echo "no-remote"
   register: alacritty_git_remote
   become_user: "{{ dev_user }}"
-  when: alacritty_source_exists.stat.exists and alacritty_is_git_repo.stat.exists
+  when:
+    - run_gui_failsafe_checks
+    - alacritty_source_exists.stat.exists
+    - alacritty_is_git_repo.stat.exists
   changed_when: false
 
 - name: Check if Alacritty binary is already installed
   stat:
     path: /usr/local/bin/alacritty
   register: alacritty_binary_exists
+  when: run_gui_failsafe_checks
 
 - name: Display current state summary
   debug:
@@ -105,6 +128,7 @@
       {% endif %}
       {% endif %}
       Alacritty binary: {{ 'INSTALLED' if alacritty_binary_exists.stat.exists else 'NOT FOUND' }}
+  when: run_gui_failsafe_checks
 
 # FAILSAFE: Stop if qtile config exists but is not the correct repository
 - name: FAILSAFE - Stop if qtile config directory exists but is not our repository
@@ -114,6 +138,7 @@
       This could be a different qtile configuration. Please backup or remove it manually.
       Found at: {{ dev_home }}/.config/qtile
   when: 
+    - run_gui_failsafe_checks
     - qtile_config_exists.stat.exists
     - not qtile_is_git_repo.stat.exists
 
@@ -125,6 +150,7 @@
       Found: {{ qtile_git_remote.stdout }}
       Please backup or remove it manually, or update the remote URL.
   when:
+    - run_gui_failsafe_checks
     - qtile_config_exists.stat.exists
     - qtile_is_git_repo.stat.exists
     - qtile_git_remote.stdout not in ['https://github.com/stonecharioteer/dotfiles-qtile.git', 'git@github.com:stonecharioteer/dotfiles-qtile.git']
@@ -137,6 +163,7 @@
       This could be a different installation. Please backup or remove it manually.
       Found at: {{ qtile_venv_path }}
   when:
+    - run_gui_failsafe_checks
     - qtile_venv_exists.stat.exists
     - not qtile_venv_valid.stat.exists
 
@@ -148,6 +175,7 @@
       This could be a different Alacritty installation. Please backup or remove it manually.
       Found at: {{ dev_home }}/code/tools/alacritty
   when:
+    - run_gui_failsafe_checks
     - alacritty_source_exists.stat.exists
     - not alacritty_is_git_repo.stat.exists
 
@@ -159,6 +187,7 @@
       Found: {{ alacritty_git_remote.stdout }}
       Please backup or remove it manually, or update the remote URL.
   when:
+    - run_gui_failsafe_checks
     - alacritty_source_exists.stat.exists
     - alacritty_is_git_repo.stat.exists
     - alacritty_git_remote.stdout not in ['https://github.com/alacritty/alacritty.git', 'git@github.com:alacritty/alacritty.git']
@@ -287,14 +316,18 @@
 # Set facts for other roles to use
 - name: Set facts about current installation state
   set_fact:
+    fish_config_repo_exists: "{{ fish_config_exists.stat.exists and fish_is_git_repo.stat.exists }}"
+    scripts_repo_exists: "{{ scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists }}"
+    scripts_can_update: "{{ scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists and scripts_git_branch.stdout == 'main' and scripts_unstaged_changes.stdout == '0' }}"
+
+- name: Set facts about current GUI installation state
+  set_fact:
     qtile_config_repo_exists: "{{ qtile_config_exists.stat.exists and qtile_is_git_repo.stat.exists }}"
     qtile_venv_ready: "{{ qtile_venv_exists.stat.exists and qtile_venv_valid.stat.exists }}"
     qtile_already_installed: "{{ qtile_venv_exists.stat.exists and qtile_venv_valid.stat.exists and qtile_installed_check is defined and qtile_installed_check.stdout == 'installed' }}"
     alacritty_source_repo_exists: "{{ alacritty_source_exists.stat.exists and alacritty_is_git_repo.stat.exists }}"
     alacritty_already_built: "{{ alacritty_binary_exists.stat.exists }}"
-    fish_config_repo_exists: "{{ fish_config_exists.stat.exists and fish_is_git_repo.stat.exists }}"
-    scripts_repo_exists: "{{ scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists }}"
-    scripts_can_update: "{{ scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists and scripts_git_branch.stdout == 'main' and scripts_unstaged_changes.stdout == '0' }}"
+  when: run_gui_failsafe_checks
 
 # Hardware Detection for conditional features
 - name: Hardware detection for conditional features
@@ -322,24 +355,29 @@
             chassis_type.stdout in ['Notebook', 'Laptop', 'Portable'] or
             product_name_check.stdout != "none"
           }}
+  when: run_gui_failsafe_checks
 
 - name: Display installation plan
   debug:
     msg: |
+      {% if run_gui_failsafe_checks %}
       === HARDWARE DETECTION ===
       System type: {{ 'LAPTOP' if is_laptop else 'DESKTOP' }}
       Battery detected: {{ battery_check.stat.exists }}
       Chassis type: {{ chassis_type.stdout }}
       
+      {% endif %}
       === INSTALLATION PLAN ===
       Fish config: {{ 'USE existing repository' if fish_config_repo_exists else 'CLONE new repository' }}
-      Qtile config: {{ 'USE existing repository' if qtile_config_repo_exists else 'CLONE new repository' }}
       Scripts repo: {{ 'USE existing repository' if scripts_repo_exists else 'CLONE new repository' }}
+      {% if run_gui_failsafe_checks %}
+      Qtile config: {{ 'USE existing repository' if qtile_config_repo_exists else 'CLONE new repository' }}
       Python venv: {{ 'USE existing venv' if qtile_venv_ready else 'CREATE new venv' }}
       Qtile package: {{ 'SKIP - already installed' if qtile_already_installed else 'INSTALL qtile + psutil' }}
       Alacritty source: {{ 'USE existing repository' if alacritty_source_repo_exists else 'CLONE new repository' }}
       Alacritty binary: {{ 'SKIP - already built' if alacritty_already_built else 'BUILD from source' }}
       
       {{ 'LAPTOP FEATURES: Battery monitoring, touchpad gestures, auto-rotation, sleep services' if is_laptop else 'DESKTOP FEATURES: Monitor management only (no laptop-specific features)' }}
+      {% endif %}
       
       Proceeding with safe, non-destructive operations...

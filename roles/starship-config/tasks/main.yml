@@ -1,0 +1,65 @@
+---
+- name: Ensure Starship config directory exists
+  file:
+    path: "{{ starship_config_path | dirname }}"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
+    mode: '0755'
+
+- name: Install quiet Starship prompt config
+  copy:
+    dest: "{{ starship_config_path }}"
+    owner: "{{ dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
+    mode: '0644'
+    content: |
+      format = "$username$hostname$status$character"
+      add_newline = false
+
+      [username]
+      show_always = true
+      format = "[$user]($style)"
+      style_user = "bold green"
+      style_root = "bold red"
+
+      [hostname]
+      ssh_only = false
+      ssh_symbol = " ssh"
+      format = "[@$hostname$ssh_symbol]($style) "
+      style = "bold blue"
+      trim_at = ""
+
+      [status]
+      disabled = false
+      format = "[$symbol$status]($style) "
+      symbol = "exit "
+      style = "bold red"
+
+      [character]
+      success_symbol = "[>](bold green)"
+      error_symbol = "[>](bold red)"
+
+      [nodejs]
+      disabled = true
+
+      [python]
+      disabled = true
+
+      [rust]
+      disabled = true
+
+      [golang]
+      disabled = true
+
+      [java]
+      disabled = true
+
+      [docker_context]
+      disabled = true
+
+      [container]
+      disabled = true
+
+      [os]
+      disabled = true

@@ -8,6 +8,7 @@
   vars:
     dev_user: "{{ ansible_user | default('stonecharioteer') }}"
     dev_home: "/home/{{ dev_user }}"
+    run_gui_failsafe_checks: true
     
   pre_tasks:
     - name: Update package cache (Debian/Ubuntu)
@@ -15,6 +16,13 @@
         update_cache: yes
         cache_valid_time: 86400
       when: ansible_facts["os_family"] == "Debian"
+
+    - name: Install GitHub CLI and verify authentication
+      include_tasks:
+        file: tasks/github-cli-preflight.yml
+        apply:
+          tags: always
+      tags: always
       
     - name: Check which packages are missing
       shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
@@ -31,6 +39,7 @@
         - ca-certificates
         - gnupg
         - lsb-release
+        - gh
         - python3-dev
         - python3-pip
         - python3-venv
@@ -82,6 +91,8 @@
       tags: [dev, git, config]
     - role: cli-tools
       tags: [dev, cli]
+    - role: starship-config
+      tags: [shell, starship, config]
     - role: dev-folders
       tags: [dev, folders]
     - role: tmux

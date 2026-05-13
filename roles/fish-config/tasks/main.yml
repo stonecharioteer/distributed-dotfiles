@@ -24,13 +24,19 @@
   register: fish_plugins_file
   become: no
 
+- name: Check if Fisher plugin manager is already installed
+  stat:
+    path: "{{ dev_home }}/.config/fish/functions/fisher.fish"
+  register: fisher_function
+  become: no
+
 - name: Install Fisher plugin manager
   shell: |
     fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher"
   become: no
   environment:
     HOME: "{{ dev_home }}"
-  ignore_errors: yes  # Fisher might already be installed
+  when: not fisher_function.stat.exists
 
 - name: Install Fish plugins from fish_plugins file
   shell: |
@@ -39,21 +45,21 @@
   environment:
     HOME: "{{ dev_home }}"
   when: fish_plugins_file.stat.exists
-  ignore_errors: yes
 
 - name: Initialize shell tool integrations
   shell: |
-    fish -c "{{ item.cmd }}"
+    fish -c "command -q {{ item.binary }}; and {{ item.cmd }}"
   loop:
-    - { cmd: "starship init fish | source" }
-    - { cmd: "atuin init fish | source" }
-    - { cmd: "zoxide init fish | source" }
+    - { binary: "starship", cmd: "starship init fish | source" }
+    - { binary: "atuin", cmd: "atuin init fish | source" }
+    - { binary: "zoxide", cmd: "zoxide init fish | source" }
   loop_control:
-    label: "{{ item.cmd }}"
+    label: "{{ item.binary }}"
   become: no
   environment:
     HOME: "{{ dev_home }}"
-  ignore_errors: yes
+  changed_when: false
+  failed_when: false
 
 - name: Create local bin directory for additional tools
   file:

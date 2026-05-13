@@ -1,0 +1,61 @@
+---
+# Install GitHub CLI and fail fast if the target user is not authenticated.
+
+- name: Check Debian package architecture
+  command: dpkg --print-architecture
+  register: deb_architecture
+  changed_when: false
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Install GitHub CLI apt prerequisites
+  apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: yes
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Install GitHub CLI repository key
+  get_url:
+    url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+    dest: /usr/share/keyrings/githubcli-archive-keyring.gpg
+    mode: '0644'
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Add GitHub CLI apt repository
+  apt_repository:
+    repo: "deb [arch={{ deb_architecture.stdout }} signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
+    filename: github-cli
+    state: present
+    update_cache: yes
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Install GitHub CLI
+  apt:
+    name: gh
+    state: present
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Check GitHub CLI authentication for dev user
+  command: gh auth status
+  register: gh_auth_status
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_home }}"
+  changed_when: false
+  failed_when: false
+
+- name: Fail if GitHub CLI is not authenticated
+  fail:
+    msg: |
+      GitHub CLI is installed, but {{ dev_user }} is not logged in on this machine.
+
+      Log in on the target host before rerunning this playbook:
+
+        ssh {{ ansible_host | default(inventory_hostname) }}
+        gh auth login --hostname github.com --git-protocol ssh
+
+      This playbook clones private GitHub repositories and should fail here rather
+      than partway through setup.
+  when: gh_auth_status.rc != 0

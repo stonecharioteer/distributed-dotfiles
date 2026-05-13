@@ -89,6 +89,24 @@
 
 - name: Update existing nvim-config repository
   block:
+    - name: Check for local modifications in nvim-config repository
+      shell: git -C "{{ nvim_config_dir }}" status --porcelain
+      register: nvim_config_local_changes
+      become_user: "{{ dev_user }}"
+      changed_when: false
+      failed_when: false
+
+    - name: Skip nvim-config update when local modifications exist
+      debug:
+        msg: |
+          Skipping nvim-config pull because local modifications exist in {{ nvim_config_dir }}.
+
+          Local changes:
+          {{ nvim_config_local_changes.stdout }}
+
+          Commit, stash, or discard these changes, then rerun the playbook to update the config.
+      when: nvim_config_local_changes.stdout | length > 0
+
     - name: Pull latest changes from nvim-config repository
       git:
         repo: "{{ nvim_config_repo }}"
@@ -98,6 +116,7 @@
         accept_hostkey: yes
       become_user: "{{ dev_user }}"
       register: nvim_config_pull
+      when: nvim_config_local_changes.stdout | length == 0
 
     - name: Run headless Neovim setup to update plugins
       shell: |
@@ -107,12 +126,17 @@
         HOME: "{{ dev_home }}"
       register: nvim_update_setup
       ignore_errors: yes
-      when: nvim_config_pull.changed
+      when:
+        - nvim_config_pull is defined
+        - nvim_config_pull.changed
 
     - name: Display update results
       debug:
         msg: |
           nvim-config update completed:
+          {% if nvim_config_local_changes.stdout | length > 0 %}
+          ✓ Configuration update skipped because local modifications exist
+          {% else %}
           {% if nvim_config_pull.changed %}
           ✓ Configuration pulled from {{ nvim_config_branch }}
           {% if nvim_update_setup.rc == 0 %}
@@ -123,6 +147,7 @@
           {% endif %}
           {% else %}
           ✓ Configuration already up to date
+          {% endif %}
           {% endif %}
 
   when: nvim_config_exists.stat.exists and nvim_config_git.stat.exists and (existing_repo_url.stdout is not defined or nvim_config_repo in existing_repo_url.stdout)

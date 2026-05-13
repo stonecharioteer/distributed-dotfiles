@@ -66,6 +66,8 @@
       tags: [dev, git, config]
     - role: cli-tools
       tags: [dev, cli]
+    - role: starship-config
+      tags: [shell, starship, config]
     - role: dev-folders
       tags: [dev, folders]
     - role: tmux
