@@ -37,13 +37,13 @@
       time_format = "%H:%M:%S"
 
       [directory]
-      format = "[dir:$path]($style) "
+      format = "[ $path]($style) "
       style = "bold cyan"
       truncation_length = 3
       truncate_to_repo = false
 
       [git_branch]
-      format = "[git:$branch]($style) "
+      format = "[ $branch]($style) "
       style = "bold purple"
 
       [cmd_duration]
