@@ -21,3 +21,26 @@ tmux_build_deps:
   - autoconf          # For autogen.sh script
   - libtool           # For autogen.sh script
   - git               # For downloading source from GitHub
+
+# Default tmux theme palette. Host-specific overrides can set this variable in
+# host_vars/<host>.yml to keep the same tmux behavior with different server
+# colors.
+tmux_theme_palette:
+  colour_1: '"#2f3b17"    # deep olive (status line base)'
+  colour_2: '"#445324"    # medium olive'
+  colour_3: '"#d8dfb8"    # pale olive text'
+  colour_4: '"#a7c957"    # bright olive highlight'
+  colour_5: '"#c7d98a"    # light olive'
+  colour_6: '"#14180d"    # near-black olive text'
+  colour_7: '"#f5f8e8"    # warm white text'
+  colour_8: '"#14180d"    # near-black olive text'
+  colour_9: '"#8aa63e"    # left segment 1 bg'
+  colour_10: '"#5f732c"   # left segment 2 bg'
+  colour_11: '"#afc36b"   # left segment 3 bg'
+  colour_12: '"#1a1f10"   # right segment 1 fg'
+  colour_13: '"#f5f8e8"   # right segment 2 fg'
+  colour_14: '"#1a1f10"   # right segment 3 fg'
+  colour_15: '"#8fa94a"   # right segment 1 bg'
+  colour_16: '"#5a6b2f"   # right segment 2 bg'
+  colour_17: '"#c2d48a"   # right segment 3 bg'
+  focused_pane_bg: '"#000000"'

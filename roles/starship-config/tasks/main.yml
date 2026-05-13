@@ -15,7 +15,7 @@
     mode: '0644'
     content: |
       format = "$username$hostname$time$cmd_duration$status\n$directory$git_branch\n$character"
-      add_newline = false
+      add_newline = true
 
       [username]
       show_always = true

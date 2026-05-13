@@ -20,8 +20,8 @@
       include_tasks:
         file: tasks/github-cli-preflight.yml
         apply:
-          tags: always
-      tags: always
+          tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config]
+      tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config]
       
     - name: Check which packages are missing
       shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
@@ -65,7 +65,7 @@
   roles:
     # Failsafe checks for all components
     - role: failsafe-checks
-      tags: [always]
+      tags: [safety, shell, fish, dotfiles, scripts]
 
     # Shell Environment
     - role: fish-shell
