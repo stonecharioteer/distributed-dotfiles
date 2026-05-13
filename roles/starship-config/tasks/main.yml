@@ -14,7 +14,7 @@
     group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
     mode: '0644'
     content: |
-      format = "$username$hostname$directory$git_branch$status$character"
+      format = "$username$hostname$directory$git_branch$status\n$character"
       add_newline = false
 
       [username]
