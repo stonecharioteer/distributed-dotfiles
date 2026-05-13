@@ -1,0 +1,86 @@
+---
+- name: Include macOS-specific Supabase tooling tasks
+  include_tasks: darwin.yml
+  when: ansible_facts["os_family"] == "Darwin"
+
+- name: Install Supabase CLI on Debian/Ubuntu
+  when: ansible_facts["os_family"] == "Debian"
+  block:
+    - name: Check installed Supabase CLI version
+      command: supabase --version
+      register: supabase_cli_check
+      changed_when: false
+      failed_when: false
+
+    - name: Fetch latest Supabase CLI release metadata
+      uri:
+        url: "{{ supabase_cli_repo_api }}"
+        return_content: yes
+      register: supabase_latest_release
+      when: supabase_cli_install_version == "latest"
+
+    - name: Set target Supabase CLI version
+      set_fact:
+        supabase_cli_target_tag: >-
+          {{ supabase_latest_release.json.tag_name
+             if supabase_cli_install_version == 'latest'
+             else supabase_cli_install_version
+               if supabase_cli_install_version is match('^v')
+               else 'v' + supabase_cli_install_version }}
+
+    - name: Set Supabase CLI package version
+      set_fact:
+        supabase_cli_package_version: "{{ supabase_cli_target_tag | regex_replace('^v', '') }}"
+
+    - name: Check Debian package architecture
+      command: dpkg --print-architecture
+      register: supabase_deb_architecture
+      changed_when: false
+
+    - name: Map architecture for Supabase CLI package
+      set_fact:
+        supabase_cli_package_arch: >-
+          {{ 'amd64' if supabase_deb_architecture.stdout == 'amd64'
+             else 'arm64' if supabase_deb_architecture.stdout in ['arm64', 'aarch64']
+             else supabase_deb_architecture.stdout }}
+
+    - name: Install Supabase CLI {{ supabase_cli_target_tag }}
+      when: supabase_cli_check.rc != 0 or supabase_cli_package_version not in supabase_cli_check.stdout
+      block:
+        - name: Create temporary directory for Supabase CLI download
+          tempfile:
+            state: directory
+            suffix: supabase-cli
+          register: supabase_cli_temp_dir
+
+        - name: Download Supabase CLI Debian package
+          get_url:
+            url: "https://github.com/supabase/cli/releases/download/{{ supabase_cli_target_tag }}/supabase_{{ supabase_cli_package_version }}_linux_{{ supabase_cli_package_arch }}.deb"
+            dest: "{{ supabase_cli_temp_dir.path }}/supabase_{{ supabase_cli_package_version }}_linux_{{ supabase_cli_package_arch }}.deb"
+            mode: '0644'
+
+        - name: Install Supabase CLI Debian package
+          apt:
+            deb: "{{ supabase_cli_temp_dir.path }}/supabase_{{ supabase_cli_package_version }}_linux_{{ supabase_cli_package_arch }}.deb"
+
+        - name: Clean up Supabase CLI download directory
+          file:
+            path: "{{ supabase_cli_temp_dir.path }}"
+            state: absent
+
+    - name: Verify Supabase CLI installation
+      command: supabase --version
+      register: supabase_cli_verify
+      changed_when: false
+
+    - name: Check Docker availability for local Supabase stack
+      command: docker --version
+      register: supabase_docker_check
+      changed_when: false
+      failed_when: false
+
+    - name: Display Supabase tooling status
+      debug:
+        msg: |
+          Supabase CLI: {{ supabase_cli_verify.stdout }}
+          Docker: {{ supabase_docker_check.stdout if supabase_docker_check.rc == 0 else 'not available; required for supabase start' }}

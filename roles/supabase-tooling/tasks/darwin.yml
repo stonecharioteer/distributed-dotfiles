@@ -1,0 +1,27 @@
+---
+- name: Install Supabase CLI via Homebrew
+  shell: |
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export PATH="/opt/homebrew/bin:$PATH"
+
+    if ! brew list supabase &>/dev/null; then
+      echo "Installing supabase..."
+      brew install supabase/tap/supabase
+    else
+      echo "supabase is already installed"
+    fi
+  args:
+    executable: /bin/bash
+  become: no
+  register: supabase_brew_install
+  changed_when: "'Installing supabase' in supabase_brew_install.stdout"
+
+- name: Verify Supabase CLI installation
+  command: supabase --version
+  register: supabase_cli_verify
+  changed_when: false
+  become: no
+
+- name: Display Supabase CLI installation status
+  debug:
+    msg: "{{ supabase_cli_verify.stdout }}"

@@ -1,0 +1,6 @@
+---
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+
+supabase_cli_repo_api: "https://api.github.com/repos/supabase/cli/releases/latest"
+supabase_cli_install_version: "latest"

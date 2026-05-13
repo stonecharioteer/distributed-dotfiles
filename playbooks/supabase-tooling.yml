@@ -1,0 +1,26 @@
+---
+# Optional Supabase tooling setup for machines that need local Supabase development.
+- name: Supabase Tooling Setup
+  hosts: supabase_machines
+  become: yes
+  gather_facts: true
+  vars:
+    dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+    dev_home: "/home/{{ dev_user }}"
+
+  roles:
+    - role: supabase-tooling
+      tags: [supabase, dev]
+
+  post_tasks:
+    - name: Display Supabase tooling setup completion
+      debug:
+        msg: |
+          Supabase tooling setup complete.
+
+          Installed:
+          - Supabase CLI
+
+          Notes:
+          - Local Supabase projects still require Docker to run `supabase start`.
+          - Authenticate when needed with `supabase login`.
