@@ -19,10 +19,12 @@
   ignore_errors: yes
 
 - name: Check if Starship is already installed
-  command: "{{ external_tools.starship.check_cmd }}"
+  shell: "command -v starship >/dev/null 2>&1 && {{ external_tools.starship.check_cmd }}"
+  args:
+    executable: /bin/bash
   register: starship_check
-  ignore_errors: yes
   changed_when: false
+  failed_when: false
 
 - name: Install Starship prompt
   block:
@@ -60,10 +62,12 @@
         msg: "⚠ Starship installation failed - continuing with other tools"
 
 - name: Check if Gum is already installed
-  command: "{{ external_tools.gum.check_cmd }}"
+  shell: "command -v gum >/dev/null 2>&1 && {{ external_tools.gum.check_cmd }}"
+  args:
+    executable: /bin/bash
   register: gum_check
-  ignore_errors: yes
   changed_when: false
+  failed_when: false
 
 - name: Install Gum terminal UI tools
   block:
@@ -101,10 +105,12 @@
         msg: "⚠ Gum installation failed - continuing with other tools"
 
 - name: Check if Glow is already installed
-  command: "{{ external_tools.glow.check_cmd }}"
+  shell: "command -v glow >/dev/null 2>&1 && {{ external_tools.glow.check_cmd }}"
+  args:
+    executable: /bin/bash
   register: glow_check
-  ignore_errors: yes
   changed_when: false
+  failed_when: false
 
 - name: Install Glow markdown renderer
   block:

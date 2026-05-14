@@ -12,6 +12,9 @@ ansible-playbook --ask-become-pass playbooks/base-environment.yml
 
 # GUI workstation (includes base + desktop)
 ansible-playbook --ask-become-pass playbooks/gui-environment.yml
+
+# Optional Supabase tooling for selected machines
+ansible-playbook -i inventory/hosts.yml --ask-become-pass playbooks/supabase-tooling.yml
 ```
 
 ### macOS
@@ -178,6 +181,17 @@ ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-envir
 ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit servers
 ```
 
+### Optional Supabase tooling
+
+Supabase tooling is intentionally separate from the base environment. Add hosts
+to the `supabase_machines` inventory group, then run:
+
+```bash
+ansible-playbook -i inventory/hosts.yml --ask-become-pass playbooks/supabase-tooling.yml
+```
+
+The current inventory applies this to `1990-dev`.
+
 ### Test connectivity
 
 ```bash
@@ -211,6 +225,7 @@ ansible-playbook playbooks/base-environment.yml --list-tasks
 - Shell: `fish-shell`, `fish-config`, `mise-tools`, `rust-toolchain`
 - CLI: `system-deps`, `cli-tools`, `dev-folders`
 - Development: `tmux`, `neovim-latest`, `nvim-config`, `tree-sitter-cli`, `hugo`, `docker`
+- Optional tooling: `supabase-tooling`
 - GUI (Linux): `qtile-wm`, `alacritty`, `desktop-integration`
 - GUI (macOS): `ghostty`, `aerospace-wm`, `nerd-fonts`
 

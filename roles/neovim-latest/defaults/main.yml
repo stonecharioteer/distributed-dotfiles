@@ -4,7 +4,7 @@ dev_user: "{{ ansible_user | default('stonecharioteer') }}"
 dev_home: "/home/{{ dev_user }}"
 
 # Neovim installation configuration
-neovim_version: "v0.11.6"
+neovim_version: "v0.12.2"
 neovim_install_prefix: "/usr/local"
 neovim_binary_path: "{{ neovim_install_prefix }}/bin/nvim"
 neovim_vim_symlink_path: "{{ neovim_install_prefix }}/bin/vim"

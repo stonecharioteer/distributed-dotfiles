@@ -37,37 +37,6 @@
         force: no
       become: no
 
-    - name: Enable mouse mode in .tmux.conf.local
-      lineinfile:
-        path: "{{ dev_home }}/.tmux.conf.local"
-        regexp: '^#set -g mouse on'
-        line: 'set -g mouse on'
-        backrefs: yes
-      become: no
-
-    - name: Enable vi mode keys in .tmux.conf.local
-      lineinfile:
-        path: "{{ dev_home }}/.tmux.conf.local"
-        regexp: '^#{{ item }}'
-        line: '{{ item }}'
-        backrefs: yes
-      loop:
-        - 'set -g status-keys vi'
-        - 'set -g mode-keys vi'
-      become: no
-
-    - name: Enable powerline separators in .tmux.conf.local
-      replace:
-        path: "{{ dev_home }}/.tmux.conf.local"
-        regexp: '^#({{ item.key }}=.*)$'
-        replace: '\1'
-      loop:
-        - { key: "tmux_conf_theme_left_separator_main" }
-        - { key: "tmux_conf_theme_left_separator_sub" }
-        - { key: "tmux_conf_theme_right_separator_main" }
-        - { key: "tmux_conf_theme_right_separator_sub" }
-      become: no
-
     - name: Display oh-my-tmux installation success
       debug:
         msg: |
@@ -75,7 +44,7 @@
           Location: {{ dev_home }}/.tmux/
           Config: {{ dev_home }}/.tmux.conf.local
 
-  when: not oh_my_tmux_exists.stat.exists or oh_my_tmux_exists.stat.islnk is defined
+  when: not oh_my_tmux_exists.stat.exists or (oh_my_tmux_exists.stat.islnk | default(false))
 
 - name: Update oh-my-tmux if already installed
   tags:
@@ -99,4 +68,115 @@
           ✓ oh-my-tmux already up to date
           {% endif %}
 
-  when: oh_my_tmux_exists.stat.exists and oh_my_tmux_exists.stat.islnk is not defined
+  when: oh_my_tmux_exists.stat.exists and not (oh_my_tmux_exists.stat.islnk | default(false))
+
+- name: Ensure .tmux.conf.local exists
+  copy:
+    src: "{{ dev_home }}/.tmux/.tmux.conf.local"
+    dest: "{{ dev_home }}/.tmux.conf.local"
+    remote_src: yes
+    force: no
+  become: no
+  tags:
+    - oh-my-tmux
+    - blog
+
+- name: Remove obsolete appended oh-my-tmux options block
+  blockinfile:
+    path: "{{ dev_home }}/.tmux.conf.local"
+    marker: "# {mark} ANSIBLE MANAGED OH-MY-TMUX OPTIONS"
+    state: absent
+  become: no
+  tags:
+    - oh-my-tmux
+    - blog
+
+- name: Apply shared oh-my-tmux theme options
+  lineinfile:
+    path: "{{ dev_home }}/.tmux.conf.local"
+    regexp: "^#?{{ item.key }}=.*$"
+    line: "{{ item.key }}={{ item.value }}"
+  loop:
+    - { key: "tmux_conf_new_session_retain_current_path", value: "true" }
+    - { key: "tmux_conf_new_window_retain_current_path", value: "true" }
+    - { key: "tmux_conf_theme_colour_1", value: "{{ tmux_theme_palette.colour_1 }}" }
+    - { key: "tmux_conf_theme_colour_2", value: "{{ tmux_theme_palette.colour_2 }}" }
+    - { key: "tmux_conf_theme_colour_3", value: "{{ tmux_theme_palette.colour_3 }}" }
+    - { key: "tmux_conf_theme_colour_4", value: "{{ tmux_theme_palette.colour_4 }}" }
+    - { key: "tmux_conf_theme_colour_5", value: "{{ tmux_theme_palette.colour_5 }}" }
+    - { key: "tmux_conf_theme_colour_6", value: "{{ tmux_theme_palette.colour_6 }}" }
+    - { key: "tmux_conf_theme_colour_7", value: "{{ tmux_theme_palette.colour_7 }}" }
+    - { key: "tmux_conf_theme_colour_8", value: "{{ tmux_theme_palette.colour_8 }}" }
+    - { key: "tmux_conf_theme_colour_9", value: "{{ tmux_theme_palette.colour_9 }}" }
+    - { key: "tmux_conf_theme_colour_10", value: "{{ tmux_theme_palette.colour_10 }}" }
+    - { key: "tmux_conf_theme_colour_11", value: "{{ tmux_theme_palette.colour_11 }}" }
+    - { key: "tmux_conf_theme_colour_12", value: "{{ tmux_theme_palette.colour_12 }}" }
+    - { key: "tmux_conf_theme_colour_13", value: "{{ tmux_theme_palette.colour_13 }}" }
+    - { key: "tmux_conf_theme_colour_14", value: "{{ tmux_theme_palette.colour_14 }}" }
+    - { key: "tmux_conf_theme_colour_15", value: "{{ tmux_theme_palette.colour_15 }}" }
+    - { key: "tmux_conf_theme_colour_16", value: "{{ tmux_theme_palette.colour_16 }}" }
+    - { key: "tmux_conf_theme_colour_17", value: "{{ tmux_theme_palette.colour_17 }}" }
+    - { key: "tmux_conf_theme_highlight_focused_pane", value: "true" }
+    - { key: "tmux_conf_theme_focused_pane_bg", value: "{{ tmux_theme_palette.focused_pane_bg }}" }
+    - { key: "tmux_conf_theme_pane_border", value: '"$tmux_conf_theme_colour_1"' }
+    - { key: "tmux_conf_theme_pane_active_border", value: '"$tmux_conf_theme_colour_15"' }
+    - { key: "tmux_conf_theme_pane_indicator", value: '"$tmux_conf_theme_colour_15"' }
+    - { key: "tmux_conf_theme_pane_active_indicator", value: '"$tmux_conf_theme_colour_11"' }
+    - { key: "tmux_conf_theme_left_separator_main", value: "'\\uE0B0'" }
+    - { key: "tmux_conf_theme_left_separator_sub", value: "'\\uE0B1'" }
+    - { key: "tmux_conf_theme_right_separator_main", value: "'\\uE0B2'" }
+    - { key: "tmux_conf_theme_right_separator_sub", value: "'\\uE0B3'" }
+    - { key: "tmux_conf_copy_to_os_clipboard", value: "true" }
+    - { key: "tmux_conf_update_plugins_on_launch", value: "false" }
+    - { key: "tmux_conf_update_plugins_on_reload", value: "false" }
+    - { key: "tmux_conf_uninstall_plugins_on_reload", value: "true" }
+  become: no
+  tags:
+    - oh-my-tmux
+    - blog
+
+- name: Apply shared oh-my-tmux conditional theme options
+  replace:
+    path: "{{ dev_home }}/.tmux.conf.local"
+    regexp: 'tmux_conf_theme_pane_active_border="#\{\?pane_in_mode,\$tmux_conf_theme_colour_[0-9]+,#\{\?synchronize-panes,\$tmux_conf_theme_colour_[0-9]+,\$tmux_conf_theme_colour_[0-9]+\}\}"'
+    replace: 'tmux_conf_theme_pane_active_border="#{?pane_in_mode,$tmux_conf_theme_colour_11,#{?synchronize-panes,$tmux_conf_theme_colour_16,$tmux_conf_theme_colour_15}}"'
+  become: no
+  tags:
+    - oh-my-tmux
+    - blog
+
+- name: Apply shared oh-my-tmux status content
+  lineinfile:
+    path: "{{ dev_home }}/.tmux.conf.local"
+    regexp: "^#?{{ item.key }}=.*$"
+    line: "{{ item.key }}={{ item.value }}"
+  loop:
+    - { key: "tmux_conf_theme_status_left", value: '" ❐ #S | ↑#{?uptime_y, #{uptime_y}y,}#{?uptime_d, #{uptime_d}d,}#{?uptime_h, #{uptime_h}h,}#{?uptime_m, #{uptime_m}m,} | #{pretty_pane_current_path} "' }
+    - { key: "tmux_conf_theme_status_right", value: '" #{prefix}#{mouse}#{pairing}#{synchronized}#[fg=$tmux_conf_theme_colour_12]#{?battery_percentage, 🔋 #{battery_percentage},} , %R , %d %b | #{username}#{root} | #{hostname} "' }
+  become: no
+  tags:
+    - oh-my-tmux
+    - blog
+
+- name: Apply shared tmux command customizations
+  blockinfile:
+    path: "{{ dev_home }}/.tmux.conf.local"
+    marker: "# {mark} ANSIBLE MANAGED TMUX COMMANDS"
+    insertbefore: '^# -- tpm'
+    block: |
+      set -g history-limit 100000
+      set -g mouse on
+      set -g status-keys vi
+      set -g mode-keys vi
+
+      bind | split-window -h -c '#{pane_current_path}'
+      bind '\' split-window -v -c '#{pane_current_path}'
+      bind C-c command-prompt -I "#{b:pane_current_path}" -p "new-session" "new-session -A -c '#{pane_current_path}' -s '%%'"
+
+      set -g pane-border-status top
+      set -g pane-border-format " #{pane_current_path} "
+      set -g extended-keys-format csi-u
+  become: no
+  tags:
+    - oh-my-tmux
+    - blog

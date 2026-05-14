@@ -171,10 +171,13 @@
   ignore_errors: yes
 
 - name: Check if uv is already installed
-  command: which uv
+  shell: command -v uv
+  args:
+    executable: /bin/bash
   register: uv_exists
-  ignore_errors: yes
   become: no
+  changed_when: false
+  failed_when: false
 
 - name: Install uv Python package manager via official installer
   shell: |

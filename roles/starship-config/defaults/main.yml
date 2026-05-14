@@ -1,0 +1,4 @@
+---
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+starship_config_path: "{{ dev_home }}/.config/starship.toml"
