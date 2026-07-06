@@ -18,5 +18,5 @@ all:
   children:
     macbooks:
       hosts:
-        localhost:
+        macbook:
           ansible_connection: local

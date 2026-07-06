@@ -24,7 +24,7 @@ Options:
   -h, --help             Show this help
 
 Examples:
-  ./bootstrap headless --host 1990-dev --user stonecharioteer
+  ./bootstrap headless --host linux-server --user stonecharioteer
   ./bootstrap gui -i inventory/gui.example.yml --check --diff
   ./bootstrap mac
   ./bootstrap mac-gui --tags gui
