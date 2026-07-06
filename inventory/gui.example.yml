@@ -25,6 +25,6 @@ all:
         desktop:
           ansible_host: desktop.example.com
           ansible_user: stonecharioteer
-        laptop:
-          ansible_host: laptop.example.com
+        linux-laptop:
+          ansible_host: linux-laptop.example.com
           ansible_user: stonecharioteer

@@ -17,9 +17,9 @@ all:
   children:
     headless_machines:
       hosts:
-        devbox:
-          ansible_host: devbox.example.com
+        linux-server:
+          ansible_host: linux-server.example.com
           ansible_user: stonecharioteer
-        storage:
-          ansible_host: storage.example.com
+        linux-laptop:
+          ansible_host: linux-laptop.example.com
           ansible_user: stonecharioteer

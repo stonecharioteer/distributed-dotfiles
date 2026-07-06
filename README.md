@@ -25,7 +25,7 @@ Examples:
 
 ```bash
 # Base development environment on a Linux host
-./bootstrap headless --host 1990-dev --user stonecharioteer
+./bootstrap headless --host linux-server --user stonecharioteer
 
 # Linux GUI workstation with Qtile
 ./bootstrap gui --host desktop --user stonecharioteer
@@ -251,7 +251,7 @@ to the `supabase_machines` inventory group, then run:
 ansible-playbook -i inventory/hosts.yml --ask-become-pass playbooks/supabase-tooling.yml
 ```
 
-The current inventory applies this to `1990-dev`.
+Add target machines to the `supabase_machines` inventory group when they need this tooling.
 
 ### Test connectivity
 
