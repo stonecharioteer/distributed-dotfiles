@@ -23,6 +23,22 @@
   become_user: "{{ dev_user }}"
   when: not scripts_repo_exists
 
+- name: Normalize scripts repository origin URL to SSH
+  command: git remote set-url origin git@github.com:stonecharioteer/scripts.git
+  args:
+    chdir: "{{ dev_home }}/code/checkouts/personal/scripts"
+  become_user: "{{ dev_user }}"
+  when:
+    - scripts_repo_exists
+    - scripts_git_remote is defined
+    - scripts_git_remote.stdout in [
+        'https://github.com/stonecharioteer/scripts',
+        'git@github.com:stonecharioteer/scripts.git',
+        'git@github.com:stonecharioteer/scripts',
+        'ssh://git@github.com/stonecharioteer/scripts.git',
+        'ssh://git@github.com/stonecharioteer/scripts'
+      ]
+
 - name: Leave existing scripts repository untouched (has local changes or not on main)
   debug:
     msg: |

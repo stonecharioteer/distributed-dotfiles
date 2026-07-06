@@ -246,13 +246,26 @@
   fail:
     msg: |
       STOP: ~/code/checkouts/personal/scripts is a git repository but not the expected one.
-      Expected: https://github.com/stonecharioteer/scripts.git
-      Found: {{ scripts_git_remote.stdout }}
+      Expected one of:
+        - https://github.com/stonecharioteer/scripts.git
+        - https://github.com/stonecharioteer/scripts
+        - git@github.com:stonecharioteer/scripts.git
+        - git@github.com:stonecharioteer/scripts
+        - ssh://git@github.com/stonecharioteer/scripts.git
+        - ssh://git@github.com/stonecharioteer/scripts
+      Found: {{ scripts_git_remote.stdout | default('') }}
       Please backup or remove it manually, or update the remote URL.
   when:
     - scripts_repo_exists.stat.exists
     - scripts_is_git_repo.stat.exists
-    - scripts_git_remote.stdout not in ['https://github.com/stonecharioteer/scripts.git', 'git@github.com:stonecharioteer/scripts.git']
+    - scripts_git_remote.stdout not in [
+        'https://github.com/stonecharioteer/scripts.git',
+        'https://github.com/stonecharioteer/scripts',
+        'git@github.com:stonecharioteer/scripts.git',
+        'git@github.com:stonecharioteer/scripts',
+        'ssh://git@github.com/stonecharioteer/scripts.git',
+        'ssh://git@github.com/stonecharioteer/scripts'
+      ]
 
 # === FISH CONFIGURATION REPOSITORY CHECKS ===
 - name: Check if fish config directory exists
