@@ -121,11 +121,24 @@
   become: no
   when: uv_exists.rc != 0
 
-- name: Ensure mise is in PATH for fish shell
+- name: Remove legacy fish universal path override
   lineinfile:
     path: "{{ dev_home }}/.config/fish/fish_variables"
-    line: "SETUVAR dev_user_paths:{{ dev_home }}/\\.local/bin\\x1e{{ dev_home }}/\\.cargo/bin\\x1e/opt/homebrew/bin\\x1e/opt/homebrew/sbin"
     regexp: "^SETUVAR dev_user_paths:"
+    state: absent
+  become: no
+  failed_when: false
+
+- name: Ensure mise paths are added with fish_add_path
+  blockinfile:
+    path: "{{ dev_home }}/.config/fish/config.fish"
+    marker: "# {mark} ANSIBLE MANAGED MISE PATHS"
+    block: |
+      fish_add_path {{ dev_home }}/.local/bin
+      fish_add_path {{ dev_home }}/.cargo/bin
+      fish_add_path /opt/homebrew/bin
+      fish_add_path /opt/homebrew/sbin
     create: yes
     owner: "{{ dev_user }}"
+    mode: '0644'
   become: no
