@@ -80,14 +80,15 @@
 # Note: ripgrep, fd, zoxide, starship are installed via package manager in cli-tools role
 # This avoids conflicts and uses system package manager when available
 
-- name: Add cargo bin to user PATH in fish config
+- name: Add cargo bin to fish config with fish_add_path
   lineinfile:
-    path: "{{ dev_home }}/.config/fish/fish_variables"
-    line: "SETUVAR dev_user_paths:{{ dev_home }}/\\.cargo/bin\\x1e{{ dev_home }}/\\.fzf/bin"
-    regexp: "^SETUVAR dev_user_paths:"
+    path: "{{ dev_home }}/.config/fish/config.fish"
+    line: "fish_add_path {{ dev_home }}/.cargo/bin"
+    regexp: "^fish_add_path {{ dev_home | regex_escape }}/\\.cargo/bin$"
     create: yes
     owner: "{{ dev_user }}"
     group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
+    mode: '0644'
   become: no
 
 - name: Ensure cargo bin directory is in PATH

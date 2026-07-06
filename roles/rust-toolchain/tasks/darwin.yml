@@ -73,12 +73,14 @@
   become: no
   ignore_errors: yes
 
-- name: Add cargo bin to fish config
+- name: Add cargo bin to fish config with fish_add_path
   lineinfile:
     path: "{{ dev_home }}/.config/fish/config.fish"
-    line: 'fish_add_path {{ dev_home }}/.cargo/bin'
+    line: "fish_add_path {{ dev_home }}/.cargo/bin"
+    regexp: "^fish_add_path {{ dev_home | regex_escape }}/\\.cargo/bin$"
     create: yes
     owner: "{{ dev_user }}"
+    mode: '0644'
   become: no
 
 - name: Display Rust toolchain installation summary
