@@ -1,0 +1,3 @@
+---
+# Ubuntu LTS 26.04 defaults.
+# This release uses sudo-rs by default on these hosts.

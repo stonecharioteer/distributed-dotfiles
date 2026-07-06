@@ -104,7 +104,8 @@ Preserve the inventory split when adding machines or features:
 - `inventory/hosts.yml` is for host and group membership only. Prefer FQDN inventory hostnames such as `desktop.home.arpa`, `linux-laptop.home.arpa`, and `macbook.home.arpa` instead of short aliases plus `ansible_host`.
 - `inventory/group_vars/` defines behavior for groups. Add shared defaults to `group_vars/all.yml`, profile defaults to groups like `headless_machines.yml`, `gui_machines.yml`, `macbooks.yml`, and feature defaults to purpose groups like `laptops.yml`.
 - `inventory/host_vars/` is only for real per-machine exceptions. Do not put common defaults there.
-- Group new hosts by intent: `headless_machines`, `gui_machines`, `macbooks`, `servers`, `workstations`, `laptops`, hardware groups such as `thinkpads`, and optional feature groups such as `supabase_machines`.
+- Group new hosts by intent: `headless_machines`, `gui_machines`, `macbooks`, `servers`, `workstations`, `laptops`, OS groups such as `ubuntu_lts_26_04`, sudo implementation groups such as `sudo_rs`, hardware groups such as `thinkpads`, and optional feature groups such as `supabase_machines`.
+- For sudo-rs machines, add them to the `sudo_rs` group and keep `inventory/group_vars/sudo_rs.yml` as the source of truth for Ansible sudo compatibility (`ansible_become_exe: /usr/bin/sudo.ws`).
 - Add optional capabilities as roles plus feature flags. Example: the `tailscale` role is controlled by `enable_tailscale`, defaults to false in `group_vars/all.yml`, and is enabled for `laptops` in `group_vars/laptops.yml`.
 - When adding a feature flag, wire it through the relevant playbooks and expose a bootstrap override when useful, e.g. `./bootstrap headless --enable-tailscale`.
 - Keep example inventories generic. Use names like `desktop`, `macbook`, `linux-laptop`, and `linux-server`; do not include personal or retired hostnames.

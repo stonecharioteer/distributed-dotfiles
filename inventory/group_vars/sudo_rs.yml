@@ -1,0 +1,4 @@
+---
+# Hosts with sudo-rs should use the classic sudo compatibility binary for Ansible.
+# If overriding manually, use: -e ansible_become_exe=/usr/bin/sudo.ws
+ansible_become_exe: /usr/bin/sudo.ws
