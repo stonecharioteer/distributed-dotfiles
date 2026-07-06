@@ -6,7 +6,7 @@
   stat:
     path: "{{ dev_home }}/.config/fish/config.fish"
   register: fish_config_file
-  
+
 - name: Display fish configuration status
   debug:
     msg: |

@@ -44,7 +44,7 @@
           - uuid-dev
           - zlib1g-dev
     - name: Download Python 3.8
-      unarchive: 
+      unarchive:
         src: https://www.python.org/ftp/python/3.8.15/Python-3.8.15.tgz
         dest: /tmp/python/
         remote_src: true
@@ -54,11 +54,11 @@
         cmd: |
           ./configure --prefix=/home/{{ansible_user}}/.python/py3.8/ --enable-optimizations --with-ensurepip=install
           make clean
-          make -s -j 8 
+          make -s -j 8
           make altinstall
         chdir: /tmp/python/Python-3.8.15
     - name: Download Python 3.9
-      unarchive: 
+      unarchive:
         src: https://www.python.org/ftp/python/3.9.15/Python-3.9.15.tgz
         dest: /tmp/python/
         remote_src: true
@@ -66,13 +66,13 @@
     - name: Build and install python 3.9
       shell:
         cmd: |
-          ./configure --prefix=/home/{{ansible_user}}/.python/py3.9/ --enable-optimizations --with-ensurepip=install 
+          ./configure --prefix=/home/{{ansible_user}}/.python/py3.9/ --enable-optimizations --with-ensurepip=install
           make clean
-          make -s -j 8 
+          make -s -j 8
           make altinstall
         chdir: /tmp/python/Python-3.9.15
     - name: Download Python 3.10
-      unarchive: 
+      unarchive:
         src: https://www.python.org/ftp/python/3.10.8/Python-3.10.8.tgz
         dest: /tmp/python/
         remote_src: true
@@ -80,13 +80,13 @@
     - name: Build and install python 3.10
       shell:
         cmd: |
-          ./configure --prefix=/home/{{ansible_user}}/.python/py3.10/ --enable-optimizations --with-ensurepip=install 
+          ./configure --prefix=/home/{{ansible_user}}/.python/py3.10/ --enable-optimizations --with-ensurepip=install
           make clean
-          make -s -j 8 
+          make -s -j 8
           make altinstall
         chdir: /tmp/python/Python-3.10.8
     - name: Download Python 3.11
-      unarchive: 
+      unarchive:
         src: https://www.python.org/ftp/python/3.11.0/Python-3.11.0.tgz
         dest: /tmp/python/
         remote_src: true
@@ -94,7 +94,7 @@
     - name: Build and install python 3.11
       shell:
         cmd: |
-          ./configure --prefix=/home/{{ansible_user}}/.python/py3.9/ --enable-optimizations --with-ensurepip=install 
+          ./configure --prefix=/home/{{ansible_user}}/.python/py3.9/ --enable-optimizations --with-ensurepip=install
           make clean
           make -s -j 8
           make altinstall

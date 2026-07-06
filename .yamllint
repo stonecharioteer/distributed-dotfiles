@@ -1,0 +1,23 @@
+---
+extends: default
+
+ignore: |
+  .git/
+  *.log
+
+rules:
+  # Ansible playbooks commonly use long package names, shell commands, and messages.
+  line-length: disable
+
+  # Existing playbooks use Ansible's yes/no style; ansible-lint can drive a gradual
+  # migration later without making this initial hook noisy.
+  truthy: disable
+
+  comments:
+    min-spaces-from-content: 1
+
+  braces: disable
+  colons: disable
+  comments-indentation: disable
+  document-start: disable
+  empty-lines: disable

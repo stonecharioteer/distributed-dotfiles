@@ -76,6 +76,27 @@ ssh-keygen -R "192.168.60.3"
 ssh-keygen -R "192.168.60.4"
 ```
 
+## Repository Quality Gates
+
+Pre-commit is the canonical local and CI quality gate for this repository:
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+Current checks intentionally start broad but non-disruptive:
+- commit-message guards enforce Conventional Commits and block AI attribution footers such as `Co-authored-by: Claude` and `Generated with Claude Code`
+- generic file hygiene via `pre-commit-hooks`
+- YAML parsing/style via `yamllint`
+- Ansible syntax/semantic checks via `ansible-lint`
+- shell script checks via `shellcheck`
+
+The `.ansible-lint` and `.yamllint` configs include compatibility skips for the existing playbooks. As roles are modernized, tighten these rules incrementally instead of removing the hooks:
+1. remove skipped `ansible-lint` rules one category at a time
+2. prefer fixing existing violations over adding new skips
+3. keep CI required on PRs to `main` so regressions are caught before merge
+4. document any temporary skip with the cleanup condition
+
 ## Architecture
 
 ### Consolidated Role-Based Structure

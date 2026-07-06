@@ -38,7 +38,7 @@ Vagrant.configure("2") do |config|
     end
     # install devtools
     # this includes python, installed the way I like it,
-    # rust, golang, fish, fzf, ripgrep, 
+    # rust, golang, fish, fzf, ripgrep,
     vm_ubuntu.vm.provision "python", type: "ansible" do |python|
       python.compatibility_mode = "2.0"
       python.playbook = "playbooks/devex/python.yml"
@@ -74,7 +74,7 @@ Vagrant.configure("2") do |config|
     ubuntu3.vm.box = "nickpegg/ubuntu-22.04"
     ubuntu3.vm.host_name = "ubuntu2204.test"
     ubuntu3.vm.network "private_network", ip: "192.168.60.4"
-    configure_ssh_keys ubuntu3 
+    configure_ssh_keys ubuntu3
   end
 
   config.vm.define "arch1", autostart: false do |arch1|

@@ -41,7 +41,7 @@
   loop:
     - src: "{{ dev_home }}/code/checkouts/personal"
       dest: "{{ dev_home }}/personal"
-    - src: "{{ dev_home }}/workspace/scratch"  
+    - src: "{{ dev_home }}/workspace/scratch"
       dest: "{{ dev_home }}/scratch"
   become: no
   ignore_errors: yes  # Don't fail if symlinks already exist
@@ -50,17 +50,17 @@
   debug:
     msg: |
       Development folder structure setup complete!
-      
+
       Directory structure:
       ~/code/
       ├── checkouts/
       │   ├── personal/    (symlinked to ~/personal)
       │   └── work/
       └── tools/
-      
+
       ~/workspace/
       ├── projects/
       └── scratch/         (symlinked to ~/scratch)
-      
+
       ~/Pictures/screenshots/
       ~/.local/bin/

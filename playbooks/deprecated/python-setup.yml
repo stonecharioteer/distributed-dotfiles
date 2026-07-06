@@ -44,7 +44,7 @@
             - ubuntu
             - deadsnakes
         - name: Add the public key for the deadsnakes ppa
-          command: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776 
+          command: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BA6932366A755776
           when:  ansible_facts["distribution_major_version"]|int == 21
           tags:
             - python
@@ -66,13 +66,13 @@
             - python3.11
             - ubuntu
             - deadsnakes
-        - name: Install Dependencies for Python Builds 
+        - name: Install Dependencies for Python Builds
           apt:
             state: present
             pkg:
               - build-essential
               - gdb
-              - lcov 
+              - lcov
               - pkg-config
               - libbz2-dev
               - libffi-dev

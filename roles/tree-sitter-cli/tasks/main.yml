@@ -26,7 +26,7 @@
 - name: Fail if Node.js is not available
   fail:
     msg: |
-      Node.js is not installed via mise. 
+      Node.js is not installed via mise.
       Please run the fish ansible setup first to install Node.js via mise
   when: node_check.rc != 0
 

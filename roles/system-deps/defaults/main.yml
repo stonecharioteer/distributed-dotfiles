@@ -16,7 +16,7 @@ system_packages:
   - net-tools
   - traceroute
   - vim
-  
+
   # Build essentials and development headers
   - build-essential
   - pkg-config
@@ -25,7 +25,7 @@ system_packages:
   - libtool
   - make
   - cmake
-  
+
   # Development libraries
   - libssl-dev
   - libffi-dev

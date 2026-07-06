@@ -96,6 +96,20 @@ ansible-galaxy collection install community.general
 ansible-playbook playbooks/macos-base-environment.yml
 ```
 
+## Development Checks
+
+This repository uses [pre-commit](https://pre-commit.com/) for commit-message hygiene and Ansible/YAML checks.
+
+```bash
+# Install hooks, including the commit-msg hook that blocks AI attribution footers
+pre-commit install
+
+# Run every configured check manually
+pre-commit run --all-files
+```
+
+The commit-msg hooks enforce Conventional Commits and block generated attribution such as `Co-authored-by: Claude ...` and `Generated with Claude Code` before it reaches GitHub. GitHub Actions runs matching quality checks on every pull request to `main`, and `main` is protected by required status checks for commit messages, file hygiene, YAML, Ansible, and shell scripts.
+
 ## Advanced Usage
 
 ### Run specific components using tags

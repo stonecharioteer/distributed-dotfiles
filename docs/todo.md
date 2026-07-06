@@ -21,7 +21,7 @@
     - [ ] pavucontrol
     - [ ] Laptops
       - [ ] tlp
-      - [ ] radeontop 
+      - [ ] radeontop
     - [ ] Fix locale so that it uses `en_US.utf-8`
   - [ ] Python
     - [ ] Python 3.8

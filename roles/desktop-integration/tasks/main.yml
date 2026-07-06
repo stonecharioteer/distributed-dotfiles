@@ -134,7 +134,7 @@
   become_user: "{{ dev_user }}"
   with_items:
     - auto-rotate.service
-    - lock-on-suspend.service  
+    - lock-on-suspend.service
     - unlock-on-resume.service
   when: is_laptop
   ignore_errors: yes
@@ -199,10 +199,10 @@
       ~/.config/redshift -> ~/.config/qtile/install/redshift
       ~/.config/rofi -> ~/.config/qtile/install/rofi
       ~/.config/touchegg -> ~/.config/qtile/install/touchegg
-      
+
       File symlinks:
       ~/.config/picom.conf -> ~/.config/qtile/install/picom.conf
-      
+
       {{ "LAPTOP-SPECIFIC FEATURES ENABLED:" if is_laptop else "DESKTOP SYSTEM DETECTED:" }}
       {{ "- Battery monitoring cron job" if is_laptop else "- No battery monitoring (desktop)" }}
       {{ "- Auto-rotation service" if is_laptop else "- No auto-rotation (desktop)" }}
@@ -210,5 +210,5 @@
       - Monitor management (all systems)
       - Dark mode preference for browsers
       - Mouse cursor size set to 16px for high-DPI displays
-      
+
       Repository is now the single source of truth for all configurations!

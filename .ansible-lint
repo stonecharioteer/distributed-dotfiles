@@ -1,0 +1,40 @@
+---
+exclude_paths:
+  - .git/
+  - .ansible/
+  - .cache/
+  - playbooks/deprecated/
+
+# Let ansible-lint syntax-check this repo without forcing a large legacy
+# style migration in the first pre-commit rollout. Tighten this skip list as
+# roles are modernized.
+mock_modules:
+  - community.general.git_config
+  - locale_gen
+  - pacman
+  - timezone
+
+skip_list:
+  - command-instead-of-module
+  - command-instead-of-shell
+  - fqcn[action]
+  - fqcn[action-core]
+  - ignore-errors
+  - jinja[spacing]
+  - key-order[task]
+  - latest[git]
+  - name[casing]
+  - name[template]
+  - no-changed-when
+  - no-free-form
+  - package-latest
+  - partial-become[task]
+  - risky-file-permissions
+  - risky-shell-pipe
+  - role-name
+  - var-naming[no-role-prefix]
+  - yaml[line-length]
+  - yaml[truthy]
+
+warn_list:
+  - experimental
