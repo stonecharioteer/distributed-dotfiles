@@ -1,0 +1,6 @@
+[Unit]
+Description=Collect daily NVMe SMART health snapshot
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/nvme-health-snapshot

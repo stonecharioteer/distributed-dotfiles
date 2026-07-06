@@ -16,6 +16,7 @@
     enable_hugo: true
     enable_docker: true
     enable_tailscale: false
+    enable_laptop_health_monitoring: false
 
   pre_tasks:
     - name: Update package cache (Debian/Ubuntu)
@@ -139,6 +140,9 @@
     - role: tailscale
       when: enable_tailscale | bool
       tags: [networking, tailscale]
+    - role: laptop-health
+      when: enable_laptop_health_monitoring | bool or enable_laptop_lid_ignore | default(false) | bool or enable_x13_screen_keepoff | default(false) | bool
+      tags: [laptop, health, monitoring]
 
   post_tasks:
     - name: Display base environment setup completion
@@ -154,6 +158,7 @@
           - Hugo: {{ enable_hugo }}
           - Docker: {{ enable_docker }}
           - Tailscale: {{ enable_tailscale }}
+          - Laptop health monitoring: {{ enable_laptop_health_monitoring }}
 
           🐚 Shell Environment:
           ✓ Fish shell with syntax highlighting and modern features

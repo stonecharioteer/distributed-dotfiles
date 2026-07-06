@@ -1,0 +1,13 @@
+---
+- name: reload systemd daemon
+  systemd:
+    daemon_reload: true
+
+- name: restart systemd-logind
+  systemd:
+    name: systemd-logind
+    state: restarted
+
+- name: apply sysctl settings
+  command: sysctl --system
+  changed_when: true

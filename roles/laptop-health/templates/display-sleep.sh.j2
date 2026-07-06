@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set +e
+
+# Run by LightDM after the X server starts. Applies to the login/greeter screen.
+export DISPLAY="${DISPLAY:-:0}"
+export XAUTHORITY="${XAUTHORITY:-/var/run/lightdm/root/:0}"
+
+xset s blank
+xset s {{ lightdm_display_sleep_blank_seconds }} {{ lightdm_display_sleep_blank_seconds }}
+xset +dpms
+xset dpms {{ lightdm_display_sleep_standby_seconds }} {{ lightdm_display_sleep_suspend_seconds }} {{ lightdm_display_sleep_off_seconds }}

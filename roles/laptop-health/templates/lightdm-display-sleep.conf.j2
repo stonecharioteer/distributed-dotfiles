@@ -1,0 +1,5 @@
+[Seat:*]
+# Apply once when the X server starts, then again after the greeter starts.
+# Some greeters reset screensaver/DPMS settings, so both hooks are intentional.
+display-setup-script=/etc/lightdm/scripts/display-sleep.sh
+greeter-setup-script=/etc/lightdm/scripts/display-sleep.sh

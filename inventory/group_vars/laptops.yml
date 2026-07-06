@@ -1,3 +1,5 @@
 ---
-# Defaults for portable machines that should join the tailnet.
+# Defaults for portable machines that should join the tailnet and report health.
 enable_tailscale: true
+enable_laptop_health_monitoring: true
+enable_laptop_lid_ignore: true

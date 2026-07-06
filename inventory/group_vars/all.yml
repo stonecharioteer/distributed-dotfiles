@@ -11,3 +11,11 @@ enable_development_tools: true
 enable_docker: true
 enable_hugo: true
 enable_tailscale: false
+enable_laptop_health_monitoring: false
+enable_laptop_lid_ignore: false
+enable_laptop_panic_reboot: false
+enable_nvme_health_monitoring: true
+enable_x13_screen_keepoff: false
+enable_lightdm_display_sleep: false
+enable_nvidia_integrated_mode: false
+enable_nouveau_blacklist_fix: false

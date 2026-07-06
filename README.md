@@ -52,7 +52,7 @@ The bootstrap script prints the exact `ansible-playbook` command before running 
 - Neovim 0.11.2 + custom configuration
 - Hugo Extended 0.146.7 (static site generator)
 - Docker Engine + Compose
-- Tailscale on hosts in the `laptops` inventory group
+- Tailscale and laptop health monitoring on hosts in the `laptops` inventory group
 
 **macOS** (`macos-base-environment.yml`):
 
@@ -138,6 +138,8 @@ all:
     enable_docker: true
     enable_hugo: true
     enable_tailscale: false # enabled by inventory/group_vars/laptops.yml
+    enable_laptop_health_monitoring: false # enabled by inventory/group_vars/laptops.yml
+    enable_laptop_lid_ignore: false
     enable_gui_environment: true
     enable_qtile: true
     enable_ghostty: true
@@ -199,6 +201,7 @@ ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags "fish,t
 - **Shell:** `shell`, `fish`, `dotfiles`, `scripts`, `mise`, `rust`, `languages`, `config`
 - **Development:** `dev`, `deps`, `cli`, `folders`, `tmux`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
 - **Networking:** `networking`, `tailscale`
+- **Laptop/server mode:** `laptop`, `health`, `monitoring`
 - **GUI:** `gui`, `system`, `locale`, `repos`, `wm`, `qtile`, `fonts`, `terminal`, `alacritty`, `desktop`, `integration`
 
 #### macOS

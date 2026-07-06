@@ -1,0 +1,278 @@
+---
+- name: Install laptop health package dependencies
+  package:
+    name:
+      - lm-sensors
+      - smartmontools
+      - nvme-cli
+    state: present
+  when:
+    - ansible_facts["os_family"] == "Debian"
+    - enable_laptop_health_monitoring | bool
+
+- name: Install local sbin directory
+  file:
+    path: /usr/local/sbin
+    state: directory
+    mode: '0755'
+  when: enable_laptop_health_monitoring | bool
+
+- name: Install hang health snapshot script
+  template:
+    src: hang-health-snapshot.j2
+    dest: /usr/local/sbin/hang-health-snapshot
+    mode: '0755'
+  notify: reload systemd daemon
+  when: enable_laptop_health_monitoring | bool
+
+- name: Install hang health systemd units
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+  loop:
+    - hang-health-snapshot.service
+    - hang-health-snapshot.timer
+  notify: reload systemd daemon
+  when: enable_laptop_health_monitoring | bool
+
+- name: Ensure hang health log exists
+  file:
+    path: "{{ laptop_health_log_file }}"
+    state: touch
+    mode: '0644'
+  changed_when: false
+  when: enable_laptop_health_monitoring | bool
+
+- name: Enable persistent journald storage
+  file:
+    path: /var/log/journal
+    state: directory
+    mode: '0755'
+  when: enable_laptop_health_monitoring | bool
+
+- name: Create persistent journald files
+  command: systemd-tmpfiles --create --prefix /var/log/journal
+  changed_when: false
+  failed_when: false
+  when: enable_laptop_health_monitoring | bool
+
+- name: Enable SysRq for emergency diagnostics
+  copy:
+    dest: /etc/sysctl.d/99-sysrq.conf
+    content: |
+      kernel.sysrq = 1
+    mode: '0644'
+  notify: apply sysctl settings
+  when:
+    - enable_laptop_health_monitoring | bool
+    - enable_laptop_sysrq | bool
+
+- name: Configure panic auto-reboot sysctls
+  copy:
+    dest: /etc/sysctl.d/98-reboot-investigation.conf
+    content: |
+      # Reboot automatically after kernel failures so a headless machine does not stay wedged.
+      kernel.panic = 30
+      kernel.panic_on_oops = 1
+      kernel.softlockup_panic = 1
+      kernel.hung_task_panic = 1
+      kernel.panic_on_warn = 0
+    mode: '0644'
+  notify: apply sysctl settings
+  when:
+    - enable_laptop_health_monitoring | bool
+    - enable_laptop_panic_reboot | bool
+
+- name: Enable hang health timer
+  systemd:
+    name: hang-health-snapshot.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: enable_laptop_health_monitoring | bool
+
+- name: Run initial hang health snapshot
+  systemd:
+    name: hang-health-snapshot.service
+    state: started
+  failed_when: false
+  when: enable_laptop_health_monitoring | bool
+
+- name: Install NVMe health snapshot script
+  template:
+    src: nvme-health-snapshot.j2
+    dest: /usr/local/sbin/nvme-health-snapshot
+    mode: '0755'
+  notify: reload systemd daemon
+  when:
+    - enable_laptop_health_monitoring | bool
+    - enable_nvme_health_monitoring | bool
+
+- name: Install NVMe health systemd units
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+  loop:
+    - nvme-health-snapshot.service
+    - nvme-health-snapshot.timer
+  notify: reload systemd daemon
+  when:
+    - enable_laptop_health_monitoring | bool
+    - enable_nvme_health_monitoring | bool
+
+- name: Ensure NVMe health log exists
+  file:
+    path: "{{ nvme_health_log_file }}"
+    state: touch
+    mode: '0644'
+  changed_when: false
+  when:
+    - enable_laptop_health_monitoring | bool
+    - enable_nvme_health_monitoring | bool
+
+- name: Enable NVMe health timer
+  systemd:
+    name: nvme-health-snapshot.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  when:
+    - enable_laptop_health_monitoring | bool
+    - enable_nvme_health_monitoring | bool
+
+- name: Ensure logind config directory exists
+  file:
+    path: /etc/systemd/logind.conf.d
+    state: directory
+    mode: '0755'
+  when: enable_laptop_lid_ignore | bool
+
+- name: Configure logind to ignore laptop lid close
+  template:
+    src: lid-server.conf.j2
+    dest: /etc/systemd/logind.conf.d/zz-lid-server.conf
+    mode: '0644'
+  notify: restart systemd-logind
+  when: enable_laptop_lid_ignore | bool
+
+- name: Remove older lid ignore config files
+  file:
+    path: "/etc/systemd/logind.conf.d/{{ item }}"
+    state: absent
+  loop:
+    - lid-server.conf
+    - 99-lid-server.conf
+  when: enable_laptop_lid_ignore | bool
+
+- name: Ensure LightDM config directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /etc/lightdm/scripts
+    - /etc/lightdm/lightdm.conf.d
+  when: enable_lightdm_display_sleep | bool
+
+- name: Configure LightDM login-screen display sleep script
+  template:
+    src: display-sleep.sh.j2
+    dest: /etc/lightdm/scripts/display-sleep.sh
+    mode: '0755'
+  when: enable_lightdm_display_sleep | bool
+
+- name: Configure LightDM login-screen display sleep hooks
+  template:
+    src: lightdm-display-sleep.conf.j2
+    dest: /etc/lightdm/lightdm.conf.d/99-display-sleep.conf
+    mode: '0644'
+  when: enable_lightdm_display_sleep | bool
+
+- name: Find X13 screen control script
+  stat:
+    path: "{{ item }}"
+  loop: "{{ x13_screen_script_candidates }}"
+  register: x13_screen_script_stats
+  when: enable_x13_screen_keepoff | bool
+
+- name: Set X13 screen control script path
+  set_fact:
+    x13_screen_script_path: "{{ (x13_screen_script_stats.results | selectattr('stat.exists') | map(attribute='item') | list | first) | default('') }}"
+  when: enable_x13_screen_keepoff | bool
+
+- name: Fail when X13 screen control script is missing
+  fail:
+    msg: |
+      X13 screen keep-off was enabled, but no screen control script was found.
+      Move the core script to {{ laptop_scripts_dir }}/x13-flow/screen.sh or keep the transition fallback in ~/.config/qtile/laptop/x13-flow/screen.sh.
+  when:
+    - enable_x13_screen_keepoff | bool
+    - x13_screen_script_path | length == 0
+
+- name: Install X13 screen keep-off systemd units
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+  loop:
+    - x13-screen-off.service
+    - x13-screen-off.timer
+  notify: reload systemd daemon
+  when:
+    - enable_x13_screen_keepoff | bool
+    - x13_screen_script_path | length > 0
+
+- name: Configure nouveau blacklist
+  copy:
+    dest: /etc/modprobe.d/blacklist-nouveau.conf
+    content: |
+      blacklist nouveau
+      options nouveau modeset=0
+    mode: '0644'
+  register: nouveau_blacklist
+  when: enable_nouveau_blacklist_fix | bool
+
+- name: Rebuild initramfs after nouveau blacklist changes
+  command: update-initramfs -u
+  when:
+    - enable_nouveau_blacklist_fix | bool
+    - nouveau_blacklist.changed
+
+- name: Check PRIME mode
+  command: prime-select query
+  register: prime_mode_check
+  changed_when: false
+  failed_when: false
+  when: enable_nvidia_integrated_mode | bool
+
+- name: Switch PRIME to integrated GPU mode
+  command: prime-select intel
+  register: prime_select_integrated
+  changed_when: prime_mode_check.stdout != 'intel'
+  when:
+    - enable_nvidia_integrated_mode | bool
+    - prime_mode_check.rc == 0
+    - prime_mode_check.stdout != 'intel'
+
+- name: Disable NVIDIA persistence daemon
+  systemd:
+    name: nvidia-persistenced.service
+    enabled: false
+    state: stopped
+  failed_when: false
+  when: enable_nvidia_integrated_mode | bool
+
+- name: Display laptop health setup summary
+  debug:
+    msg: |
+      Laptop health setup complete.
+      Health monitoring: {{ enable_laptop_health_monitoring }}
+      NVMe monitoring: {{ enable_nvme_health_monitoring }}
+      Lid ignore: {{ enable_laptop_lid_ignore }}
+      X13 screen keep-off units installed: {{ enable_x13_screen_keepoff }}
+      LightDM display sleep: {{ enable_lightdm_display_sleep }}
+      NVIDIA integrated mode: {{ enable_nvidia_integrated_mode }}
+      Nouveau blacklist fix: {{ enable_nouveau_blacklist_fix }}
+  when: enable_laptop_health_monitoring | bool or enable_laptop_lid_ignore | bool or enable_x13_screen_keepoff | bool or enable_lightdm_display_sleep | bool or enable_nvidia_integrated_mode | bool or enable_nouveau_blacklist_fix | bool

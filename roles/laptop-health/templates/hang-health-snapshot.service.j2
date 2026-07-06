@@ -1,0 +1,6 @@
+[Unit]
+Description=Collect a health snapshot for debugging hangs
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/hang-health-snapshot
