@@ -1,3 +1,8 @@
 ---
 # Defaults for Linux Mint 22.1 machines.
 # Linux Mint 22.1 is Ubuntu/Debian-family for package management in these roles.
+enable_x13_screen_keepoff: true
+enable_lightdm_display_sleep: true
+enable_laptop_panic_reboot: true
+enable_nouveau_blacklist_fix: true
+enable_nvidia_integrated_mode: true

@@ -109,6 +109,7 @@ Preserve the inventory split when adding machines or features:
 - Group new hosts by intent: `headless_machines`, `gui_machines`, `macbooks`, `servers`, `workstations`, `laptops`, OS groups such as `ubuntu_lts_26_04`, sudo implementation groups such as `sudo_rs`, hardware groups such as `thinkpads`, and optional feature groups such as `supabase_machines`.
 - For sudo-rs machines, add them to the `sudo_rs` group and keep `inventory/group_vars/sudo_rs.yml` as the source of truth for Ansible sudo compatibility (`ansible_become_exe: /usr/bin/sudo.ws`).
 - Add optional capabilities as roles plus feature flags. Example: the `tailscale` role is controlled by `enable_tailscale`, defaults to false in `group_vars/all.yml`, and is enabled for `laptops` in `group_vars/laptops.yml`.
+- Keep installation/systemd/sysctl steps in this repository. Keep reusable laptop helper scripts in `stonecharioteer/scripts` (for example under `laptop/x13-flow/`) and have roles reference the scripts checkout instead of sourcing scripts from the Qtile dotfiles repo. Temporary qtile fallbacks should be documented and removed once the scripts repo has the core script.
 - When adding a feature flag, wire it through the relevant playbooks and expose a bootstrap override when useful, e.g. `./bootstrap headless --enable-tailscale`.
 - Keep example inventories generic. Use names like `desktop`, `macbook`, `linux-laptop`, and `linux-server`; do not include personal or retired hostnames.
 
@@ -184,6 +185,7 @@ The repository uses a **unified role-based architecture** with all functionality
   - macOS: Installs via Homebrew (always latest extended version)
 - **docker**: Docker Engine installation (Linux) or Docker Desktop via Homebrew (macOS)
 - **tailscale**: Tailscale installation for Linux laptops/servers when `enable_tailscale` is true
+- **laptop-health**: Linux laptop/server-mode health monitoring, lid-ignore config, NVMe SMART snapshots, and X13 Flow-specific display/GPU mitigations through feature flags
 
 **GUI Environment (Linux):**
 - **locale-setup**: System locale configuration

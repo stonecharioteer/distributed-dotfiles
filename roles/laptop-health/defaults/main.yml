@@ -1,0 +1,30 @@
+---
+# General laptop health/server-mode defaults.
+enable_laptop_health_monitoring: false
+enable_laptop_lid_ignore: false
+enable_laptop_sysrq: true
+enable_laptop_panic_reboot: false
+enable_nvme_health_monitoring: true
+
+# X13 Flow/tent-mode display controls.
+enable_x13_screen_keepoff: false
+enable_lightdm_display_sleep: false
+enable_nvidia_integrated_mode: false
+enable_nouveau_blacklist_fix: false
+
+laptop_health_log_file: /var/log/hang-health.log
+nvme_health_log_file: /var/log/nvme-health.log
+nvme_health_smartctl_device: /dev/nvme0n1
+nvme_health_nvme_device: /dev/nvme0
+
+# Prefer core scripts from the scripts checkout. Keep the qtile path as a
+# transition fallback until the scripts are moved out of dotfiles-qtile.
+laptop_scripts_dir: "{{ dev_home }}/code/checkouts/personal/scripts/laptop"
+x13_screen_script_candidates:
+  - "{{ laptop_scripts_dir }}/x13-flow/screen.sh"
+  - "{{ dev_home }}/.config/qtile/laptop/x13-flow/screen.sh"
+
+lightdm_display_sleep_blank_seconds: 300
+lightdm_display_sleep_standby_seconds: 300
+lightdm_display_sleep_suspend_seconds: 600
+lightdm_display_sleep_off_seconds: 900

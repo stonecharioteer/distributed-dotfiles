@@ -1,0 +1,7 @@
+[Unit]
+Description=Force ASUS X13 laptop panel off for headless/tent mode
+Documentation=file://{{ x13_screen_script_path }}
+
+[Service]
+Type=oneshot
+ExecStart={{ x13_screen_script_path }} --apply-off

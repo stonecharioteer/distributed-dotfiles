@@ -1,0 +1,12 @@
+[Unit]
+Description=Keep ASUS X13 laptop panel off for headless/tent mode
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Unit=x13-screen-off.service
+Persistent=false
+
+[Install]
+WantedBy=timers.target
