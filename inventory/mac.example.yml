@@ -1,0 +1,22 @@
+---
+# Example inventory for running macOS playbooks locally.
+# Use with ./bootstrap mac or ./bootstrap mac-gui, or copy for custom groups.
+all:
+  vars:
+    # Base feature flags consumed by macOS playbooks.
+    enable_shell_environment: true
+    enable_development_tools: true
+    enable_hugo: true
+    enable_docker: true
+
+    # GUI feature flags consumed by playbooks/macos-gui-environment.yml.
+    enable_gui_environment: true
+    enable_nerd_fonts: true
+    enable_ghostty: true
+    enable_aerospace: true
+
+  children:
+    macbooks:
+      hosts:
+        localhost:
+          ansible_connection: local

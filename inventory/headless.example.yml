@@ -1,0 +1,25 @@
+---
+# Example inventory for headless Linux development machines.
+# Copy to inventory/my-headless.yml and replace hostnames/users.
+all:
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    dev_user: stonecharioteer
+
+    # Feature flags consumed by playbooks/base-environment.yml.
+    enable_github_preflight: true
+    enable_shell_environment: true
+    enable_development_tools: true
+    enable_server_hardening: true
+    enable_hugo: true
+    enable_docker: true
+
+  children:
+    headless_machines:
+      hosts:
+        devbox:
+          ansible_host: devbox.example.com
+          ansible_user: stonecharioteer
+        storage:
+          ansible_host: storage.example.com
+          ansible_user: stonecharioteer

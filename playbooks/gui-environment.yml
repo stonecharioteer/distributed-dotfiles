@@ -9,6 +9,16 @@
     dev_user: "{{ ansible_user | default('stonecharioteer') }}"
     dev_home: "/home/{{ dev_user }}"
     run_gui_failsafe_checks: true
+    enable_github_preflight: true
+    enable_failsafe_checks: true
+    enable_shell_environment: true
+    enable_development_tools: true
+    enable_docker: true
+    enable_gui_environment: true
+    enable_qtile: true
+    enable_nerd_fonts: true
+    enable_alacritty: true
+    enable_desktop_integration: true
 
   pre_tasks:
     - name: Update package cache (Debian/Ubuntu)
@@ -23,6 +33,7 @@
         apply:
           tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config, gui, system, repos]
       tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config, gui, system, repos]
+      when: enable_github_preflight | bool
 
     - name: Check which packages are missing
       shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
@@ -70,56 +81,80 @@
   roles:
     # Failsafe checks for all components
     - role: failsafe-checks
+      when: enable_failsafe_checks | bool
       tags: [safety, shell, fish, dotfiles, scripts, gui, system, repos]
 
     # Base Development Environment (shell + dev tools)
     - role: fish-shell
+      when: enable_shell_environment | bool
       tags: [shell, fish]
     - role: fish-repository-setup
+      when: enable_shell_environment | bool
       tags: [shell, fish, dotfiles]
     - role: scripts-repository-setup
+      when: enable_shell_environment | bool
       tags: [shell, scripts]
     - role: mise-tools
+      when: enable_shell_environment | bool
       tags: [shell, mise, languages]
     - role: rust-toolchain
+      when: enable_shell_environment | bool
       tags: [shell, rust, languages]
     - role: fish-config
+      when: enable_shell_environment | bool
       tags: [shell, fish, config]
     - role: system-deps
+      when: enable_development_tools | bool
       tags: [dev, deps]
     - role: git-config
+      when: enable_development_tools | bool
       tags: [dev, git, config]
     - role: cli-tools
+      when: enable_development_tools | bool
       tags: [dev, cli]
     - role: starship-config
+      when: enable_shell_environment | bool
       tags: [shell, starship, config]
     - role: dev-folders
+      when: enable_development_tools | bool
       tags: [dev, folders]
     - role: tmux
+      when: enable_development_tools | bool
       tags: [dev, tmux]
     - role: neovim-latest
+      when: enable_development_tools | bool
       tags: [dev, neovim, editor]
     - role: tree-sitter-cli
+      when: enable_development_tools | bool
       tags: [dev, neovim]
     - role: nvim-config
+      when: enable_development_tools | bool
       tags: [dev, neovim, editor, config]
     - role: docker
+      when: enable_docker | bool
       tags: [dev, docker, containers]
 
     # GUI Environment
     - role: locale-setup
+      when: enable_gui_environment | bool
       tags: [gui, system, locale]
     - role: base-system
+      when: enable_gui_environment | bool
       tags: [gui, system]
     - role: repository-setup
+      when: enable_gui_environment | bool
       tags: [gui, system, repos]
     - role: qtile-wm
+      when: enable_gui_environment | bool and enable_qtile | bool
       tags: [gui, wm, qtile]
     - role: nerd-fonts
+      when: enable_gui_environment | bool and enable_nerd_fonts | bool
       tags: [gui, fonts]
     - role: alacritty
+      when: enable_gui_environment | bool and enable_alacritty | bool
       tags: [gui, terminal, alacritty]
     - role: desktop-integration
+      when: enable_gui_environment | bool and enable_desktop_integration | bool
       tags: [gui, desktop, integration]
 
   post_tasks:
@@ -127,6 +162,16 @@
       debug:
         msg: |
           🚀 Complete GUI Workstation Setup Finished!
+
+          Profile: Linux GUI workstation
+          Feature flags:
+          - Shell environment: {{ enable_shell_environment }}
+          - Development tools: {{ enable_development_tools }}
+          - Docker: {{ enable_docker }}
+          - GUI environment: {{ enable_gui_environment }}
+          - Qtile: {{ enable_qtile }}
+          - Nerd Fonts: {{ enable_nerd_fonts }}
+          - Alacritty: {{ enable_alacritty }}
 
           🐚 Shell Environment:
           ✓ Fish shell with syntax highlighting and modern features

@@ -8,6 +8,13 @@
   vars:
     dev_user: "{{ ansible_user | default('stonecharioteer') }}"
     dev_home: "/home/{{ dev_user }}"
+    enable_github_preflight: true
+    enable_failsafe_checks: true
+    enable_shell_environment: true
+    enable_development_tools: true
+    enable_server_hardening: true
+    enable_hugo: true
+    enable_docker: true
 
   pre_tasks:
     - name: Update package cache (Debian/Ubuntu)
@@ -22,6 +29,7 @@
         apply:
           tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config]
       tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config]
+      when: enable_github_preflight | bool
 
     - name: Check which packages are missing
       shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
@@ -65,48 +73,67 @@
   roles:
     # Failsafe checks for all components
     - role: failsafe-checks
+      when: enable_failsafe_checks | bool
       tags: [safety, shell, fish, dotfiles, scripts]
 
     # Shell Environment
     - role: fish-shell
+      when: enable_shell_environment | bool
       tags: [shell, fish]
     - role: fish-repository-setup
+      when: enable_shell_environment | bool
       tags: [shell, fish, dotfiles]
     - role: scripts-repository-setup
+      when: enable_shell_environment | bool
       tags: [shell, scripts]
     - role: mise-tools
+      when: enable_shell_environment | bool
       tags: [shell, mise, languages]
     - role: rust-toolchain
+      when: enable_shell_environment | bool
       tags: [shell, rust, languages]
     - role: fish-config
+      when: enable_shell_environment | bool
       tags: [shell, fish, config]
 
     # Server Hardening (Debian/Ubuntu only)
     - role: server-hardening
+      when: enable_server_hardening | bool
       tags: [server, security, hardening]
 
     # Development Environment
     - role: system-deps
+      when: enable_development_tools | bool
       tags: [dev, deps]
     - role: git-config
+      when: enable_development_tools | bool
       tags: [dev, git, config]
     - role: cli-tools
+      when: enable_development_tools | bool
       tags: [dev, cli]
     - role: starship-config
+      when: enable_shell_environment | bool
       tags: [shell, starship, config]
     - role: dev-folders
+      when: enable_development_tools | bool
       tags: [dev, folders]
     - role: tmux
+      when: enable_development_tools | bool
       tags: [dev, tmux]
     - role: neovim-latest
+      when: enable_development_tools | bool
       tags: [dev, neovim, editor]
     - role: tree-sitter-cli
+      when: enable_development_tools | bool
       tags: [dev, neovim]
     - role: nvim-config
+      when: enable_development_tools | bool
       tags: [dev, neovim, editor, config]
     - role: hugo
+      when: enable_hugo | bool
       tags: [dev, hugo, blog]
     - role: docker
+      when: enable_docker | bool
       tags: [dev, docker, containers]
 
   post_tasks:
@@ -114,6 +141,14 @@
       debug:
         msg: |
           🚀 Base Development Environment Setup Complete!
+
+          Profile: headless Linux / base environment
+          Feature flags:
+          - Shell environment: {{ enable_shell_environment }}
+          - Development tools: {{ enable_development_tools }}
+          - Server hardening: {{ enable_server_hardening }}
+          - Hugo: {{ enable_hugo }}
+          - Docker: {{ enable_docker }}
 
           🐚 Shell Environment:
           ✓ Fish shell with syntax highlighting and modern features
@@ -150,5 +185,6 @@
           - Development tools: tmux, Neovim/AstroNvim, Docker
           - All CLI tools integrated and configured for productivity
 
-          💡 For GUI systems, also run:
-          - ansible-playbook playbooks/gui-environment.yml
+          💡 Useful follow-ups:
+          - Run ./scripts/doctor.sh locally to verify prerequisites
+          - For GUI systems, run: ./bootstrap gui --host <host> --user <user>

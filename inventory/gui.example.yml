@@ -1,0 +1,30 @@
+---
+# Example inventory for Linux GUI workstations with Qtile.
+# Copy to inventory/my-gui.yml and replace hostnames/users.
+all:
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    dev_user: stonecharioteer
+
+    # Base feature flags.
+    enable_github_preflight: true
+    enable_shell_environment: true
+    enable_development_tools: true
+    enable_docker: true
+
+    # GUI feature flags consumed by playbooks/gui-environment.yml.
+    enable_gui_environment: true
+    enable_qtile: true
+    enable_nerd_fonts: true
+    enable_alacritty: true
+    enable_desktop_integration: true
+
+  children:
+    gui_machines:
+      hosts:
+        desktop:
+          ansible_host: desktop.example.com
+          ansible_user: stonecharioteer
+        laptop:
+          ansible_host: laptop.example.com
+          ansible_user: stonecharioteer
