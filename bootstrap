@@ -52,6 +52,9 @@ ansible_args=()
 
 has_limit_arg() {
   local previous=""
+  if (( ${#ansible_args[@]} == 0 )); then
+    return 1
+  fi
   for arg in "${ansible_args[@]}"; do
     if [[ "${previous}" == "--limit" || "${previous}" == "-l" ]]; then
       return 0
@@ -233,7 +236,9 @@ if [[ "${needs_become}" == true && "${ask_become_pass}" == true ]]; then
   command+=(--ask-become-pass)
 fi
 command+=("${playbook}")
-command+=("${ansible_args[@]}")
+if (( ${#ansible_args[@]} > 0 )); then
+  command+=("${ansible_args[@]}")
+fi
 
 cat <<EOF
 Profile:  ${profile}
