@@ -14,6 +14,26 @@ check:
 doctor:
     ./scripts/doctor.sh
 
+# Bootstrap headless inventory targets from inventory/hosts.yml (defaults to ThinkPads)
+bootstrap target="thinkpads":
+    ./bootstrap headless -i inventory/hosts.yml -- --limit {{ target }}
+
+# Common typo alias for bootstrap
+boostrap target="thinkpads":
+    just bootstrap {{ target }}
+
+# Dry-run headless inventory targets from inventory/hosts.yml (defaults to ThinkPads)
+bootstrap-check target="thinkpads":
+    ./bootstrap headless -i inventory/hosts.yml --check --diff -- --limit {{ target }}
+
+# Bootstrap the ThinkPad headless server laptops
+setup-thinkpads:
+    just bootstrap thinkpads
+
+# Dry-run the ThinkPad headless server laptops
+check-thinkpads:
+    just bootstrap-check thinkpads
+
 # Bootstrap a headless Linux development machine
 setup-headless host user="stonecharioteer":
     ./bootstrap headless --host {{ host }} --user {{ user }}
