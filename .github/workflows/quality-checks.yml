@@ -113,7 +113,9 @@ jobs:
         run: python -m pip install pre-commit
 
       - name: Run Ansible lint
-        run: pre-commit run ansible-lint --all-files
+        run: |
+          pre-commit run ansible-lint --all-files
+          pre-commit run check-ansible-risky-patterns --all-files
 
   shell:
     name: shellcheck

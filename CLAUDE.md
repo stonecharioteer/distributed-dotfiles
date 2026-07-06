@@ -90,12 +90,14 @@ Current checks intentionally start broad but non-disruptive:
 - YAML parsing/style via `yamllint`
 - Ansible syntax/semantic checks via `ansible-lint`
 - shell script checks via `shellcheck`
+- local Ansible guardrails that reject risky direct binary probe tasks such as `command: tool --version` in check tasks without `failed_when: false`
 
 The `.ansible-lint` and `.yamllint` configs include compatibility skips for the existing playbooks. As roles are modernized, tighten these rules incrementally instead of removing the hooks:
 1. remove skipped `ansible-lint` rules one category at a time
 2. prefer fixing existing violations over adding new skips
 3. keep CI required on PRs to `main` so regressions are caught before merge
 4. document any temporary skip with the cleanup condition
+5. when checking whether a CLI exists, prefer `shell: command -v tool >/dev/null 2>&1 && tool --version` with `failed_when: false` over direct `command: tool --version`
 
 ## Inventory Design Rules
 

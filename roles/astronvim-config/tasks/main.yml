@@ -1,9 +1,11 @@
 ---
 - name: Check if Neovim is available
-  command: nvim --version
+  shell: command -v nvim >/dev/null 2>&1 && nvim --version
+  args:
+    executable: /bin/bash
   register: nvim_check
-  ignore_errors: yes
   changed_when: false
+  failed_when: false
 
 - name: Fail if Neovim is not available
   fail:

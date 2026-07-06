@@ -6,6 +6,13 @@ dev_home: "/home/{{ dev_user }}"
 # Neovim configuration
 nvim_config_dir: "{{ dev_home }}/.config/nvim"
 nvim_config_repo: "git@github.com:stonecharioteer/nvim-config.git"
+nvim_config_repo_accepted_remotes:
+  - "https://github.com/stonecharioteer/nvim-config.git"
+  - "https://github.com/stonecharioteer/nvim-config"
+  - "git@github.com:stonecharioteer/nvim-config.git"
+  - "git@github.com:stonecharioteer/nvim-config"
+  - "ssh://git@github.com/stonecharioteer/nvim-config.git"
+  - "ssh://git@github.com/stonecharioteer/nvim-config"
 nvim_config_branch: "main"
 
 # Backup directories for clean installation

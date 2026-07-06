@@ -11,6 +11,22 @@
   become_user: "{{ dev_user }}"
   when: not qtile_config_repo_exists
 
+- name: Normalize qtile repository origin URL to SSH
+  command: git remote set-url origin git@github.com:stonecharioteer/dotfiles-qtile.git
+  args:
+    chdir: "{{ dev_home }}/.config/qtile"
+  become_user: "{{ dev_user }}"
+  when:
+    - qtile_config_repo_exists
+    - qtile_git_remote is defined
+    - qtile_git_remote.stdout in [
+        'https://github.com/stonecharioteer/dotfiles-qtile.git',
+        'https://github.com/stonecharioteer/dotfiles-qtile',
+        'git@github.com:stonecharioteer/dotfiles-qtile',
+        'ssh://git@github.com/stonecharioteer/dotfiles-qtile.git',
+        'ssh://git@github.com/stonecharioteer/dotfiles-qtile'
+      ]
+
 - name: Leave existing qtile repository untouched
   debug:
     msg: "Qtile repository already exists - skipping any git operations"
@@ -59,6 +75,22 @@
     accept_hostkey: yes
   become_user: "{{ dev_user }}"
   when: not alacritty_source_repo_exists
+
+- name: Normalize Alacritty repository origin URL to SSH
+  command: git remote set-url origin git@github.com:alacritty/alacritty.git
+  args:
+    chdir: "{{ dev_home }}/code/tools/alacritty"
+  become_user: "{{ dev_user }}"
+  when:
+    - alacritty_source_repo_exists
+    - alacritty_git_remote is defined
+    - alacritty_git_remote.stdout in [
+        'https://github.com/alacritty/alacritty.git',
+        'https://github.com/alacritty/alacritty',
+        'git@github.com:alacritty/alacritty',
+        'ssh://git@github.com/alacritty/alacritty.git',
+        'ssh://git@github.com/alacritty/alacritty'
+      ]
 
 - name: Leave existing Alacritty repository untouched
   debug:
