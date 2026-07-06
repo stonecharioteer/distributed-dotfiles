@@ -98,8 +98,8 @@ cp inventory/gui.example.yml inventory/my-gui.yml
 Recommended inventory model:
 
 - keep one example inventory per machine profile (`headless`, `gui`, `mac`)
-- group real hosts by profile (`headless_machines`, `gui_machines`, `macbooks`)
-- keep shared defaults in `all.vars`
+- group real hosts by profile (`headless_machines`, `gui_machines`, `macbooks`), OS (`ubuntu_lts_26_04`), and sudo implementation (`sudo_rs`)
+- keep shared defaults in `inventory/group_vars/all.yml`
 - keep host-specific overrides in `inventory/host_vars/<host>.yml`
 - use feature flags in inventory to opt in/out of components like Docker, Hugo, Tailscale, Qtile, Ghostty, or AeroSpace
 
