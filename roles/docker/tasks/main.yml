@@ -5,10 +5,12 @@
   when: ansible_facts["os_family"] == "Darwin"
 
 - name: Check if Docker is already installed
-  command: docker --version
+  shell: command -v docker >/dev/null 2>&1 && docker --version
+  args:
+    executable: /bin/bash
   register: docker_version_check
-  ignore_errors: yes
   changed_when: false
+  failed_when: false
 
 - name: Display Docker installation status
   debug:
