@@ -1,0 +1,6 @@
+---
+# ThinkPad server laptops run Ubuntu Server LTS and require a TTY for sudo.
+ansible_ssh_use_tty: true
+ansible_become_method: sudo
+# Drop Ansible's default -n flag so --ask-become-pass can satisfy sudo prompts.
+ansible_become_flags: "-H -S"
