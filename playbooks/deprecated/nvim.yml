@@ -8,7 +8,7 @@
         state: absent
       when: reinstall
     - name: Download neovim 0.6.1
-      get_url: 
+      get_url:
         url: https://github.com/neovim/neovim/releases/download/v0.6.1/nvim-linux64.tar.gz
         dest: "{{ansible_facts.env.HOME}}/nvim.tar.gz"
         checksum: sha256:06f1c19b09dd8cc63f970ef7edab8fa3850a154c296f453393d00854f514a847

@@ -173,18 +173,18 @@
       debug:
         msg: |
           Docker Engine Installation Complete!
-          
+
           ✓ Docker version: {{ docker_version_verify.stdout if docker_version_check.rc != 0 else docker_version_check.stdout }}
           ✓ Service status: {{ docker_service_status.status.ActiveState }}
           ✓ User {{ dev_user }} added to docker group
           ✓ Docker and containerd services enabled for boot
-          
+
           {% if docker_test.rc == 0 %}
           ✓ Docker functionality test passed
           {% else %}
           ⚠ Docker test failed - may need to log out/in for group changes
           {% endif %}
-          
+
           Post-installation notes:
           1. Log out and log back in for group changes to take effect
           2. After re-login, test with: docker run hello-world

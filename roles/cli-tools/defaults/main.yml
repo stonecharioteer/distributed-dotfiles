@@ -38,7 +38,7 @@ external_tools:
     url: "https://starship.rs/install.sh"
     binary_path: "/usr/local/bin/starship"
     check_cmd: "starship --version"
-  
+
   gum:
     repo_key: "https://repo.charm.sh/apt/gpg.key"
     repo_line: "deb https://repo.charm.sh/apt/ * *"

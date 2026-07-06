@@ -16,13 +16,13 @@ dev_directories:
     mode: '0755'
   - path: "{{ dev_home }}/code/tools"
     mode: '0755'
-  
+
   # Screenshots directory (following qtile pattern)
   - path: "{{ dev_home }}/Pictures"
     mode: '0755'
   - path: "{{ dev_home }}/Pictures/screenshots"
     mode: '0755'
-    
+
   # Development workspace
   - path: "{{ dev_home }}/workspace"
     mode: '0755'
@@ -30,7 +30,7 @@ dev_directories:
     mode: '0755'
   - path: "{{ dev_home }}/workspace/projects"
     mode: '0755'
-    
+
   # Local binary directory
   - path: "{{ dev_home }}/.local"
     mode: '0755'

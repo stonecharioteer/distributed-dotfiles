@@ -12,7 +12,7 @@ tmux_binary_path: "{{ tmux_install_prefix }}/bin/tmux"
 # Build dependencies (complete list for tmux compilation)
 tmux_build_deps:
   - libevent-dev      # Required: libevent development headers
-  - ncurses-dev       # Required: ncurses development headers  
+  - ncurses-dev       # Required: ncurses development headers
   - build-essential   # Required: C compiler, make, etc.
   - bison             # Required: yacc/bison parser generator
   - pkg-config        # Required: package configuration tool

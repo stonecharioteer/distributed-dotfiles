@@ -6,7 +6,7 @@ all:
   vars:
     ansible_user: your_username
     ansible_python_interpreter: /usr/bin/python3
-    
+
   children:
     # By location
     office:
@@ -16,14 +16,14 @@ all:
           ansible_connection: local  # Running from this machine
         work-laptop:
           ansible_host: 192.168.1.101
-          
+
     living_room:
       hosts:
         media-server:
           ansible_host: 192.168.1.200
         htpc:
           ansible_host: 192.168.1.201
-          
+
     basement:
       hosts:
         homelab-server1:
@@ -32,26 +32,26 @@ all:
           ansible_host: 192.168.1.211
         nas:
           ansible_host: 192.168.1.220
-          
+
     # By function/role
     development_machines:
       hosts:
         main-desktop:
         work-laptop:
         homelab-server1:
-        
+
     media_servers:
       hosts:
         media-server:
         htpc:
         nas:
-        
+
     # By setup type needed
     full_workstations:
       hosts:
         main-desktop:
         work-laptop:
-        
+
     headless_servers:
       hosts:
         homelab-server1:

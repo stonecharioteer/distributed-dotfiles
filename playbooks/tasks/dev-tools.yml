@@ -1,7 +1,7 @@
 - name: Install CLI tools that will make development faster
   tags:
     - tools
-  block: 
+  block:
     - name: Install starship.rs Prompt
       block:
         # TODO: Only install this when starship isn't already installed.

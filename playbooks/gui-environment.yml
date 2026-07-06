@@ -1,5 +1,5 @@
 ---
-# Complete GUI workstation setup playbook  
+# Complete GUI workstation setup playbook
 # Includes base development environment + GUI components
 - name: Complete GUI Workstation Setup
   hosts: all
@@ -9,7 +9,7 @@
     dev_user: "{{ ansible_user | default('stonecharioteer') }}"
     dev_home: "/home/{{ dev_user }}"
     run_gui_failsafe_checks: true
-    
+
   pre_tasks:
     - name: Update package cache (Debian/Ubuntu)
       apt:
@@ -23,7 +23,7 @@
         apply:
           tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config, gui, system, repos]
       tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config, gui, system, repos]
-      
+
     - name: Check which packages are missing
       shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
       register: missing_packages_check
@@ -62,7 +62,7 @@
         state: present
         install_recommends: no
         force_apt_get: yes
-      when: 
+      when:
         - ansible_facts["os_family"] == "Debian"
         - packages_to_install is defined
         - packages_to_install | length > 0
@@ -127,7 +127,7 @@
       debug:
         msg: |
           🚀 Complete GUI Workstation Setup Finished!
-          
+
           🐚 Shell Environment:
           ✓ Fish shell with syntax highlighting and modern features
           ✓ Fish dotfiles cloned from: git@github.com:stonecharioteer/dotfiles-fish.git
@@ -135,7 +135,7 @@
           ✓ mise runtime manager (Node.js, Python, Go, Rust)
           ✓ Enhanced Rust toolchain with cargo-binstall
           ✓ Fish configuration with abbreviations and integrations
-          
+
           🛠️ Development Environment:
           ✓ System dependencies and development headers
           ✓ Modern CLI tools (ripgrep, fd, fzf, starship, etc.)
@@ -145,7 +145,7 @@
           ✓ tree-sitter CLI for syntax highlighting
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
           ✓ Docker Engine with Compose plugin
-          
+
           🖥️ GUI Environment:
           ✓ System locale and base packages
           ✓ Qtile dotfiles cloned from: git@github.com:stonecharioteer/dotfiles-qtile.git
@@ -153,7 +153,7 @@
           ✓ JetBrains Mono Nerd Font with icon support
           ✓ Alacritty GPU-accelerated terminal
           ✓ Desktop integration and session management
-          
+
           📋 Next Steps:
           1. Log out and log back in for shell/group changes
           2. Select "Qtile" from display manager login screen
@@ -163,7 +163,7 @@
              - docker run hello-world
              - nvim (complete plugin setup)
              - mise list (verify language runtimes)
-          
+
           🎯 Your complete GUI workstation is ready!
           - Modern shell: Fish with mise for language management
           - Development tools: tmux, Neovim/AstroNvim, Docker

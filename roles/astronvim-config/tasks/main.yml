@@ -26,7 +26,7 @@
 - name: Warn if tree-sitter CLI is not available
   debug:
     msg: |
-      WARNING: tree-sitter CLI not found. 
+      WARNING: tree-sitter CLI not found.
       AstroNvim will work but some features may be limited.
       Please run the tree-sitter-cli role first.
   when: tree_sitter_check.rc != 0
@@ -121,7 +121,7 @@
           {% if astronvim_backup_dir is exists %}
           Backup: {{ astronvim_backup_dir }}
           {% endif %}
-          
+
           Next steps:
           1. Run 'nvim' to complete plugin installation
           2. Install language servers with ':LspInstall <server>'
@@ -132,6 +132,6 @@
     - name: Display installation failure
       debug:
         msg: |
-          AstroNvim installation failed. 
+          AstroNvim installation failed.
           You may need to manually install or check the logs.
           Backups are preserved if they were created.

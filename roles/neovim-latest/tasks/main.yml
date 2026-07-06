@@ -70,7 +70,7 @@
         cp -r "{{ neovim_download_dir }}/nvim-linux-x86_64/share/nvim" "{{ neovim_install_prefix }}/share/"
         chmod -R 755 "{{ neovim_install_prefix }}/share/nvim"
 
-    - name: Install Neovim lib files  
+    - name: Install Neovim lib files
       shell: |
         cp -r "{{ neovim_download_dir }}/nvim-linux-x86_64/lib/nvim" "{{ neovim_install_prefix }}/lib/"
         chmod -R 755 "{{ neovim_install_prefix }}/lib/nvim"

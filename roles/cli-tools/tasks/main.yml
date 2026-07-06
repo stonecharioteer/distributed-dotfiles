@@ -220,7 +220,7 @@
   command: "{{ item }} --version"
   loop:
     - rg              # ripgrep
-    - fd              # fd-find  
+    - fd              # fd-find
     - fzf
     - zoxide
     - direnv

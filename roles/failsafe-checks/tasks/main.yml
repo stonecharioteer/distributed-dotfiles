@@ -137,7 +137,7 @@
       STOP: ~/.config/qtile exists but is not a git repository.
       This could be a different qtile configuration. Please backup or remove it manually.
       Found at: {{ dev_home }}/.config/qtile
-  when: 
+  when:
     - run_gui_failsafe_checks
     - qtile_config_exists.stat.exists
     - not qtile_is_git_repo.stat.exists
@@ -365,7 +365,7 @@
       System type: {{ 'LAPTOP' if is_laptop else 'DESKTOP' }}
       Battery detected: {{ battery_check.stat.exists }}
       Chassis type: {{ chassis_type.stdout }}
-      
+
       {% endif %}
       === INSTALLATION PLAN ===
       Fish config: {{ 'USE existing repository' if fish_config_repo_exists else 'CLONE new repository' }}
@@ -376,8 +376,8 @@
       Qtile package: {{ 'SKIP - already installed' if qtile_already_installed else 'INSTALL qtile + psutil' }}
       Alacritty source: {{ 'USE existing repository' if alacritty_source_repo_exists else 'CLONE new repository' }}
       Alacritty binary: {{ 'SKIP - already built' if alacritty_already_built else 'BUILD from source' }}
-      
+
       {{ 'LAPTOP FEATURES: Battery monitoring, touchpad gestures, auto-rotation, sleep services' if is_laptop else 'DESKTOP FEATURES: Monitor management only (no laptop-specific features)' }}
       {% endif %}
-      
+
       Proceeding with safe, non-destructive operations...

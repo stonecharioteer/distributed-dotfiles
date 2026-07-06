@@ -8,7 +8,7 @@
   vars:
     dev_user: "{{ ansible_user | default('stonecharioteer') }}"
     dev_home: "/home/{{ dev_user }}"
-    
+
   pre_tasks:
     - name: Update package cache (Debian/Ubuntu)
       apt:
@@ -22,7 +22,7 @@
         apply:
           tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config]
       tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config]
-      
+
     - name: Check which packages are missing
       shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
       register: missing_packages_check
@@ -57,7 +57,7 @@
         state: present
         install_recommends: no
         force_apt_get: yes
-      when: 
+      when:
         - ansible_facts["os_family"] == "Debian"
         - packages_to_install is defined
         - packages_to_install | length > 0
@@ -114,7 +114,7 @@
       debug:
         msg: |
           🚀 Base Development Environment Setup Complete!
-          
+
           🐚 Shell Environment:
           ✓ Fish shell with syntax highlighting and modern features
           ✓ Fish dotfiles cloned from: git@github.com:stonecharioteer/dotfiles-fish.git
@@ -122,7 +122,7 @@
           ✓ mise runtime manager (Node.js, Python, Go, Rust)
           ✓ Enhanced Rust toolchain with cargo-binstall
           ✓ Fish configuration with abbreviations and integrations
-          
+
           🛠️ Development Environment:
           ✓ System dependencies and development headers
           ✓ Modern CLI tools (ripgrep, fd, fzf, starship, etc.)
@@ -134,7 +134,7 @@
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
           ✓ Hugo Extended {{ hugo_version | default('0.146.7') }} static site generator
           ✓ Docker Engine with Compose plugin
-          
+
           📋 Next Steps:
           1. Log out and log back in for shell/group changes
           2. Test development environment:
@@ -144,11 +144,11 @@
              - mise list (verify language runtimes)
              - psql --version && pgcli --version (database tools)
              - hugo version (static site generator)
-          
+
           🎯 Your base development environment is ready!
           - Modern shell: Fish with mise for language management
           - Development tools: tmux, Neovim/AstroNvim, Docker
           - All CLI tools integrated and configured for productivity
-          
+
           💡 For GUI systems, also run:
           - ansible-playbook playbooks/gui-environment.yml

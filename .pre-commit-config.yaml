@@ -1,0 +1,68 @@
+---
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
+default_language_version:
+  python: python3.11
+
+ci:
+  autofix_commit_msg: "chore: apply pre-commit fixes"
+  autoupdate_commit_msg: "chore: update pre-commit hooks"
+
+exclude: |
+  (?x)^(
+    .*\.log|
+    \.git/.*
+  )$
+
+repos:
+  - repo: local
+    hooks:
+      - id: block-ai-commit-attribution
+        name: Block AI attribution in commit messages
+        language: pygrep
+        entry: '(?i)(co-authored-by:.*(claude|anthropic|chatgpt|openai|copilot)|generated\s+with.*(claude|chatgpt|copilot)|claude\s+code|🤖)'
+        stages: [commit-msg]
+        always_run: true
+      - id: check-conventional-commit
+        name: Check conventional commit message
+        language: script
+        entry: hooks/check-conventional-commit.sh
+        stages: [commit-msg]
+        always_run: true
+        pass_filenames: true
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: trailing-whitespace
+
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-c, .yamllint]
+
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v24.6.1
+    hooks:
+      - id: ansible-lint
+        files: ^(playbooks|roles|inventory)/.*\.(ya?ml)$
+        args: [--config-file, .ansible-lint]
+        additional_dependencies:
+          - ansible==10.7.0
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck

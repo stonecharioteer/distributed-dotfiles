@@ -22,7 +22,7 @@
       # key is encrypted. I'm not sure how to do that.
       shell:
         cmd: |
-          if [ -L '{{ansible_facts.env.HOME}}/code/tools/dotfiles/astronvim' ]; then 
+          if [ -L '{{ansible_facts.env.HOME}}/code/tools/dotfiles/astronvim' ]; then
             git clone 'git@github.com:stonecharioteer/dotfiles-astronvim' '{{ansible_facts.env.HOME}}/code/tools/dotfiles/astronvim'
           fi
           rm -rf '{{ansible_facts.env.HOME}}/.config/nvim/lua/user' && ln -s '{{ansible_facts.env.HOME}}/code/tools/dotfiles/astronvim/user' '{{ansible_facts.env.HOME}}/.config/nvim/lua/user'

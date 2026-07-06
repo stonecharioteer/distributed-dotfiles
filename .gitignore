@@ -101,6 +101,9 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# Local Ansible caches/plugins
+.ansible/
+
 # Environments
 .env
 .venv
@@ -134,4 +137,3 @@ inventory/my-*.yml
 inventory/home.yml
 inventory/personal.yml
 inventory/production.yml
-
