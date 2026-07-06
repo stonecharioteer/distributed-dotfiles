@@ -134,14 +134,38 @@
   become: no
   tags: blog
 
-- name: Install Node.js via mise
+- name: Remove Ruby from mise if present
   shell: |
-    "{{ dev_home }}/.local/bin/mise" install node@latest
-    "{{ dev_home }}/.local/bin/mise" global node@latest
+    "{{ dev_home }}/.local/bin/mise" unuse ruby -g -y || true
+    "{{ dev_home }}/.local/bin/mise" uninstall ruby --all -y || true
+  args:
+    executable: /bin/bash
   environment:
     HOME: "{{ dev_home }}"
   become: no
-  ignore_errors: yes
+  register: mise_ruby_cleanup
+  changed_when: "'ruby' in mise_ruby_cleanup.stdout | lower"
+  failed_when: false
+  tags: blog
+
+- name: Install latest Node.js via mise
+  shell: |
+    "{{ dev_home }}/.local/bin/mise" use -g node@latest
+  environment:
+    HOME: "{{ dev_home }}"
+  become: no
+  tags: blog
+
+- name: Set up pnpm with mise-managed Node.js
+  shell: |
+    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
+    corepack enable pnpm
+    corepack prepare pnpm@latest --activate
+  args:
+    executable: /bin/bash
+  environment:
+    HOME: "{{ dev_home }}"
+  become: no
   tags: blog
 
 # Python management handled separately via uv instead of mise
