@@ -26,6 +26,8 @@ Options:
       --extra-var KEY=VALUE
                          Pass an extra Ansible variable
       --no-become-pass   Do not prompt for sudo password on Linux profiles
+
+If no Linux inventory target is provided, bootstrap uses gum to select a host or group from inventory/hosts.yml.
   -h, --help             Show this help
 
 Examples:
@@ -47,6 +49,90 @@ inventory=""
 ssh_user=""
 ask_become_pass=true
 ansible_args=()
+
+has_limit_arg() {
+  local previous=""
+  for arg in "${ansible_args[@]}"; do
+    if [[ "${previous}" == "--limit" || "${previous}" == "-l" ]]; then
+      return 0
+    fi
+    if [[ "${arg}" == --limit=* || "${arg}" == -l=* || "${arg}" == "--limit" || "${arg}" == "-l" ]]; then
+      return 0
+    fi
+    previous="${arg}"
+  done
+  return 1
+}
+
+select_inventory_target() {
+  local profile_group="$1"
+  local default_inventory="inventory/hosts.yml"
+
+  inventory="${inventory:-${default_inventory}}"
+
+  if ! command -v gum >/dev/null 2>&1; then
+    cat >&2 <<EOF
+No inventory target was provided and gum is not installed.
+
+Install gum or pass an explicit target, for example:
+  ./bootstrap ${profile} -i ${inventory} -- --limit ${profile_group}
+  ./bootstrap ${profile} --host linux-server
+EOF
+    exit 1
+  fi
+
+  local selection
+  selection="$(ansible-inventory -i "${inventory}" --list | PROFILE_GROUP="${profile_group}" python3 -c '
+import json
+import os
+import sys
+
+profile_group = os.environ["PROFILE_GROUP"]
+data = json.load(sys.stdin)
+
+choices = []
+
+def add_group(name):
+    if name in data and (data[name].get("hosts") or data[name].get("children")):
+        choices.append(f"group:{name}")
+
+def collect_hosts(group_name, seen_groups=None, seen_hosts=None):
+    seen_groups = seen_groups or set()
+    seen_hosts = seen_hosts or []
+    if group_name in seen_groups or group_name not in data:
+        return seen_hosts
+    seen_groups.add(group_name)
+    for host in data[group_name].get("hosts", []):
+        if host not in seen_hosts:
+            seen_hosts.append(host)
+    for child in data[group_name].get("children", []):
+        collect_hosts(child, seen_groups, seen_hosts)
+    return seen_hosts
+
+add_group(profile_group)
+if profile_group == "headless_machines":
+    add_group("thinkpads")
+elif profile_group == "gui_machines":
+    add_group("workstations")
+
+for host in collect_hosts(profile_group):
+    choices.append(host)
+
+for choice in choices:
+    print(choice)
+' | gum choose --header "Select ${profile} target from ${inventory}")"
+
+  if [[ -z "${selection}" ]]; then
+    echo "No inventory target selected." >&2
+    exit 1
+  fi
+
+  if [[ "${selection}" == group:* ]]; then
+    selection="${selection#group:}"
+  fi
+
+  ansible_args+=(--limit "${selection}")
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -127,6 +213,14 @@ case "${profile}" in
     exit 2
     ;;
 esac
+
+if [[ "${inventory}" != *, ]]; then
+  if [[ "${profile}" == "headless" ]] && ! has_limit_arg; then
+    select_inventory_target headless_machines
+  elif [[ "${profile}" == "gui" ]] && ! has_limit_arg; then
+    select_inventory_target gui_machines
+  fi
+fi
 
 command=(ansible-playbook)
 if [[ -n "${inventory}" ]]; then

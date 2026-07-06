@@ -27,6 +27,9 @@ Examples:
 # Base development environment on a Linux host
 ./bootstrap headless --host linux-server --user stonecharioteer
 
+# Choose a headless inventory target interactively with gum
+just bootstrap
+
 # Linux GUI workstation with Qtile
 ./bootstrap gui --host desktop --user stonecharioteer
 
@@ -35,7 +38,7 @@ Examples:
 ./bootstrap mac-gui
 ```
 
-The bootstrap script prints the exact `ansible-playbook` command before running it and supports `--check`, `--diff`, `--tags`, `--skip-tags`, `--inventory`, `--enable-tailscale`, `--disable-tailscale`, `--extra-var KEY=VALUE`, and extra `ansible-playbook` arguments after `--`.
+The bootstrap script prints the exact `ansible-playbook` command before running it and supports `--check`, `--diff`, `--tags`, `--skip-tags`, `--inventory`, `--enable-tailscale`, `--disable-tailscale`, `--extra-var KEY=VALUE`, and extra `ansible-playbook` arguments after `--`. For Linux profiles, if no host or `--limit` is provided, it opens a `gum` selector using `inventory/hosts.yml`.
 
 ## What Gets Installed
 

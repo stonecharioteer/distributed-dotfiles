@@ -14,17 +14,27 @@ check:
 doctor:
     ./scripts/doctor.sh
 
-# Bootstrap headless inventory targets from inventory/hosts.yml (defaults to ThinkPads)
-bootstrap target="thinkpads":
-    ./bootstrap headless -i inventory/hosts.yml -- --limit {{ target }}
+# Bootstrap headless inventory targets from inventory/hosts.yml; opens gum selector when target is empty
+bootstrap target="":
+    #!/usr/bin/env bash
+    if [[ -n "{{ target }}" ]]; then
+      ./bootstrap headless -i inventory/hosts.yml -- --limit "{{ target }}"
+    else
+      ./bootstrap headless
+    fi
 
 # Common typo alias for bootstrap
-boostrap target="thinkpads":
-    just bootstrap {{ target }}
+boostrap target="":
+    just bootstrap "{{ target }}"
 
-# Dry-run headless inventory targets from inventory/hosts.yml (defaults to ThinkPads)
-bootstrap-check target="thinkpads":
-    ./bootstrap headless -i inventory/hosts.yml --check --diff -- --limit {{ target }}
+# Dry-run headless inventory targets from inventory/hosts.yml; opens gum selector when target is empty
+bootstrap-check target="":
+    #!/usr/bin/env bash
+    if [[ -n "{{ target }}" ]]; then
+      ./bootstrap headless -i inventory/hosts.yml --check --diff -- --limit "{{ target }}"
+    else
+      ./bootstrap headless --check --diff
+    fi
 
 # Bootstrap the ThinkPad headless server laptops
 setup-thinkpads:
