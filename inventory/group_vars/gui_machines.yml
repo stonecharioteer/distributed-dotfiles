@@ -1,0 +1,7 @@
+---
+# Defaults for Linux GUI workstations.
+enable_gui_environment: true
+enable_qtile: true
+enable_nerd_fonts: true
+enable_alacritty: true
+enable_desktop_integration: true

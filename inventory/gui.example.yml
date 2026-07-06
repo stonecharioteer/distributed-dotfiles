@@ -11,6 +11,7 @@ all:
     enable_shell_environment: true
     enable_development_tools: true
     enable_docker: true
+    enable_tailscale: false
 
     # GUI feature flags consumed by playbooks/gui-environment.yml.
     enable_gui_environment: true
@@ -28,3 +29,7 @@ all:
         linux-laptop:
           ansible_host: linux-laptop.example.com
           ansible_user: stonecharioteer
+
+    laptops:
+      hosts:
+        linux-laptop:

@@ -35,7 +35,7 @@ Examples:
 ./bootstrap mac-gui
 ```
 
-The bootstrap script prints the exact `ansible-playbook` command before running it and supports `--check`, `--diff`, `--tags`, `--skip-tags`, `--inventory`, and extra `ansible-playbook` arguments after `--`.
+The bootstrap script prints the exact `ansible-playbook` command before running it and supports `--check`, `--diff`, `--tags`, `--skip-tags`, `--inventory`, `--enable-tailscale`, `--disable-tailscale`, `--extra-var KEY=VALUE`, and extra `ansible-playbook` arguments after `--`.
 
 ## What Gets Installed
 
@@ -49,6 +49,7 @@ The bootstrap script prints the exact `ansible-playbook` command before running 
 - Neovim 0.11.2 + custom configuration
 - Hugo Extended 0.146.7 (static site generator)
 - Docker Engine + Compose
+- Tailscale on hosts in the `laptops` inventory group
 
 **macOS** (`macos-base-environment.yml`):
 
@@ -100,7 +101,7 @@ Recommended inventory model:
 - group real hosts by profile (`headless_machines`, `gui_machines`, `macbooks`)
 - keep shared defaults in `all.vars`
 - keep host-specific overrides in `inventory/host_vars/<host>.yml`
-- use feature flags in inventory to opt out of large components like Docker, Hugo, Qtile, Ghostty, or AeroSpace
+- use feature flags in inventory to opt in/out of components like Docker, Hugo, Tailscale, Qtile, Ghostty, or AeroSpace
 
 Then run with either bootstrap or Ansible directly:
 
@@ -133,6 +134,7 @@ all:
     enable_development_tools: true
     enable_docker: true
     enable_hugo: true
+    enable_tailscale: false # enabled by inventory/group_vars/laptops.yml
     enable_gui_environment: true
     enable_qtile: true
     enable_ghostty: true
@@ -193,6 +195,7 @@ ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags "fish,t
 
 - **Shell:** `shell`, `fish`, `dotfiles`, `scripts`, `mise`, `rust`, `languages`, `config`
 - **Development:** `dev`, `deps`, `cli`, `folders`, `tmux`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
+- **Networking:** `networking`, `tailscale`
 - **GUI:** `gui`, `system`, `locale`, `repos`, `wm`, `qtile`, `fonts`, `terminal`, `alacritty`, `desktop`, `integration`
 
 #### macOS

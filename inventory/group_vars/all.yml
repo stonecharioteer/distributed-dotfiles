@@ -1,0 +1,13 @@
+---
+# Shared defaults for all inventory-managed machines.
+ansible_python_interpreter: /usr/bin/python3
+
+dev_user: stonecharioteer
+
+enable_github_preflight: true
+enable_failsafe_checks: true
+enable_shell_environment: true
+enable_development_tools: true
+enable_docker: true
+enable_hugo: true
+enable_tailscale: false

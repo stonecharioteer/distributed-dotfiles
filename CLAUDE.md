@@ -97,6 +97,18 @@ The `.ansible-lint` and `.yamllint` configs include compatibility skips for the 
 3. keep CI required on PRs to `main` so regressions are caught before merge
 4. document any temporary skip with the cleanup condition
 
+## Inventory Design Rules
+
+Preserve the inventory split when adding machines or features:
+
+- `inventory/hosts.yml` is for host and group membership only. Prefer FQDN inventory hostnames such as `desktop.home.arpa`, `linux-laptop.home.arpa`, and `macbook.home.arpa` instead of short aliases plus `ansible_host`.
+- `inventory/group_vars/` defines behavior for groups. Add shared defaults to `group_vars/all.yml`, profile defaults to groups like `headless_machines.yml`, `gui_machines.yml`, `macbooks.yml`, and feature defaults to purpose groups like `laptops.yml`.
+- `inventory/host_vars/` is only for real per-machine exceptions. Do not put common defaults there.
+- Group new hosts by intent: `headless_machines`, `gui_machines`, `macbooks`, `servers`, `workstations`, `laptops`, hardware groups such as `thinkpads`, and optional feature groups such as `supabase_machines`.
+- Add optional capabilities as roles plus feature flags. Example: the `tailscale` role is controlled by `enable_tailscale`, defaults to false in `group_vars/all.yml`, and is enabled for `laptops` in `group_vars/laptops.yml`.
+- When adding a feature flag, wire it through the relevant playbooks and expose a bootstrap override when useful, e.g. `./bootstrap headless --enable-tailscale`.
+- Keep example inventories generic. Use names like `desktop`, `macbook`, `linux-laptop`, and `linux-server`; do not include personal or retired hostnames.
+
 ## Architecture
 
 ### Consolidated Role-Based Structure
@@ -168,6 +180,7 @@ The repository uses a **unified role-based architecture** with all functionality
   - Linux: Downloads .deb from GitHub releases and installs via apt
   - macOS: Installs via Homebrew (always latest extended version)
 - **docker**: Docker Engine installation (Linux) or Docker Desktop via Homebrew (macOS)
+- **tailscale**: Tailscale installation for Linux laptops/servers when `enable_tailscale` is true
 
 **GUI Environment (Linux):**
 - **locale-setup**: System locale configuration

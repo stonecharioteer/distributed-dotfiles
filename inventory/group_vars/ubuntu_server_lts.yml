@@ -1,0 +1,3 @@
+---
+# Defaults for Ubuntu Server LTS machines.
+enable_server_hardening: true

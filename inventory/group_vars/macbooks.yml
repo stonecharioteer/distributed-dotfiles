@@ -1,0 +1,6 @@
+---
+# Defaults for macOS machines, when managed through inventory/hosts.yml.
+enable_gui_environment: true
+enable_nerd_fonts: true
+enable_ghostty: true
+enable_aerospace: true
