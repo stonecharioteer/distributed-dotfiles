@@ -101,13 +101,14 @@
 - name: Install Gum terminal UI tools
   block:
     - name: Add Charm repository GPG key
-      apt_key:
-        url: "{{ external_tools.gum.repo_key }}"
-        state: present
+      get_url:
+        url: "{{ external_tools.charm.repo_key }}"
+        dest: "{{ external_tools.charm.keyring_path }}"
+        mode: '0644'
 
     - name: Add Charm repository
       apt_repository:
-        repo: "{{ external_tools.gum.repo_line }}"
+        repo: "{{ external_tools.charm.repo_line }}"
         state: present
 
     - name: Install Gum
@@ -144,13 +145,14 @@
 - name: Install Glow markdown renderer
   block:
     - name: Add Charm repository GPG key (if not already added)
-      apt_key:
-        url: "{{ external_tools.glow.repo_key }}"
-        state: present
+      get_url:
+        url: "{{ external_tools.charm.repo_key }}"
+        dest: "{{ external_tools.charm.keyring_path }}"
+        mode: '0644'
 
     - name: Add Charm repository (if not already added)
       apt_repository:
-        repo: "{{ external_tools.glow.repo_line }}"
+        repo: "{{ external_tools.charm.repo_line }}"
         state: present
 
     - name: Install Glow
