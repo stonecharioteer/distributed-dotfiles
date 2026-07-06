@@ -10,6 +10,7 @@
         pkg:
           - ca-certificates
           - curl
+          - apt
           - gnupg
           - lsb-release
     - name: Create the keyrings directory

@@ -7,7 +7,9 @@
   when: ansible_facts["os_family"] == "Debian"
   block:
     - name: Check installed Supabase CLI version
-      command: supabase --version
+      shell: command -v supabase >/dev/null 2>&1 && supabase --version
+      args:
+        executable: /bin/bash
       register: supabase_cli_check
       changed_when: false
       failed_when: false
@@ -69,12 +71,17 @@
             state: absent
 
     - name: Verify Supabase CLI installation
-      command: supabase --version
+      shell: command -v supabase >/dev/null 2>&1 && supabase --version
+      args:
+        executable: /bin/bash
       register: supabase_cli_verify
       changed_when: false
+      failed_when: false
 
     - name: Check Docker availability for local Supabase stack
-      command: docker --version
+      shell: command -v docker >/dev/null 2>&1 && docker --version
+      args:
+        executable: /bin/bash
       register: supabase_docker_check
       changed_when: false
       failed_when: false

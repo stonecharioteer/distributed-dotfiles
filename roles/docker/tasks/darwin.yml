@@ -7,10 +7,12 @@
   become: no
 
 - name: Check if Docker CLI is available
-  command: docker --version
+  shell: command -v docker >/dev/null 2>&1 && docker --version
+  args:
+    executable: /bin/bash
   register: docker_version_check
-  ignore_errors: yes
   changed_when: false
+  failed_when: false
   become: no
 
 - name: Ensure directories required by Docker cask exist and are writable

@@ -146,14 +146,21 @@
   fail:
     msg: |
       STOP: ~/.config/qtile is a git repository but not the expected one.
-      Expected: https://github.com/stonecharioteer/dotfiles-qtile.git
-      Found: {{ qtile_git_remote.stdout }}
+      Expected repository: stonecharioteer/dotfiles-qtile via HTTPS or SSH
+      Found: {{ qtile_git_remote.stdout | default('') }}
       Please backup or remove it manually, or update the remote URL.
   when:
     - run_gui_failsafe_checks
     - qtile_config_exists.stat.exists
     - qtile_is_git_repo.stat.exists
-    - qtile_git_remote.stdout not in ['https://github.com/stonecharioteer/dotfiles-qtile.git', 'git@github.com:stonecharioteer/dotfiles-qtile.git']
+    - qtile_git_remote.stdout not in [
+        'https://github.com/stonecharioteer/dotfiles-qtile.git',
+        'https://github.com/stonecharioteer/dotfiles-qtile',
+        'git@github.com:stonecharioteer/dotfiles-qtile.git',
+        'git@github.com:stonecharioteer/dotfiles-qtile',
+        'ssh://git@github.com/stonecharioteer/dotfiles-qtile.git',
+        'ssh://git@github.com/stonecharioteer/dotfiles-qtile'
+      ]
 
 # FAILSAFE: Stop if /opt/qtile exists but is not a valid venv
 - name: FAILSAFE - Stop if /opt/qtile exists but is not a valid Python virtual environment
@@ -183,14 +190,21 @@
   fail:
     msg: |
       STOP: ~/code/tools/alacritty is a git repository but not the expected one.
-      Expected: https://github.com/alacritty/alacritty.git
-      Found: {{ alacritty_git_remote.stdout }}
+      Expected repository: alacritty/alacritty via HTTPS or SSH
+      Found: {{ alacritty_git_remote.stdout | default('') }}
       Please backup or remove it manually, or update the remote URL.
   when:
     - run_gui_failsafe_checks
     - alacritty_source_exists.stat.exists
     - alacritty_is_git_repo.stat.exists
-    - alacritty_git_remote.stdout not in ['https://github.com/alacritty/alacritty.git', 'git@github.com:alacritty/alacritty.git']
+    - alacritty_git_remote.stdout not in [
+        'https://github.com/alacritty/alacritty.git',
+        'https://github.com/alacritty/alacritty',
+        'git@github.com:alacritty/alacritty.git',
+        'git@github.com:alacritty/alacritty',
+        'ssh://git@github.com/alacritty/alacritty.git',
+        'ssh://git@github.com/alacritty/alacritty'
+      ]
 
 # === SCRIPTS REPOSITORY CHECKS ===
 - name: Check if scripts repository directory exists
@@ -318,13 +332,20 @@
   fail:
     msg: |
       STOP: ~/.config/fish is a git repository but not the expected one.
-      Expected: https://github.com/stonecharioteer/dotfiles-fish.git
-      Found: {{ fish_git_remote.stdout }}
+      Expected repository: stonecharioteer/dotfiles-fish via HTTPS or SSH
+      Found: {{ fish_git_remote.stdout | default('') }}
       Please backup or remove it manually, or update the remote URL.
   when:
     - fish_config_exists.stat.exists
     - fish_is_git_repo.stat.exists
-    - fish_git_remote.stdout not in ['https://github.com/stonecharioteer/dotfiles-fish.git', 'git@github.com:stonecharioteer/dotfiles-fish.git']
+    - fish_git_remote.stdout not in [
+        'https://github.com/stonecharioteer/dotfiles-fish.git',
+        'https://github.com/stonecharioteer/dotfiles-fish',
+        'git@github.com:stonecharioteer/dotfiles-fish.git',
+        'git@github.com:stonecharioteer/dotfiles-fish',
+        'ssh://git@github.com/stonecharioteer/dotfiles-fish.git',
+        'ssh://git@github.com/stonecharioteer/dotfiles-fish'
+      ]
 
 # Set facts for other roles to use
 - name: Set facts about current installation state

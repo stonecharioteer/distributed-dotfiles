@@ -56,6 +56,14 @@
           tags:
             - gum
           block:
+            - name: Ensure apt-key prerequisites are available for older systems
+              apt:
+                pkg:
+                  - apt
+                  - ca-certificates
+                  - curl
+                  - gnupg
+                state: present
             - name: Add the charmbracelet gpg key
               apt_key:
                 url: https://repo.charm.sh/apt/gpg.key

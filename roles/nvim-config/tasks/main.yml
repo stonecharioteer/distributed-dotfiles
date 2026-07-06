@@ -1,9 +1,11 @@
 ---
 - name: Check if Neovim is available
-  command: nvim --version
+  shell: command -v nvim >/dev/null 2>&1 && nvim --version
+  args:
+    executable: /bin/bash
   register: nvim_check
-  ignore_errors: yes
   changed_when: false
+  failed_when: false
 
 - name: Fail if Neovim is not available
   fail:
@@ -38,13 +40,25 @@
     msg: |
       ERROR: {{ nvim_config_dir }} exists but is not a clone of {{ nvim_config_repo }}
       Found repository: {{ existing_repo_url.stdout | default('not a git repository') }}
-      Expected repository: {{ nvim_config_repo }}
+      Expected repository: stonecharioteer/nvim-config via HTTPS or SSH
       Please backup and remove the existing configuration before running this role.
   when:
     - nvim_config_exists.stat.exists
     - nvim_config_git.stat.exists
     - existing_repo_url.stdout is defined
-    - nvim_config_repo not in existing_repo_url.stdout
+    - existing_repo_url.stdout not in nvim_config_repo_accepted_remotes
+
+- name: Normalize nvim-config repository origin URL to SSH
+  command: git remote set-url origin git@github.com:stonecharioteer/nvim-config.git
+  args:
+    chdir: "{{ nvim_config_dir }}"
+  become_user: "{{ dev_user }}"
+  when:
+    - nvim_config_exists.stat.exists
+    - nvim_config_git.stat.exists
+    - existing_repo_url.stdout is defined
+    - existing_repo_url.stdout in nvim_config_repo_accepted_remotes
+    - existing_repo_url.stdout != nvim_config_repo
 
 - name: Clone nvim-config repository (fresh install)
   block:
@@ -150,7 +164,7 @@
           {% endif %}
           {% endif %}
 
-  when: nvim_config_exists.stat.exists and nvim_config_git.stat.exists and (existing_repo_url.stdout is not defined or nvim_config_repo in existing_repo_url.stdout)
+  when: nvim_config_exists.stat.exists and nvim_config_git.stat.exists and (existing_repo_url.stdout is not defined or existing_repo_url.stdout in nvim_config_repo_accepted_remotes)
 
 - name: Display nvim-config setup completion
   debug:
