@@ -13,6 +13,7 @@ all:
     enable_server_hardening: true
     enable_hugo: true
     enable_docker: true
+    enable_tailscale: false
 
   children:
     headless_machines:
@@ -23,3 +24,7 @@ all:
         linux-laptop:
           ansible_host: linux-laptop.example.com
           ansible_user: stonecharioteer
+
+    laptops:
+      hosts:
+        linux-laptop:

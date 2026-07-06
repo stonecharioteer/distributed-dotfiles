@@ -1,0 +1,3 @@
+---
+# Defaults for portable machines that should join the tailnet.
+enable_tailscale: true

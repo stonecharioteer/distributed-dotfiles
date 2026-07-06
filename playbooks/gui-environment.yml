@@ -19,6 +19,7 @@
     enable_nerd_fonts: true
     enable_alacritty: true
     enable_desktop_integration: true
+    enable_tailscale: false
 
   pre_tasks:
     - name: Update package cache (Debian/Ubuntu)
@@ -133,6 +134,9 @@
     - role: docker
       when: enable_docker | bool
       tags: [dev, docker, containers]
+    - role: tailscale
+      when: enable_tailscale | bool
+      tags: [networking, tailscale]
 
     # GUI Environment
     - role: locale-setup
@@ -172,6 +176,7 @@
           - Qtile: {{ enable_qtile }}
           - Nerd Fonts: {{ enable_nerd_fonts }}
           - Alacritty: {{ enable_alacritty }}
+          - Tailscale: {{ enable_tailscale }}
 
           🐚 Shell Environment:
           ✓ Fish shell with syntax highlighting and modern features
@@ -190,6 +195,7 @@
           ✓ tree-sitter CLI for syntax highlighting
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
           ✓ Docker Engine with Compose plugin
+          {% if enable_tailscale | bool %}✓ Tailscale installed for tailnet access{% endif %}
 
           🖥️ GUI Environment:
           ✓ System locale and base packages

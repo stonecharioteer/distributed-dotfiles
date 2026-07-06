@@ -1,0 +1,50 @@
+---
+- name: Check if Tailscale is already installed
+  command: which tailscale
+  register: tailscale_check
+  changed_when: false
+  failed_when: false
+
+- name: Install Tailscale on Debian/Ubuntu when missing
+  when:
+    - ansible_facts["os_family"] == "Debian"
+    - tailscale_check.rc != 0
+  block:
+    - name: Install Tailscale apt prerequisites
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+        state: present
+        update_cache: true
+
+    - name: Add Tailscale apt keyring
+      get_url:
+        url: "https://pkgs.tailscale.com/stable/{{ ansible_facts['distribution'] | lower }}/{{ ansible_facts['distribution_release'] }}.noarmor.gpg"
+        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+        mode: "0644"
+
+    - name: Add Tailscale apt repository
+      get_url:
+        url: "https://pkgs.tailscale.com/stable/{{ ansible_facts['distribution'] | lower }}/{{ ansible_facts['distribution_release'] }}.tailscale-keyring.list"
+        dest: /etc/apt/sources.list.d/tailscale.list
+        mode: "0644"
+
+    - name: Install Tailscale package
+      apt:
+        name: tailscale
+        state: present
+        update_cache: true
+
+- name: Ensure Tailscale service is enabled and started
+  service:
+    name: tailscaled
+    state: started
+    enabled: true
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Display Tailscale next step
+  debug:
+    msg: "Tailscale is installed. Run 'sudo tailscale up' on the host if it has not joined your tailnet yet."
+  when: ansible_facts["os_family"] == "Debian"

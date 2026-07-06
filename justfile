@@ -18,6 +18,10 @@ doctor:
 setup-headless host user="stonecharioteer":
     ./bootstrap headless --host {{ host }} --user {{ user }}
 
+# Bootstrap a headless Linux laptop/server and enable Tailscale
+setup-headless-laptop host user="stonecharioteer":
+    ./bootstrap headless --host {{ host }} --user {{ user }} --enable-tailscale
+
 # Bootstrap a Linux GUI workstation with Qtile
 setup-gui host user="stonecharioteer":
     ./bootstrap gui --host {{ host }} --user {{ user }}

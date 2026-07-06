@@ -1,0 +1,8 @@
+---
+# Defaults for headless Linux machines.
+enable_server_hardening: true
+enable_gui_environment: false
+enable_qtile: false
+enable_nerd_fonts: false
+enable_alacritty: false
+enable_desktop_integration: false

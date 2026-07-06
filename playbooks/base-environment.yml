@@ -15,6 +15,7 @@
     enable_server_hardening: true
     enable_hugo: true
     enable_docker: true
+    enable_tailscale: false
 
   pre_tasks:
     - name: Update package cache (Debian/Ubuntu)
@@ -135,6 +136,9 @@
     - role: docker
       when: enable_docker | bool
       tags: [dev, docker, containers]
+    - role: tailscale
+      when: enable_tailscale | bool
+      tags: [networking, tailscale]
 
   post_tasks:
     - name: Display base environment setup completion
@@ -149,6 +153,7 @@
           - Server hardening: {{ enable_server_hardening }}
           - Hugo: {{ enable_hugo }}
           - Docker: {{ enable_docker }}
+          - Tailscale: {{ enable_tailscale }}
 
           🐚 Shell Environment:
           ✓ Fish shell with syntax highlighting and modern features
@@ -169,6 +174,7 @@
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
           ✓ Hugo Extended {{ hugo_version | default('0.146.7') }} static site generator
           ✓ Docker Engine with Compose plugin
+          {% if enable_tailscale | bool %}✓ Tailscale installed for tailnet access{% endif %}
 
           📋 Next Steps:
           1. Log out and log back in for shell/group changes

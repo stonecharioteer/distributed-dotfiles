@@ -20,6 +20,11 @@ Options:
       --diff             Show Ansible diffs
       --tags TAGS        Run only selected tags
       --skip-tags TAGS   Skip selected tags
+      --enable-tailscale Install/configure Tailscale for this run
+      --disable-tailscale
+                         Disable Tailscale for this run
+      --extra-var KEY=VALUE
+                         Pass an extra Ansible variable
       --no-become-pass   Do not prompt for sudo password on Linux profiles
   -h, --help             Show this help
 
@@ -63,6 +68,18 @@ while [[ $# -gt 0 ]]; do
       ;;
     --tags|--skip-tags)
       ansible_args+=("$1" "$2")
+      shift 2
+      ;;
+    --enable-tailscale)
+      ansible_args+=(-e enable_tailscale=true)
+      shift
+      ;;
+    --disable-tailscale)
+      ansible_args+=(-e enable_tailscale=false)
+      shift
+      ;;
+    --extra-var)
+      ansible_args+=(-e "$2")
       shift 2
       ;;
     --no-become-pass)
