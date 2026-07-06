@@ -4,36 +4,45 @@ Ansible-based automation for setting up consistent development environments on *
 
 ## Quick Start
 
-### Ubuntu/Debian
+Run the doctor first to check local prerequisites:
 
 ```bash
-# Base development environment (ALL systems)
-ansible-playbook --ask-become-pass playbooks/base-environment.yml
-
-# GUI workstation (includes base + desktop)
-ansible-playbook --ask-become-pass playbooks/gui-environment.yml
-
-# Optional Supabase tooling for selected machines
-ansible-playbook -i inventory/hosts.yml --ask-become-pass playbooks/supabase-tooling.yml
+./scripts/doctor.sh
+# or
+just doctor
 ```
 
-### macOS
+Then choose the profile that matches the machine you are setting up:
+
+| Profile        | Bootstrap command                              | Playbook                               | Target            | Includes                                                          |
+| -------------- | ---------------------------------------------- | -------------------------------------- | ----------------- | ----------------------------------------------------------------- |
+| Headless Linux | `./bootstrap headless --host HOST --user USER` | `playbooks/base-environment.yml`       | servers/dev boxes | Fish, dotfiles, mise, tmux, Neovim, Hugo, Docker                  |
+| Linux GUI      | `./bootstrap gui --host HOST --user USER`      | `playbooks/gui-environment.yml`        | desktops/laptops  | base tools + Qtile, Nerd Font, Alacritty, desktop integration     |
+| macOS Base     | `./bootstrap mac`                              | `playbooks/macos-base-environment.yml` | MacBooks          | Homebrew, Fish, dotfiles, dev tools, tmux, Neovim, Docker Desktop |
+| macOS GUI      | `./bootstrap mac-gui`                          | `playbooks/macos-gui-environment.yml`  | MacBooks          | macOS base + Ghostty, AeroSpace, Nerd Font                        |
+
+Examples:
 
 ```bash
-# Base development environment (ALL systems)
-ansible-playbook playbooks/macos-base-environment.yml
+# Base development environment on a Linux host
+./bootstrap headless --host 1990-dev --user stonecharioteer
 
-# GUI workstation (includes base + GUI apps)
-ansible-playbook playbooks/macos-gui-environment.yml
+# Linux GUI workstation with Qtile
+./bootstrap gui --host desktop --user stonecharioteer
+
+# Current macOS machine
+./bootstrap mac
+./bootstrap mac-gui
 ```
 
-**Note:** macOS playbooks use Homebrew and don't require `--ask-become-pass`.
+The bootstrap script prints the exact `ansible-playbook` command before running it and supports `--check`, `--diff`, `--tags`, `--skip-tags`, `--inventory`, and extra `ansible-playbook` arguments after `--`.
 
 ## What Gets Installed
 
 ### Base Environment (All Systems)
 
 **Ubuntu/Debian** (`base-environment.yml`):
+
 - Fish shell + dotfiles, mise (Node.js, Python, Go, Rust), Rust toolchain
 - CLI tools: ripgrep, fd, fzf, starship, gum, direnv, zoxide, watchexec
 - tmux (compiled from source) + oh-my-tmux with powerline separators
@@ -42,6 +51,7 @@ ansible-playbook playbooks/macos-gui-environment.yml
 - Docker Engine + Compose
 
 **macOS** (`macos-base-environment.yml`):
+
 - Homebrew (auto-installed), Fish shell + dotfiles
 - mise (Node.js, Python, Go, Rust), Rust toolchain
 - Same CLI tools via Homebrew
@@ -53,11 +63,13 @@ ansible-playbook playbooks/macos-gui-environment.yml
 ### GUI Environment
 
 **Ubuntu/Debian** (`gui-environment.yml`):
+
 - Everything from base +
 - Qtile window manager, JetBrains Mono Nerd Font
 - Alacritty terminal, Desktop integration
 
 **macOS** (`macos-gui-environment.yml`):
+
 - Everything from base +
 - JetBrains Mono Nerd Font, Ghostty terminal
 - AeroSpace window manager (i3/sway-like)
@@ -70,17 +82,31 @@ ansible-playbook playbooks/macos-gui-environment.yml
 sudo apt-get install ansible
 ```
 
-Create an [ansible inventory](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html) file:
+Create an [ansible inventory](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html) file from the profile-specific examples:
 
 ```bash
-cp inventory/hosts.yml inventory/my-home.yml
-# Edit with your SSH hostnames
+# Headless Linux servers/dev boxes
+cp inventory/headless.example.yml inventory/my-headless.yml
 
-# Set environment variable (optional)
-export ANSIBLE_INVENTORY=inventory/my-home.yml
+# Linux GUI desktops/laptops
+cp inventory/gui.example.yml inventory/my-gui.yml
 
-# Or use -i flag
-ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml
+# Edit with your SSH hostnames, users, and feature flags
+```
+
+Recommended inventory model:
+
+- keep one example inventory per machine profile (`headless`, `gui`, `mac`)
+- group real hosts by profile (`headless_machines`, `gui_machines`, `macbooks`)
+- keep shared defaults in `all.vars`
+- keep host-specific overrides in `inventory/host_vars/<host>.yml`
+- use feature flags in inventory to opt out of large components like Docker, Hugo, Qtile, Ghostty, or AeroSpace
+
+Then run with either bootstrap or Ansible directly:
+
+```bash
+./bootstrap headless -i inventory/my-headless.yml
+ansible-playbook -i inventory/my-headless.yml --ask-become-pass playbooks/base-environment.yml
 ```
 
 ### macOS
@@ -92,9 +118,28 @@ python3 -m pip install --user ansible
 # Install community modules
 ansible-galaxy collection install community.general
 
-# Run playbooks (no inventory needed for localhost)
-ansible-playbook playbooks/macos-base-environment.yml
+# Run through bootstrap against localhost
+./bootstrap mac
 ```
+
+## Feature Flags
+
+The main playbooks expose coarse feature flags so inventories can opt out of large components without needing long tag lists:
+
+```yaml
+all:
+  vars:
+    enable_shell_environment: true
+    enable_development_tools: true
+    enable_docker: true
+    enable_hugo: true
+    enable_gui_environment: true
+    enable_qtile: true
+    enable_ghostty: true
+    enable_aerospace: true
+```
+
+See `inventory/headless.example.yml`, `inventory/gui.example.yml`, and `inventory/mac.example.yml` for profile-specific defaults.
 
 ## Development Checks
 
@@ -145,6 +190,7 @@ ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags "fish,t
 ```
 
 **Available Linux tags:**
+
 - **Shell:** `shell`, `fish`, `dotfiles`, `scripts`, `mise`, `rust`, `languages`, `config`
 - **Development:** `dev`, `deps`, `cli`, `folders`, `tmux`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
 - **GUI:** `gui`, `system`, `locale`, `repos`, `wm`, `qtile`, `fonts`, `terminal`, `alacritty`, `desktop`, `integration`
@@ -178,6 +224,7 @@ ansible-playbook playbooks/macos-base-environment.yml --tags "fish,tmux,neovim"
 ```
 
 **Available macOS tags:**
+
 - **Shell:** `shell`, `fish`, `dotfiles`, `scripts`, `mise`, `rust`, `languages`, `config`
 - **Development:** `dev`, `cli`, `folders`, `tmux`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
 - **GUI:** `gui`, `fonts`, `terminal`, `ghostty`, `wm`, `aerospace`
@@ -236,6 +283,7 @@ ansible-playbook playbooks/base-environment.yml --list-tasks
 - No external ansible configurations required
 
 **Key roles:**
+
 - Shell: `fish-shell`, `fish-config`, `mise-tools`, `rust-toolchain`
 - CLI: `system-deps`, `cli-tools`, `dev-folders`
 - Development: `tmux`, `neovim-latest`, `nvim-config`, `tree-sitter-cli`, `hugo`, `docker`

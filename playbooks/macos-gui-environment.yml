@@ -7,6 +7,13 @@
   vars:
     dev_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
     dev_home: "{{ ansible_facts.env.HOME | default('/Users/' + dev_user) }}"
+    enable_shell_environment: true
+    enable_development_tools: true
+    enable_docker: true
+    enable_gui_environment: true
+    enable_nerd_fonts: true
+    enable_ghostty: true
+    enable_aerospace: true
 
   pre_tasks:
     - name: Verify running on macOS
@@ -49,42 +56,60 @@
   roles:
     # Base Development Environment (shell + dev tools)
     - role: fish-shell
+      when: enable_shell_environment | bool
       tags: [shell, fish]
     - role: fish-repository-setup
+      when: enable_shell_environment | bool
       tags: [shell, fish, dotfiles]
     - role: scripts-repository-setup
+      when: enable_shell_environment | bool
       tags: [shell, scripts]
     - role: mise-tools
+      when: enable_shell_environment | bool
       tags: [shell, mise, languages]
     - role: rust-toolchain
+      when: enable_shell_environment | bool
       tags: [shell, rust, languages]
     - role: fish-config
+      when: enable_shell_environment | bool
       tags: [shell, fish, config]
     - role: git-config
+      when: enable_development_tools | bool
       tags: [dev, git, config]
     - role: cli-tools
+      when: enable_development_tools | bool
       tags: [dev, cli]
     - role: starship-config
+      when: enable_shell_environment | bool
       tags: [shell, starship, config]
     - role: dev-folders
+      when: enable_development_tools | bool
       tags: [dev, folders]
     - role: tmux
+      when: enable_development_tools | bool
       tags: [dev, tmux]
     - role: neovim-latest
+      when: enable_development_tools | bool
       tags: [dev, neovim, editor]
     - role: tree-sitter-cli
+      when: enable_development_tools | bool
       tags: [dev, neovim]
     - role: nvim-config
+      when: enable_development_tools | bool
       tags: [dev, neovim, editor, config]
     - role: docker
+      when: enable_docker | bool
       tags: [dev, docker, containers]
 
     # macOS GUI Environment
     - role: nerd-fonts
+      when: enable_gui_environment | bool and enable_nerd_fonts | bool
       tags: [gui, fonts]
     - role: ghostty
+      when: enable_gui_environment | bool and enable_ghostty | bool
       tags: [gui, terminal, ghostty]
     - role: aerospace-wm
+      when: enable_gui_environment | bool and enable_aerospace | bool
       tags: [gui, wm, aerospace]
 
   post_tasks:
@@ -92,6 +117,16 @@
       debug:
         msg: |
           🚀 Complete macOS GUI Workstation Setup Finished!
+
+          Profile: macOS GUI workstation
+          Feature flags:
+          - Shell environment: {{ enable_shell_environment }}
+          - Development tools: {{ enable_development_tools }}
+          - Docker: {{ enable_docker }}
+          - GUI environment: {{ enable_gui_environment }}
+          - Nerd Fonts: {{ enable_nerd_fonts }}
+          - Ghostty: {{ enable_ghostty }}
+          - AeroSpace: {{ enable_aerospace }}
 
           ⚠️  IMPORTANT: Some tasks required sudo access:
           - Adding Fish to /etc/shells

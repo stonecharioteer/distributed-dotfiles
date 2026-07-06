@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./bootstrap <profile> [options] [-- extra ansible-playbook args]
+
+Profiles:
+  headless   Linux base development environment
+  gui        Linux GUI workstation with Qtile
+  mac        macOS base development environment
+  mac-gui    macOS GUI workstation with Ghostty + AeroSpace
+
+Options:
+  -i, --inventory PATH   Inventory file or host list
+  -u, --user USER        SSH user for remote Linux hosts
+      --host HOST        Single host shortcut; expands to "HOST,"
+      --check            Run Ansible check mode
+      --diff             Show Ansible diffs
+      --tags TAGS        Run only selected tags
+      --skip-tags TAGS   Skip selected tags
+      --no-become-pass   Do not prompt for sudo password on Linux profiles
+  -h, --help             Show this help
+
+Examples:
+  ./bootstrap headless --host 1990-dev --user stonecharioteer
+  ./bootstrap gui -i inventory/gui.example.yml --check --diff
+  ./bootstrap mac
+  ./bootstrap mac-gui --tags gui
+EOF
+}
+
+profile="${1:-}"
+if [[ -z "${profile}" || "${profile}" == "-h" || "${profile}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+shift
+
+inventory=""
+ssh_user=""
+ask_become_pass=true
+ansible_args=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -i|--inventory)
+      inventory="$2"
+      shift 2
+      ;;
+    -u|--user)
+      ssh_user="$2"
+      shift 2
+      ;;
+    --host)
+      inventory="$2,"
+      shift 2
+      ;;
+    --check|--diff)
+      ansible_args+=("$1")
+      shift
+      ;;
+    --tags|--skip-tags)
+      ansible_args+=("$1" "$2")
+      shift 2
+      ;;
+    --no-become-pass)
+      ask_become_pass=false
+      shift
+      ;;
+    --)
+      shift
+      ansible_args+=("$@")
+      break
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      ansible_args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+case "${profile}" in
+  headless)
+    playbook="playbooks/base-environment.yml"
+    needs_become=true
+    ;;
+  gui)
+    playbook="playbooks/gui-environment.yml"
+    needs_become=true
+    ;;
+  mac)
+    playbook="playbooks/macos-base-environment.yml"
+    needs_become=false
+    inventory="${inventory:-inventory/localhost.yml}"
+    ;;
+  mac-gui)
+    playbook="playbooks/macos-gui-environment.yml"
+    needs_become=false
+    inventory="${inventory:-inventory/localhost.yml}"
+    ;;
+  *)
+    echo "Unknown profile: ${profile}" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+
+command=(ansible-playbook)
+if [[ -n "${inventory}" ]]; then
+  command+=(-i "${inventory}")
+fi
+if [[ -n "${ssh_user}" ]]; then
+  command+=(-u "${ssh_user}")
+fi
+if [[ "${needs_become}" == true && "${ask_become_pass}" == true ]]; then
+  command+=(--ask-become-pass)
+fi
+command+=("${playbook}")
+command+=("${ansible_args[@]}")
+
+cat <<EOF
+Profile:  ${profile}
+Playbook: ${playbook}
+Command:  ${command[*]}
+EOF
+
+read -r -p "Continue? [y/N] " answer
+case "${answer}" in
+  y|Y|yes|YES) ;;
+  *) echo "Aborted."; exit 0 ;;
+esac
+
+exec "${command[@]}"
