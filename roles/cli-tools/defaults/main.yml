@@ -3,10 +3,11 @@
 dev_user: "{{ ansible_user | default('stonecharioteer') }}"
 dev_home: "/home/{{ dev_user }}"
 
-# Modern CLI tools for development productivity
-# Note: Core Rust tools (ripgrep, fd, zoxide, starship) installed here via package manager
-# Additional Rust tools (bat, eza, tokei, etc.) installed in rust-toolchain role via cargo
-cli_packages:
+# Modern CLI tools for development productivity.
+# Keep required tools to packages that should exist on supported Ubuntu/Debian
+# systems. Optional/fun tools are installed only when the package exists in the
+# target's enabled repositories.
+cli_packages_required:
   # File and text search tools (Rust-based, via package manager)
   - ripgrep        # Fast text search
   - fd-find        # Fast file search
@@ -25,12 +26,16 @@ cli_packages:
   - htop           # Process viewer (if not in system-deps)
   - btop           # Modern system resource monitor (C++)
 
-  # Fun tools
+cli_packages_optional:
+  # Fun/system-info tools; these vary across Ubuntu/Debian releases and repos.
   - cowsay         # ASCII art messages
   - fortune-mod    # Random quotes
   - lolcat         # Colorful output
-  - neofetch       # System information
+  - neofetch       # System information (removed from newer Ubuntu releases)
   - screenfetch    # Alternative system info
+
+# Backwards-compatible combined list for external overrides/documentation.
+cli_packages: "{{ cli_packages_required + cli_packages_optional }}"
 
 # Tools installed via external methods
 external_tools:

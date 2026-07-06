@@ -4,11 +4,40 @@
   include_tasks: darwin.yml
   when: ansible_facts["os_family"] == "Darwin"
 
-- name: Install CLI development tools via package manager
+- name: Install required CLI development tools via package manager
   package:
-    name: "{{ cli_packages }}"
+    name: "{{ cli_packages_required }}"
     state: present
   when: ansible_facts["os_family"] == "Debian"
+
+- name: Check optional CLI package availability
+  command: "apt-cache show {{ item }}"
+  loop: "{{ cli_packages_optional }}"
+  register: optional_cli_package_checks
+  changed_when: false
+  failed_when: false
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Create list of available optional CLI packages
+  set_fact:
+    available_optional_cli_packages: "{{ optional_cli_package_checks.results | selectattr('rc', 'eq', 0) | map(attribute='item') | list }}"
+    unavailable_optional_cli_packages: "{{ optional_cli_package_checks.results | rejectattr('rc', 'eq', 0) | map(attribute='item') | list }}"
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Install available optional CLI packages
+  package:
+    name: "{{ available_optional_cli_packages }}"
+    state: present
+  when:
+    - ansible_facts["os_family"] == "Debian"
+    - available_optional_cli_packages | length > 0
+
+- name: Display skipped optional CLI packages
+  debug:
+    msg: "Skipping unavailable optional CLI packages: {{ unavailable_optional_cli_packages | join(', ') }}"
+  when:
+    - ansible_facts["os_family"] == "Debian"
+    - unavailable_optional_cli_packages | length > 0
 
 - name: Create fd symlink (Ubuntu packages fd-find as fdfind)
   file:

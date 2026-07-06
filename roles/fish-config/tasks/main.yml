@@ -18,33 +18,20 @@
       WARNING: No fish configuration found! Repository may not have been cloned properly.
       {% endif %}
 
-- name: Check if fish_plugins file exists (from repository)
+- name: Check if legacy fish_plugins file exists (from repository)
   stat:
     path: "{{ dev_home }}/.config/fish/fish_plugins"
   register: fish_plugins_file
   become: no
 
-- name: Check if Fisher plugin manager is already installed
-  stat:
-    path: "{{ dev_home }}/.config/fish/functions/fisher.fish"
-  register: fisher_function
-  become: no
-
-- name: Install Fisher plugin manager
-  shell: |
-    fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher"
-  become: no
-  environment:
-    HOME: "{{ dev_home }}"
-  when: not fisher_function.stat.exists
-
-- name: Install Fish plugins from fish_plugins file
-  shell: |
-    fish -c "fisher update"
-  become: no
-  environment:
-    HOME: "{{ dev_home }}"
-  when: fish_plugins_file.stat.exists
+- name: Skip Fisher plugin management
+  debug:
+    msg: |
+      Fisher is no longer managed by distributed-dotfiles.
+      Fish config initializes shell integrations directly from config.fish.
+      {% if fish_plugins_file.stat.exists %}
+      Legacy fish_plugins exists at {{ dev_home }}/.config/fish/fish_plugins but will not be applied.
+      {% endif %}
 
 - name: Initialize shell tool integrations
   shell: |
