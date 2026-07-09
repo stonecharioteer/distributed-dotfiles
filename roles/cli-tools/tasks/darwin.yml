@@ -7,7 +7,7 @@
 
     packages=(
       ripgrep fd zoxide starship fzf direnv tree httpie
-      pgcli htop btop gum glow jq yq cowsay fortune lolcat neofetch lsd
+      pgcli libpq htop btop gum glow jq yq cowsay fortune lolcat neofetch lsd
       watchexec bandwhich just
     )
 
@@ -29,6 +29,17 @@
   debug:
     msg: "{{ brew_install_result.stdout_lines }}"
   when: brew_install_result.stdout_lines is defined
+
+- name: Add libpq tools to Fish PATH
+  shell: |
+    fish -c 'fish_add_path /opt/homebrew/opt/libpq/bin'
+  args:
+    executable: /bin/bash
+  become: no
+  environment:
+    HOME: "{{ ansible_facts.env.HOME }}"
+  changed_when: false
+  failed_when: false
 
 - name: Install cargo-based tools on macOS
   shell: |
@@ -61,6 +72,7 @@
     - zoxide
     - direnv
     - http
+    - /opt/homebrew/opt/libpq/bin/psql
     - starship
     - gum
     - glow
