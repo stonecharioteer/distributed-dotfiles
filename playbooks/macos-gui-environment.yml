@@ -119,7 +119,7 @@
 
           🖥️ macOS GUI Environment:
           ✓ JetBrains Mono Nerd Font with icon support
-          ✓ Ghostty terminal emulator (GPU-accelerated, native macOS)
+          ✓ Ghostty terminal emulator (GPU-accelerated, native macOS, TERM=xterm-256color)
           ✓ AeroSpace tiling window manager
 
           📋 Next Steps:

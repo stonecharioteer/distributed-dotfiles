@@ -53,6 +53,16 @@
   become: no
   when: not ghostty_config_exists.stat.exists
 
+- name: Force Ghostty TERM to widely-supported xterm-256color
+  lineinfile:
+    path: "{{ dev_home }}/.config/ghostty/config"
+    regexp: '^term\s*='
+    line: 'term = xterm-256color'
+    create: yes
+    owner: "{{ dev_user }}"
+    mode: '0644'
+  become: no
+
 - name: Display config status
   debug:
     msg: |
@@ -64,6 +74,7 @@
       Location: {{ dev_home }}/.config/ghostty/config
 
       Features configured:
+      - TERM: xterm-256color for tmux/SSH compatibility
       - Font: JetBrains Mono Nerd Font (size 13)
       - Theme: Rose Pine (dark/light mode auto-switch)
       - Shell integration enabled

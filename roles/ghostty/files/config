@@ -17,6 +17,9 @@ minimum-contrast = 1.1
 # Automatically inject shell support for working directory tracking
 shell-integration = detect
 
+# Use broadly available terminfo so tmux/SSH sessions work without xterm-ghostty definitions
+term = xterm-256color
+
 # Automatically convert TERM for SSH connections
 shell-integration-features = cursor,sudo,title
 
