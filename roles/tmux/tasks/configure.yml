@@ -158,6 +158,47 @@
     - oh-my-tmux
     - blog
 
+- name: Ensure local bin directory exists for tmux helper scripts
+  file:
+    path: "{{ dev_home }}/.local/bin"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
+    mode: '0755'
+  become: no
+  tags:
+    - oh-my-tmux
+    - blog
+
+- name: Install tmux popup rename helper scripts
+  copy:
+    dest: "{{ dev_home }}/.local/bin/{{ item.name }}"
+    owner: "{{ dev_user }}"
+    group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
+    mode: '0755'
+    content: "{{ item.content }}"
+  loop:
+    - name: tmux-rename-session-popup
+      content: |
+        #!/bin/sh
+        current=$(tmux display-message -p '#S')
+        printf 'New session name [%s]: ' "$current"
+        IFS= read -r name
+        [ -n "$name" ] && tmux rename-session -- "$name"
+    - name: tmux-rename-window-popup
+      content: |
+        #!/bin/sh
+        current=$(tmux display-message -p '#W')
+        printf 'New window name [%s]: ' "$current"
+        IFS= read -r name
+        [ -n "$name" ] && tmux rename-window -- "$name"
+  loop_control:
+    label: "{{ item.name }}"
+  become: no
+  tags:
+    - oh-my-tmux
+    - blog
+
 - name: Apply shared tmux command customizations
   blockinfile:
     path: "{{ dev_home }}/.tmux.conf.local"
@@ -172,6 +213,10 @@
       bind | split-window -h -c '#{pane_current_path}'
       bind '\' split-window -v -c '#{pane_current_path}'
       bind C-c command-prompt -I "#{b:pane_current_path}" -p "new-session" "new-session -A -c '#{pane_current_path}' -s '%%'"
+
+      # Use popups for rename prompts so input doesn't draw over the status bar.
+      bind-key $ display-popup -E -w 60 -h 5 '~/.local/bin/tmux-rename-session-popup'
+      bind-key , display-popup -E -w 60 -h 5 '~/.local/bin/tmux-rename-window-popup'
 
       set -g pane-border-status top
       set -g pane-border-format " #{pane_current_path} "
