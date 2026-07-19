@@ -6,8 +6,9 @@
   become: yes
   gather_facts: true
   vars:
-    dev_user: "{{ ansible_user | default('stonecharioteer') }}"
-    dev_home: "/home/{{ dev_user }}"
+    # dev_user/dev_home come from inventory/group_vars (all.yml).
+    # Do not re-derive dev_user from ansible_user here; it is often unset when
+    # SSH User is provided only via ~/.ssh/config.
     run_gui_failsafe_checks: true
     enable_github_preflight: true
     enable_failsafe_checks: true

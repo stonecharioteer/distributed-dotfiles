@@ -37,6 +37,16 @@ repos:
         language: script
         entry: hooks/check-ansible-risky-patterns.sh
         files: ^(playbooks|roles|inventory)/.*\.(ya?ml)$
+      - id: check-private-inventory
+        name: Block personal inventory commits
+        language: script
+        entry: hooks/check-private-inventory.sh
+        files: ^inventory/
+      - id: anonymize-home-arpa
+        name: Anonymize .home.arpa hostnames
+        language: script
+        entry: hooks/anonymize-home-arpa.sh
+        types: [text]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0

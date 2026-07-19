@@ -7,7 +7,9 @@
     group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
     mode: "{{ item.mode }}"
   loop: "{{ dev_directories }}"
-  become: no
+  # Run as root so ownership can be applied reliably even when the play
+  # connection user is ambiguous (e.g. ansible_user unset, SSH config only).
+  become: true
 
 - name: Display created directories
   debug:
@@ -27,9 +29,17 @@
     msg: |
       Directory ownership verification:
       Path: {{ dev_home }}/code
-      Owner: {{ code_dir_stat.stat.pw_name }}
-      Group: {{ code_dir_stat.stat.gr_name }}
-      Mode: {{ code_dir_stat.stat.mode }}
+      Exists: {{ code_dir_stat.stat.exists | default(false) }}
+      Owner: {{ code_dir_stat.stat.pw_name | default(code_dir_stat.stat.uid | default('n/a'), true) }}
+      Group: {{ code_dir_stat.stat.gr_name | default(code_dir_stat.stat.gid | default('n/a'), true) }}
+      Mode: {{ code_dir_stat.stat.mode | default('n/a') }}
+
+- name: Fail when development code directory is missing
+  fail:
+    msg: >-
+      Expected {{ dev_home }}/code to exist after dev-folders setup
+      (dev_user={{ dev_user }}, dev_home={{ dev_home }}).
+  when: not (code_dir_stat.stat.exists | default(false))
 
 - name: Create useful symlinks
   file:
@@ -43,8 +53,8 @@
       dest: "{{ dev_home }}/personal"
     - src: "{{ dev_home }}/workspace/scratch"
       dest: "{{ dev_home }}/scratch"
-  become: no
-  ignore_errors: yes  # Don't fail if symlinks already exist
+  become: true
+  failed_when: false  # Don't fail if symlinks already exist
 
 - name: Display setup completion
   debug:

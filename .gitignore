@@ -132,8 +132,12 @@ dmypy.json
 .pyre/
 .vagrant/
 
-# Personal inventory files - keep your network setup private
+# Personal inventory files - keep your network setup private.
+# Commit only generic examples (*.example.yml, example-hosts.yml, localhost.yml).
+inventory/hosts.yml
 inventory/my-*.yml
 inventory/home.yml
 inventory/personal.yml
 inventory/production.yml
+inventory/host_vars/*
+!inventory/host_vars/.gitkeep

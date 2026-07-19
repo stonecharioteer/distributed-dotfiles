@@ -31,7 +31,7 @@ cli_packages_optional:
   - cowsay         # ASCII art messages
   - fortune-mod    # Random quotes
   - lolcat         # Colorful output
-  - neofetch       # System information (removed from newer Ubuntu releases)
+  - fastfetch      # System information (neofetch replacement on newer Ubuntu)
   - screenfetch    # Alternative system info
 
 # Backwards-compatible combined list for external overrides/documentation.
