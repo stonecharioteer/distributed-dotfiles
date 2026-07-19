@@ -1,5 +1,6 @@
 ---
-# Home inventory using SSH config/FQDN hostnames.
+# Example home inventory using SSH config/FQDN hostnames.
+# Copy to inventory/hosts.yml (gitignored) and replace placeholders.
 # Keep this file focused on host membership. Put shared behavior in
 # inventory/group_vars/ and per-machine exceptions in inventory/host_vars/.
 
@@ -8,17 +9,15 @@ all:
     # Use with playbooks/base-environment.yml.
     headless_machines:
       hosts:
-        storage:  # Storage server
-        t14-g2-01.home.arpa:  # Headless ThinkPad T14 Gen 2, Ubuntu LTS 26.04
-        t14-g2-02.home.arpa:  # Headless ThinkPad T14 Gen 2, Ubuntu LTS 26.04
+        linux-server.home.local:  # Example headless server
+        thinkpad-server.home.local:  # Example headless ThinkPad
 
     # Use with playbooks/gui-environment.yml.
     gui_machines:
       hosts:
-        desktop:
-        x13-flow.home.arpa:  # ASUS Flow X13 laptop, Linux Mint 22.1
-        hp-pavilion:  # HP Pavilion laptop
-        EQR5:  # Mini PC
+        desktop.home.local:
+        linux-laptop.home.local:
+        mini-pc.home.local:
 
     # Use with playbooks/macos-base-environment.yml or macos-gui-environment.yml.
     # macOS playbooks usually run against inventory/localhost.yml; add real
@@ -29,23 +28,23 @@ all:
     # Group by OS profile.
     ubuntu_server_lts:
       hosts:
-        t14-g2-01.home.arpa:
-        t14-g2-02.home.arpa:
+        linux-server.home.local:
+        thinkpad-server.home.local:
 
     # Ubuntu LTS 26.04 switched these hosts to sudo-rs.
     ubuntu_lts_26_04:
       hosts:
-        t14-g2-01.home.arpa:
-        t14-g2-02.home.arpa:
+        linux-server.home.local:
+        thinkpad-server.home.local:
 
     sudo_rs:
       hosts:
-        t14-g2-01.home.arpa:
-        t14-g2-02.home.arpa:
+        linux-server.home.local:
+        thinkpad-server.home.local:
 
     linux_mint_22_1:
       hosts:
-        x13-flow.home.arpa:
+        linux-laptop.home.local:
 
     # Group by purpose.
     development_machines:
@@ -61,16 +60,14 @@ all:
 
     servers:
       hosts:
-        storage:
-        t14-g2-01.home.arpa:
-        t14-g2-02.home.arpa:
+        linux-server.home.local:
+        thinkpad-server.home.local:
 
     workstations:
       hosts:
-        desktop:
-        x13-flow.home.arpa:
-        hp-pavilion:
-        EQR5:
+        desktop.home.local:
+        linux-laptop.home.local:
+        mini-pc.home.local:
 
     # Optional tooling groups. Add hosts here only when they need the role.
     supabase_machines:
@@ -79,26 +76,22 @@ all:
     # Group by hardware/device type.
     thinkpads:
       hosts:
-        t14-g2-01.home.arpa:
-        t14-g2-02.home.arpa:
+        thinkpad-server.home.local:
 
     linux_laptops:
       hosts:
-        x13-flow.home.arpa:
-        t14-g2-01.home.arpa:
-        t14-g2-02.home.arpa:
+        linux-laptop.home.local:
+        thinkpad-server.home.local:
 
     laptops:
       hosts:
-        x13-flow.home.arpa:
-        hp-pavilion:
-        t14-g2-01.home.arpa:
-        t14-g2-02.home.arpa:
+        linux-laptop.home.local:
+        thinkpad-server.home.local:
 
     mini_pcs:
       hosts:
-        EQR5:
+        mini-pc.home.local:
 
     desktops:
       hosts:
-        desktop:
+        desktop.home.local:

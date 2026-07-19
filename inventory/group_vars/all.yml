@@ -2,7 +2,11 @@
 # Shared defaults for all inventory-managed machines.
 ansible_python_interpreter: /usr/bin/python3
 
+# Explicit connection user so plays don't depend on SSH config alone.
+# (ansible_user is otherwise often unset when User comes only from ~/.ssh/config.)
+ansible_user: stonecharioteer
 dev_user: stonecharioteer
+dev_home: "/home/{{ dev_user }}"
 
 enable_github_preflight: true
 enable_failsafe_checks: true

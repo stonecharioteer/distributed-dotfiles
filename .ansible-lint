@@ -4,6 +4,9 @@ exclude_paths:
   - .ansible/
   - .cache/
   - playbooks/deprecated/
+  - playbooks/investigate-node-segfault.yml
+  - playbooks/artifacts/
+  - artifacts/
 
 # Let ansible-lint syntax-check this repo without forcing a large legacy
 # style migration in the first pre-commit rollout. Tighten this skip list as

@@ -1,6 +1,7 @@
 ---
 # Default variables for dev-folders role
-dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+# Prefer inventory group_vars; these are fallback defaults only.
+dev_user: stonecharioteer
 dev_home: "/home/{{ dev_user }}"
 
 # Development directory structure

@@ -11,7 +11,10 @@
   when: ansible_facts["os_family"] == "Debian"
 
 - name: Check optional CLI package availability
-  command: "apt-cache show {{ item }}"
+  # Use policy Candidate so virtual/missing packages are not treated as installable.
+  shell: set -o pipefail; apt-cache policy {{ item | quote }} | awk '/^  Candidate:/ {print $2}'
+  args:
+    executable: /bin/bash
   loop: "{{ cli_packages_optional }}"
   register: optional_cli_package_checks
   changed_when: false
@@ -20,17 +23,59 @@
 
 - name: Create list of available optional CLI packages
   set_fact:
-    available_optional_cli_packages: "{{ optional_cli_package_checks.results | selectattr('rc', 'eq', 0) | map(attribute='item') | list }}"
-    unavailable_optional_cli_packages: "{{ optional_cli_package_checks.results | rejectattr('rc', 'eq', 0) | map(attribute='item') | list }}"
+    available_optional_cli_packages: >-
+      {{ optional_cli_package_checks.results
+         | selectattr('stdout', 'defined')
+         | selectattr('stdout', 'ne', '')
+         | selectattr('stdout', 'ne', '(none)')
+         | map(attribute='item')
+         | list }}
+    unavailable_optional_cli_packages: >-
+      {{ optional_cli_package_checks.results
+         | selectattr('item', 'defined')
+         | rejectattr('stdout', 'defined')
+         | map(attribute='item')
+         | list
+         + (optional_cli_package_checks.results
+            | selectattr('stdout', 'defined')
+            | selectattr('stdout', 'in', ['', '(none)'])
+            | map(attribute='item')
+            | list) }}
   when: ansible_facts["os_family"] == "Debian"
 
 - name: Install available optional CLI packages
   package:
-    name: "{{ available_optional_cli_packages }}"
+    name: "{{ item }}"
     state: present
+  loop: "{{ available_optional_cli_packages }}"
+  register: optional_cli_package_installs
+  failed_when: false
   when:
     - ansible_facts["os_family"] == "Debian"
     - available_optional_cli_packages | length > 0
+
+- name: Track optional CLI packages that failed to install
+  set_fact:
+    unavailable_optional_cli_packages: >-
+      {{ (unavailable_optional_cli_packages | default([]))
+         + (optional_cli_package_installs.results
+            | default([])
+            | selectattr('failed', 'defined')
+            | selectattr('failed')
+            | map(attribute='item')
+            | list)
+         + (optional_cli_package_installs.results
+            | default([])
+            | selectattr('failed', 'undefined')
+            | selectattr('rc', 'defined')
+            | rejectattr('rc', 'eq', 0)
+            | map(attribute='item')
+            | list)
+         | unique
+         | list }}
+  when:
+    - ansible_facts["os_family"] == "Debian"
+    - optional_cli_package_installs is defined
 
 - name: Display skipped optional CLI packages
   debug:
