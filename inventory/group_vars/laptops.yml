@@ -3,3 +3,8 @@
 enable_tailscale: true
 enable_laptop_health_monitoring: true
 enable_laptop_lid_ignore: true
+enable_battery_charge_thresholds: true
+enable_headless_health_monitor: true
+enable_ssh_long_lived: true
+battery_charge_start_threshold: 55
+battery_charge_stop_threshold: 60

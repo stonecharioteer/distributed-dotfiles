@@ -1,0 +1,5 @@
+# Keep incoming SSH sessions alive for headless/server use.
+# Source: scripts/laptops-setup/t14-g2/setup-ssh-long-lived.sh
+ClientAliveInterval {{ ssh_client_alive_interval | int }}
+ClientAliveCountMax {{ ssh_client_alive_count_max | int }}
+TCPKeepAlive yes

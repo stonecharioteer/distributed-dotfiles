@@ -164,7 +164,258 @@
   loop:
     - lid-server.conf
     - 99-lid-server.conf
+    - 99-headless-lid.conf
   when: enable_laptop_lid_ignore | bool
+
+# === Battery charge thresholds (scripts/laptops-setup/t14-g2/setup-headless-lid-battery.sh) ===
+- name: Discover supported battery charge-threshold device
+  shell: |
+    set -euo pipefail
+    if [[ -n "{{ battery_sysfs_name | trim }}" ]]; then
+      bat="{{ battery_sysfs_name | trim }}"
+      path="/sys/class/power_supply/${bat}"
+      if [[ -r "${path}/charge_control_end_threshold" ]]; then
+        printf '%s\n' "$bat"
+        exit 0
+      fi
+      exit 0
+    fi
+    for path in /sys/class/power_supply/BAT*; do
+      [[ -e "$path" ]] || continue
+      if [[ -r "${path}/charge_control_end_threshold" ]]; then
+        basename "$path"
+        exit 0
+      fi
+    done
+    exit 0
+  args:
+    executable: /bin/bash
+  register: battery_sysfs_detect
+  changed_when: false
+  failed_when: false
+  when: enable_battery_charge_thresholds | bool
+
+- name: Select battery sysfs device
+  set_fact:
+    battery_sysfs_name: "{{ battery_sysfs_detect.stdout | trim }}"
+    battery_sysfs_path: "/sys/class/power_supply/{{ battery_sysfs_detect.stdout | trim }}"
+  when:
+    - enable_battery_charge_thresholds | bool
+    - (battery_sysfs_detect.stdout | default('') | trim | length) > 0
+
+- name: Skip battery thresholds when unsupported
+  debug:
+    msg: >-
+      Battery charge thresholds enabled, but no supported BAT* sysfs
+      charge_control_end_threshold was found. Skipping on this host.
+  when:
+    - enable_battery_charge_thresholds | bool
+    - (battery_sysfs_detect.stdout | default('') | trim | length) == 0
+
+- name: Read current battery charge thresholds
+  shell: |
+    set -euo pipefail
+    start=$(tr -d '\n' < "{{ battery_sysfs_path }}/charge_control_start_threshold")
+    stop=$(tr -d '\n' < "{{ battery_sysfs_path }}/charge_control_end_threshold")
+    printf '%s %s\n' "$start" "$stop"
+  args:
+    executable: /bin/bash
+  register: battery_threshold_current
+  changed_when: false
+  failed_when: false
+  when:
+    - enable_battery_charge_thresholds | bool
+    - (battery_sysfs_name | default('') | length) > 0
+
+- name: Apply battery charge thresholds now
+  shell: |
+    set -euo pipefail
+    echo {{ battery_charge_start_threshold | int }} > "{{ battery_sysfs_path }}/charge_control_start_threshold"
+    echo {{ battery_charge_stop_threshold | int }} > "{{ battery_sysfs_path }}/charge_control_end_threshold"
+  args:
+    executable: /bin/bash
+  register: battery_threshold_apply
+  changed_when: >-
+    (battery_threshold_current.stdout | default('') | trim)
+    != ((battery_charge_start_threshold | string) ~ ' ' ~ (battery_charge_stop_threshold | string))
+  when:
+    - enable_battery_charge_thresholds | bool
+    - (battery_sysfs_name | default('') | length) > 0
+
+- name: Install battery charge threshold persistence unit
+  template:
+    src: battery-charge-threshold.service.j2
+    dest: /etc/systemd/system/battery-charge-threshold.service
+    mode: "0644"
+  notify: reload systemd daemon
+  when:
+    - enable_battery_charge_thresholds | bool
+    - (battery_sysfs_name | default('') | length) > 0
+
+- name: Enable battery charge threshold service
+  systemd:
+    name: battery-charge-threshold.service
+    enabled: true
+    state: started
+    daemon_reload: true
+  when:
+    - enable_battery_charge_thresholds | bool
+    - (battery_sysfs_name | default('') | length) > 0
+
+# === Headless health monitor user service (scripts/laptops-setup/t14-g2) ===
+- name: Check headless health monitor script
+  stat:
+    path: "{{ headless_health_monitor_script }}"
+  register: headless_health_monitor_script_stat
+  when: enable_headless_health_monitor | bool
+
+- name: Fail when headless health monitor script is missing
+  fail:
+    msg: >-
+      enable_headless_health_monitor is true but script not found at
+      {{ headless_health_monitor_script }}.
+      Ensure scripts-repository-setup cloned stonecharioteer/scripts first.
+  when:
+    - enable_headless_health_monitor | bool
+    - not (headless_health_monitor_script_stat.stat.exists | default(false))
+
+- name: Ensure headless health monitor script is executable
+  file:
+    path: "{{ headless_health_monitor_script }}"
+    mode: "0755"
+  when:
+    - enable_headless_health_monitor | bool
+    - headless_health_monitor_script_stat.stat.exists | default(false)
+
+- name: Ensure headless health monitor log directory exists
+  file:
+    path: "{{ headless_health_monitor_log_dir }}"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0755"
+  when:
+    - enable_headless_health_monitor | bool
+    - headless_health_monitor_script_stat.stat.exists | default(false)
+
+- name: Ensure user systemd unit directory exists
+  file:
+    path: "{{ headless_health_monitor_unit_dir }}"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0755"
+  when:
+    - enable_headless_health_monitor | bool
+    - headless_health_monitor_script_stat.stat.exists | default(false)
+
+- name: Install headless health monitor user unit
+  template:
+    src: headless-health-monitor.service.j2
+    dest: "{{ headless_health_monitor_unit_dir }}/headless-health-monitor.service"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0644"
+  register: headless_health_monitor_unit
+  when:
+    - enable_headless_health_monitor | bool
+    - headless_health_monitor_script_stat.stat.exists | default(false)
+
+- name: Resolve dev user uid for user systemd
+  command: id -u {{ dev_user }}
+  register: laptop_dev_user_uid
+  changed_when: false
+  when:
+    - enable_headless_health_monitor | bool
+    - headless_health_monitor_script_stat.stat.exists | default(false)
+
+- name: Enable linger so user services start at boot
+  file:
+    path: "/var/lib/systemd/linger/{{ dev_user }}"
+    state: touch
+    mode: "0644"
+  when:
+    - enable_headless_health_monitor | bool
+    - headless_health_monitor_enable_linger | bool
+    - headless_health_monitor_script_stat.stat.exists | default(false)
+
+- name: Ensure user systemd runtime is available
+  command: loginctl enable-linger {{ dev_user }}
+  changed_when: false
+  failed_when: false
+  when:
+    - enable_headless_health_monitor | bool
+    - headless_health_monitor_enable_linger | bool
+    - headless_health_monitor_script_stat.stat.exists | default(false)
+
+- name: Enable headless health monitor user service
+  systemd:
+    name: headless-health-monitor.service
+    scope: user
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ laptop_dev_user_uid.stdout | trim }}"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ laptop_dev_user_uid.stdout | trim }}/bus"
+  when:
+    - enable_headless_health_monitor | bool
+    - headless_health_monitor_script_stat.stat.exists | default(false)
+    - laptop_dev_user_uid is defined
+
+# === SSH long-lived sessions (scripts/laptops-setup/t14-g2/setup-ssh-long-lived.sh) ===
+- name: Ensure sshd drop-in directory exists
+  file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    mode: "0755"
+  when: enable_ssh_long_lived | bool
+
+- name: Configure sshd keepalives for long-lived sessions
+  template:
+    src: 99-long-lived-sessions.conf.j2
+    dest: /etc/ssh/sshd_config.d/99-long-lived-sessions.conf
+    mode: "0644"
+  notify:
+    - validate sshd config
+    - reload sshd
+  when: enable_ssh_long_lived | bool
+
+- name: Ensure user SSH config directory exists
+  file:
+    path: "{{ dev_home }}/.ssh"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0700"
+  when: enable_ssh_long_lived | bool
+
+- name: Ensure user SSH config file exists
+  file:
+    path: "{{ dev_home }}/.ssh/config"
+    state: touch
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0600"
+  changed_when: false
+  when: enable_ssh_long_lived | bool
+
+- name: Configure user SSH client keepalives
+  blockinfile:
+    path: "{{ dev_home }}/.ssh/config"
+    marker: "# {mark} ANSIBLE MANAGED laptop-health ssh keepalives"
+    create: false
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0600"
+    block: |
+      Host *
+        ServerAliveInterval {{ ssh_client_alive_interval | int }}
+        ServerAliveCountMax {{ ssh_client_alive_count_max | int }}
+        TCPKeepAlive yes
+  when: enable_ssh_long_lived | bool
 
 - name: Ensure LightDM config directories exist
   file:
@@ -271,8 +522,20 @@
       Health monitoring: {{ enable_laptop_health_monitoring }}
       NVMe monitoring: {{ enable_nvme_health_monitoring }}
       Lid ignore: {{ enable_laptop_lid_ignore }}
+      Battery thresholds: {{ enable_battery_charge_thresholds }} ({{ battery_charge_start_threshold }}-{{ battery_charge_stop_threshold }}% on {{ battery_sysfs_name | default('n/a') }})
+      Headless health monitor: {{ enable_headless_health_monitor }}
+      SSH long-lived: {{ enable_ssh_long_lived }}
       X13 screen keep-off units installed: {{ enable_x13_screen_keepoff }}
       LightDM display sleep: {{ enable_lightdm_display_sleep }}
       NVIDIA integrated mode: {{ enable_nvidia_integrated_mode }}
       Nouveau blacklist fix: {{ enable_nouveau_blacklist_fix }}
-  when: enable_laptop_health_monitoring | bool or enable_laptop_lid_ignore | bool or enable_x13_screen_keepoff | bool or enable_lightdm_display_sleep | bool or enable_nvidia_integrated_mode | bool or enable_nouveau_blacklist_fix | bool
+  when: >-
+    enable_laptop_health_monitoring | bool
+    or enable_laptop_lid_ignore | bool
+    or enable_battery_charge_thresholds | bool
+    or enable_headless_health_monitor | bool
+    or enable_ssh_long_lived | bool
+    or enable_x13_screen_keepoff | bool
+    or enable_lightdm_display_sleep | bool
+    or enable_nvidia_integrated_mode | bool
+    or enable_nouveau_blacklist_fix | bool

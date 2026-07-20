@@ -1,0 +1,17 @@
+[Unit]
+Description=Headless laptop health monitor
+After=default.target
+
+[Service]
+Type=simple
+ExecStart={{ headless_health_monitor_script }} monitor
+Restart=always
+RestartSec=10
+Environment=INTERVAL={{ headless_health_monitor_interval_seconds | int }}
+Environment=BASE_DIR={{ dev_home }}/headless-monitor
+{% if battery_sysfs_name | length > 0 %}
+Environment=BAT={{ battery_sysfs_name }}
+{% endif %}
+
+[Install]
+WantedBy=default.target

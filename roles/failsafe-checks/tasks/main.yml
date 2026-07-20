@@ -7,6 +7,17 @@
     qtile_venv_path: "{{ qtile_venv_path | default('/opt/qtile') }}"
     run_gui_failsafe_checks: "{{ run_gui_failsafe_checks | default(false) | bool }}"
 
+# ---------------------------------------------------------------------------
+# Helpers: normalize git remotes so HTTPS/SSH/.git variants all match.
+# Accepts github.com[:/]owner/repo with optional .git and trailing slash.
+# ---------------------------------------------------------------------------
+- name: Define git remote matcher helpers
+  set_fact:
+    git_remote_match_qtile: 'github\.com[:/]+stonecharioteer/dotfiles-qtile(\.git)?/?$'
+    git_remote_match_alacritty: 'github\.com[:/]+alacritty/alacritty(\.git)?/?$'
+    git_remote_match_scripts: 'github\.com[:/]+stonecharioteer/scripts(\.git)?/?$'
+    git_remote_match_fish: 'github\.com[:/]+stonecharioteer/dotfiles-fish(\.git)?/?$'
+
 - name: Check if qtile config directory exists
   stat:
     path: "{{ dev_home }}/.config/qtile"
@@ -19,31 +30,47 @@
   register: qtile_is_git_repo
   when:
     - run_gui_failsafe_checks
-    - qtile_config_exists.stat.exists
+    - qtile_config_exists.stat.exists | default(false)
 
 - name: Get git remote URL if it's a git repository
   shell: |
-    cd {{ dev_home }}/.config/qtile
-    git remote get-url origin 2>/dev/null || echo "no-remote"
+    set -o pipefail
+    git -C "{{ dev_home }}/.config/qtile" remote get-url origin 2>/dev/null || echo "no-remote"
+  args:
+    executable: /bin/bash
   register: qtile_git_remote
+  become: true
   become_user: "{{ dev_user }}"
   when:
     - run_gui_failsafe_checks
-    - qtile_config_exists.stat.exists
-    - qtile_is_git_repo.stat.exists
+    - qtile_config_exists.stat.exists | default(false)
+    - qtile_is_git_repo.stat.exists | default(false)
   changed_when: false
+  failed_when: false
+
+- name: Normalize qtile git remote
+  set_fact:
+    qtile_git_remote_url: "{{ qtile_git_remote.stdout | default('no-remote') | trim }}"
+  when:
+    - run_gui_failsafe_checks
+    - qtile_config_exists.stat.exists | default(false)
+    - qtile_is_git_repo.stat.exists | default(false)
 
 - name: Get current git branch if it's a git repository
   shell: |
-    cd {{ dev_home }}/.config/qtile
-    git branch --show-current 2>/dev/null || echo "unknown"
+    set -o pipefail
+    git -C "{{ dev_home }}/.config/qtile" branch --show-current 2>/dev/null || echo "unknown"
+  args:
+    executable: /bin/bash
   register: qtile_git_branch
+  become: true
   become_user: "{{ dev_user }}"
   when:
     - run_gui_failsafe_checks
-    - qtile_config_exists.stat.exists
-    - qtile_is_git_repo.stat.exists
+    - qtile_config_exists.stat.exists | default(false)
+    - qtile_is_git_repo.stat.exists | default(false)
   changed_when: false
+  failed_when: false
 
 - name: Check if /opt/qtile directory exists
   stat:
@@ -57,17 +84,21 @@
   register: qtile_venv_valid
   when:
     - run_gui_failsafe_checks
-    - qtile_venv_exists.stat.exists
+    - qtile_venv_exists.stat.exists | default(false)
 
 - name: Check if qtile is already installed in venv
   shell: |
-    {{ qtile_venv_path }}/bin/python -c "import qtile; print('installed')" 2>/dev/null || echo "not-installed"
+    set -o pipefail
+    "{{ qtile_venv_path }}/bin/python" -c "import qtile; print('installed')" 2>/dev/null || echo "not-installed"
+  args:
+    executable: /bin/bash
   register: qtile_installed_check
   when:
     - run_gui_failsafe_checks
-    - qtile_venv_exists.stat.exists
-    - qtile_venv_valid.stat.exists
+    - qtile_venv_exists.stat.exists | default(false)
+    - qtile_venv_valid.stat.exists | default(false)
   changed_when: false
+  failed_when: false
 
 - name: Check if Alacritty source directory exists
   stat:
@@ -81,19 +112,31 @@
   register: alacritty_is_git_repo
   when:
     - run_gui_failsafe_checks
-    - alacritty_source_exists.stat.exists
+    - alacritty_source_exists.stat.exists | default(false)
 
 - name: Get Alacritty git remote URL
   shell: |
-    cd {{ dev_home }}/code/tools/alacritty
-    git remote get-url origin 2>/dev/null || echo "no-remote"
+    set -o pipefail
+    git -C "{{ dev_home }}/code/tools/alacritty" remote get-url origin 2>/dev/null || echo "no-remote"
+  args:
+    executable: /bin/bash
   register: alacritty_git_remote
+  become: true
   become_user: "{{ dev_user }}"
   when:
     - run_gui_failsafe_checks
-    - alacritty_source_exists.stat.exists
-    - alacritty_is_git_repo.stat.exists
+    - alacritty_source_exists.stat.exists | default(false)
+    - alacritty_is_git_repo.stat.exists | default(false)
   changed_when: false
+  failed_when: false
+
+- name: Normalize Alacritty git remote
+  set_fact:
+    alacritty_git_remote_url: "{{ alacritty_git_remote.stdout | default('no-remote') | trim }}"
+  when:
+    - run_gui_failsafe_checks
+    - alacritty_source_exists.stat.exists | default(false)
+    - alacritty_is_git_repo.stat.exists | default(false)
 
 - name: Check if Alacritty binary is already installed
   stat:
@@ -105,29 +148,29 @@
   debug:
     msg: |
       === CURRENT SYSTEM STATE ===
-      Qtile config directory: {{ 'EXISTS' if qtile_config_exists.stat.exists else 'NOT FOUND' }}
-      {% if qtile_config_exists.stat.exists %}
-      Qtile is git repo: {{ 'YES' if qtile_is_git_repo.stat.exists else 'NO' }}
-      {% if qtile_is_git_repo.stat.exists %}
-      Git remote: {{ qtile_git_remote.stdout }}
-      Current branch: {{ qtile_git_branch.stdout }}
+      Qtile config directory: {{ 'EXISTS' if qtile_config_exists.stat.exists | default(false) else 'NOT FOUND' }}
+      {% if qtile_config_exists.stat.exists | default(false) %}
+      Qtile is git repo: {{ 'YES' if qtile_is_git_repo.stat.exists | default(false) else 'NO' }}
+      {% if qtile_is_git_repo.stat.exists | default(false) %}
+      Git remote: {{ qtile_git_remote_url | default(qtile_git_remote.stdout | default('')) }}
+      Current branch: {{ qtile_git_branch.stdout | default('unknown') }}
       {% endif %}
       {% endif %}
-      /opt/qtile venv: {{ 'EXISTS' if qtile_venv_exists.stat.exists else 'NOT FOUND' }}
-      {% if qtile_venv_exists.stat.exists %}
-      Valid Python venv: {{ 'YES' if qtile_venv_valid.stat.exists else 'NO' }}
-      {% if qtile_venv_valid.stat.exists %}
-      Qtile installed: {{ qtile_installed_check.stdout }}
+      /opt/qtile venv: {{ 'EXISTS' if qtile_venv_exists.stat.exists | default(false) else 'NOT FOUND' }}
+      {% if qtile_venv_exists.stat.exists | default(false) %}
+      Valid Python venv: {{ 'YES' if qtile_venv_valid.stat.exists | default(false) else 'NO' }}
+      {% if qtile_venv_valid.stat.exists | default(false) %}
+      Qtile installed: {{ qtile_installed_check.stdout | default('unknown') }}
       {% endif %}
       {% endif %}
-      Alacritty source: {{ 'EXISTS' if alacritty_source_exists.stat.exists else 'NOT FOUND' }}
-      {% if alacritty_source_exists.stat.exists %}
-      Alacritty is git repo: {{ 'YES' if alacritty_is_git_repo.stat.exists else 'NO' }}
-      {% if alacritty_is_git_repo.stat.exists %}
-      Alacritty remote: {{ alacritty_git_remote.stdout }}
+      Alacritty source: {{ 'EXISTS' if alacritty_source_exists.stat.exists | default(false) else 'NOT FOUND' }}
+      {% if alacritty_source_exists.stat.exists | default(false) %}
+      Alacritty is git repo: {{ 'YES' if alacritty_is_git_repo.stat.exists | default(false) else 'NO' }}
+      {% if alacritty_is_git_repo.stat.exists | default(false) %}
+      Alacritty remote: {{ alacritty_git_remote_url | default(alacritty_git_remote.stdout | default('')) }}
       {% endif %}
       {% endif %}
-      Alacritty binary: {{ 'INSTALLED' if alacritty_binary_exists.stat.exists else 'NOT FOUND' }}
+      Alacritty binary: {{ 'INSTALLED' if alacritty_binary_exists.stat.exists | default(false) else 'NOT FOUND' }}
   when: run_gui_failsafe_checks
 
 # FAILSAFE: Stop if qtile config exists but is not the correct repository
@@ -139,28 +182,21 @@
       Found at: {{ dev_home }}/.config/qtile
   when:
     - run_gui_failsafe_checks
-    - qtile_config_exists.stat.exists
-    - not qtile_is_git_repo.stat.exists
+    - qtile_config_exists.stat.exists | default(false)
+    - not (qtile_is_git_repo.stat.exists | default(false))
 
 - name: FAILSAFE - Stop if qtile config is a different git repository
   fail:
     msg: |
       STOP: ~/.config/qtile is a git repository but not the expected one.
       Expected repository: stonecharioteer/dotfiles-qtile via HTTPS or SSH
-      Found: {{ qtile_git_remote.stdout | default('') }}
+      Found: {{ qtile_git_remote_url | default('') }}
       Please backup or remove it manually, or update the remote URL.
   when:
     - run_gui_failsafe_checks
-    - qtile_config_exists.stat.exists
-    - qtile_is_git_repo.stat.exists
-    - qtile_git_remote.stdout not in [
-        'https://github.com/stonecharioteer/dotfiles-qtile.git',
-        'https://github.com/stonecharioteer/dotfiles-qtile',
-        'git@github.com:stonecharioteer/dotfiles-qtile.git',
-        'git@github.com:stonecharioteer/dotfiles-qtile',
-        'ssh://git@github.com/stonecharioteer/dotfiles-qtile.git',
-        'ssh://git@github.com/stonecharioteer/dotfiles-qtile'
-      ]
+    - qtile_config_exists.stat.exists | default(false)
+    - qtile_is_git_repo.stat.exists | default(false)
+    - not (qtile_git_remote_url | default('') is regex(git_remote_match_qtile))
 
 # FAILSAFE: Stop if /opt/qtile exists but is not a valid venv
 - name: FAILSAFE - Stop if /opt/qtile exists but is not a valid Python virtual environment
@@ -171,8 +207,8 @@
       Found at: {{ qtile_venv_path }}
   when:
     - run_gui_failsafe_checks
-    - qtile_venv_exists.stat.exists
-    - not qtile_venv_valid.stat.exists
+    - qtile_venv_exists.stat.exists | default(false)
+    - not (qtile_venv_valid.stat.exists | default(false))
 
 # FAILSAFE: Stop if Alacritty source exists but is not the correct repository
 - name: FAILSAFE - Stop if Alacritty source exists but is not our repository
@@ -183,67 +219,85 @@
       Found at: {{ dev_home }}/code/tools/alacritty
   when:
     - run_gui_failsafe_checks
-    - alacritty_source_exists.stat.exists
-    - not alacritty_is_git_repo.stat.exists
+    - alacritty_source_exists.stat.exists | default(false)
+    - not (alacritty_is_git_repo.stat.exists | default(false))
 
 - name: FAILSAFE - Stop if Alacritty source is a different git repository
   fail:
     msg: |
       STOP: ~/code/tools/alacritty is a git repository but not the expected one.
       Expected repository: alacritty/alacritty via HTTPS or SSH
-      Found: {{ alacritty_git_remote.stdout | default('') }}
+      Found: {{ alacritty_git_remote_url | default('') }}
       Please backup or remove it manually, or update the remote URL.
   when:
     - run_gui_failsafe_checks
-    - alacritty_source_exists.stat.exists
-    - alacritty_is_git_repo.stat.exists
-    - alacritty_git_remote.stdout not in [
-        'https://github.com/alacritty/alacritty.git',
-        'https://github.com/alacritty/alacritty',
-        'git@github.com:alacritty/alacritty.git',
-        'git@github.com:alacritty/alacritty',
-        'ssh://git@github.com/alacritty/alacritty.git',
-        'ssh://git@github.com/alacritty/alacritty'
-      ]
+    - alacritty_source_exists.stat.exists | default(false)
+    - alacritty_is_git_repo.stat.exists | default(false)
+    - not (alacritty_git_remote_url | default('') is regex(git_remote_match_alacritty))
 
 # === SCRIPTS REPOSITORY CHECKS ===
 - name: Check if scripts repository directory exists
   stat:
     path: "{{ dev_home }}/code/checkouts/personal/scripts"
-  register: scripts_repo_exists
+  register: scripts_repo_dir
 
 - name: Check if existing scripts directory is a git repository
   stat:
     path: "{{ dev_home }}/code/checkouts/personal/scripts/.git"
   register: scripts_is_git_repo
-  when: scripts_repo_exists.stat.exists
+  when: scripts_repo_dir.stat.exists | default(false)
 
 - name: Get scripts git remote URL if it's a git repository
   shell: |
-    cd {{ dev_home }}/code/checkouts/personal/scripts
-    git remote get-url origin 2>/dev/null || echo "no-remote"
+    set -o pipefail
+    git -C "{{ dev_home }}/code/checkouts/personal/scripts" remote get-url origin 2>/dev/null || echo "no-remote"
+  args:
+    executable: /bin/bash
   register: scripts_git_remote
+  become: true
   become_user: "{{ dev_user }}"
-  when: scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists
+  when:
+    - scripts_repo_dir.stat.exists | default(false)
+    - scripts_is_git_repo.stat.exists | default(false)
   changed_when: false
+  failed_when: false
+
+- name: Normalize scripts git remote
+  set_fact:
+    scripts_git_remote_url: "{{ scripts_git_remote.stdout | default('no-remote') | trim }}"
+  when:
+    - scripts_repo_dir.stat.exists | default(false)
+    - scripts_is_git_repo.stat.exists | default(false)
 
 - name: Get scripts current git branch if it's a git repository
   shell: |
-    cd {{ dev_home }}/code/checkouts/personal/scripts
-    git branch --show-current 2>/dev/null || echo "unknown"
+    set -o pipefail
+    git -C "{{ dev_home }}/code/checkouts/personal/scripts" branch --show-current 2>/dev/null || echo "unknown"
+  args:
+    executable: /bin/bash
   register: scripts_git_branch
+  become: true
   become_user: "{{ dev_user }}"
-  when: scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists
+  when:
+    - scripts_repo_dir.stat.exists | default(false)
+    - scripts_is_git_repo.stat.exists | default(false)
   changed_when: false
+  failed_when: false
 
 - name: Check for unstaged changes in scripts repository
   shell: |
-    cd {{ dev_home }}/code/checkouts/personal/scripts
-    git status --porcelain 2>/dev/null | wc -l
+    set -o pipefail
+    git -C "{{ dev_home }}/code/checkouts/personal/scripts" status --porcelain 2>/dev/null | wc -l
+  args:
+    executable: /bin/bash
   register: scripts_unstaged_changes
+  become: true
   become_user: "{{ dev_user }}"
-  when: scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists
+  when:
+    - scripts_repo_dir.stat.exists | default(false)
+    - scripts_is_git_repo.stat.exists | default(false)
   changed_when: false
+  failed_when: false
 
 # FAILSAFE: Stop if scripts repo exists but is not the correct repository
 - name: FAILSAFE - Stop if scripts repository exists but is not our repository
@@ -253,33 +307,22 @@
       This could be a different scripts installation. Please backup or remove it manually.
       Found at: {{ dev_home }}/code/checkouts/personal/scripts
   when:
-    - scripts_repo_exists.stat.exists
-    - not scripts_is_git_repo.stat.exists
+    - scripts_repo_dir.stat.exists | default(false)
+    - not (scripts_is_git_repo.stat.exists | default(false))
 
 - name: FAILSAFE - Stop if scripts repository is a different git repository
   fail:
     msg: |
       STOP: ~/code/checkouts/personal/scripts is a git repository but not the expected one.
-      Expected one of:
-        - https://github.com/stonecharioteer/scripts.git
-        - https://github.com/stonecharioteer/scripts
-        - git@github.com:stonecharioteer/scripts.git
-        - git@github.com:stonecharioteer/scripts
-        - ssh://git@github.com/stonecharioteer/scripts.git
-        - ssh://git@github.com/stonecharioteer/scripts
-      Found: {{ scripts_git_remote.stdout | default('') }}
+      Expected repository: stonecharioteer/scripts via HTTPS or SSH
+      Found: {{ scripts_git_remote_url | default('') }}
+      rc={{ scripts_git_remote.rc | default('n/a') }}
+      stderr={{ scripts_git_remote.stderr | default('') }}
       Please backup or remove it manually, or update the remote URL.
   when:
-    - scripts_repo_exists.stat.exists
-    - scripts_is_git_repo.stat.exists
-    - scripts_git_remote.stdout not in [
-        'https://github.com/stonecharioteer/scripts.git',
-        'https://github.com/stonecharioteer/scripts',
-        'git@github.com:stonecharioteer/scripts.git',
-        'git@github.com:stonecharioteer/scripts',
-        'ssh://git@github.com/stonecharioteer/scripts.git',
-        'ssh://git@github.com/stonecharioteer/scripts'
-      ]
+    - scripts_repo_dir.stat.exists | default(false)
+    - scripts_is_git_repo.stat.exists | default(false)
+    - not (scripts_git_remote_url | default('') is regex(git_remote_match_scripts))
 
 # === FISH CONFIGURATION REPOSITORY CHECKS ===
 - name: Check if fish config directory exists
@@ -291,33 +334,53 @@
   stat:
     path: "{{ dev_home }}/.config/fish/.git"
   register: fish_is_git_repo
-  when: fish_config_exists.stat.exists
+  when: fish_config_exists.stat.exists | default(false)
 
 - name: Get fish git remote URL if it's a git repository
   shell: |
-    cd {{ dev_home }}/.config/fish
-    git remote get-url origin 2>/dev/null || echo "no-remote"
+    set -o pipefail
+    git -C "{{ dev_home }}/.config/fish" remote get-url origin 2>/dev/null || echo "no-remote"
+  args:
+    executable: /bin/bash
   register: fish_git_remote
+  become: true
   become_user: "{{ dev_user }}"
-  when: fish_config_exists.stat.exists and fish_is_git_repo.stat.exists
+  when:
+    - fish_config_exists.stat.exists | default(false)
+    - fish_is_git_repo.stat.exists | default(false)
   changed_when: false
+  failed_when: false
+
+- name: Normalize fish git remote
+  set_fact:
+    fish_git_remote_url: "{{ fish_git_remote.stdout | default('no-remote') | trim }}"
+  when:
+    - fish_config_exists.stat.exists | default(false)
+    - fish_is_git_repo.stat.exists | default(false)
 
 - name: Get fish current git branch if it's a git repository
   shell: |
-    cd {{ dev_home }}/.config/fish
-    git branch --show-current 2>/dev/null || echo "unknown"
+    set -o pipefail
+    git -C "{{ dev_home }}/.config/fish" branch --show-current 2>/dev/null || echo "unknown"
+  args:
+    executable: /bin/bash
   register: fish_git_branch
+  become: true
   become_user: "{{ dev_user }}"
-  when: fish_config_exists.stat.exists and fish_is_git_repo.stat.exists
+  when:
+    - fish_config_exists.stat.exists | default(false)
+    - fish_is_git_repo.stat.exists | default(false)
   changed_when: false
+  failed_when: false
 
 # FAILSAFE: If fish config exists but is not a git repo, back it up so the clone can proceed
 - name: FAILSAFE - Back up non-git fish config directory
   command: mv {{ dev_home }}/.config/fish {{ dev_home }}/.config/fish.bak.{{ ansible_date_time.iso8601_basic_short }}
+  become: true
   become_user: "{{ dev_user }}"
   when:
-    - fish_config_exists.stat.exists
-    - not fish_is_git_repo.stat.exists
+    - fish_config_exists.stat.exists | default(false)
+    - not (fish_is_git_repo.stat.exists | default(false))
 
 - name: Notify about fish config backup
   debug:
@@ -325,42 +388,47 @@
       ~/.config/fish existed but was not a git repository.
       It has been backed up to: {{ dev_home }}/.config/fish.bak.{{ ansible_date_time.iso8601_basic_short }}
   when:
-    - fish_config_exists.stat.exists
-    - not fish_is_git_repo.stat.exists
+    - fish_config_exists.stat.exists | default(false)
+    - not (fish_is_git_repo.stat.exists | default(false))
 
 - name: FAILSAFE - Stop if fish config is a different git repository
   fail:
     msg: |
       STOP: ~/.config/fish is a git repository but not the expected one.
       Expected repository: stonecharioteer/dotfiles-fish via HTTPS or SSH
-      Found: {{ fish_git_remote.stdout | default('') }}
+      Found: {{ fish_git_remote_url | default('') }}
       Please backup or remove it manually, or update the remote URL.
   when:
-    - fish_config_exists.stat.exists
-    - fish_is_git_repo.stat.exists
-    - fish_git_remote.stdout not in [
-        'https://github.com/stonecharioteer/dotfiles-fish.git',
-        'https://github.com/stonecharioteer/dotfiles-fish',
-        'git@github.com:stonecharioteer/dotfiles-fish.git',
-        'git@github.com:stonecharioteer/dotfiles-fish',
-        'ssh://git@github.com/stonecharioteer/dotfiles-fish.git',
-        'ssh://git@github.com/stonecharioteer/dotfiles-fish'
-      ]
+    - fish_config_exists.stat.exists | default(false)
+    - fish_is_git_repo.stat.exists | default(false)
+    - not (fish_git_remote_url | default('') is regex(git_remote_match_fish))
 
 # Set facts for other roles to use
 - name: Set facts about current installation state
   set_fact:
-    fish_config_repo_exists: "{{ fish_config_exists.stat.exists and fish_is_git_repo.stat.exists }}"
-    scripts_repo_exists: "{{ scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists }}"
-    scripts_can_update: "{{ scripts_repo_exists.stat.exists and scripts_is_git_repo.stat.exists and scripts_git_branch.stdout == 'main' and scripts_unstaged_changes.stdout == '0' }}"
+    fish_config_repo_exists: "{{ (fish_config_exists.stat.exists | default(false)) and (fish_is_git_repo.stat.exists | default(false)) }}"
+    scripts_repo_exists: "{{ (scripts_repo_dir.stat.exists | default(false)) and (scripts_is_git_repo.stat.exists | default(false)) }}"
+    scripts_can_update: >-
+      {{
+        (scripts_repo_dir.stat.exists | default(false))
+        and (scripts_is_git_repo.stat.exists | default(false))
+        and ((scripts_git_branch.stdout | default('')) | trim == 'main')
+        and ((scripts_unstaged_changes.stdout | default('1') | trim) == '0')
+      }}
 
 - name: Set facts about current GUI installation state
   set_fact:
-    qtile_config_repo_exists: "{{ qtile_config_exists.stat.exists and qtile_is_git_repo.stat.exists }}"
-    qtile_venv_ready: "{{ qtile_venv_exists.stat.exists and qtile_venv_valid.stat.exists }}"
-    qtile_already_installed: "{{ qtile_venv_exists.stat.exists and qtile_venv_valid.stat.exists and qtile_installed_check is defined and qtile_installed_check.stdout == 'installed' }}"
-    alacritty_source_repo_exists: "{{ alacritty_source_exists.stat.exists and alacritty_is_git_repo.stat.exists }}"
-    alacritty_already_built: "{{ alacritty_binary_exists.stat.exists }}"
+    qtile_config_repo_exists: "{{ (qtile_config_exists.stat.exists | default(false)) and (qtile_is_git_repo.stat.exists | default(false)) }}"
+    qtile_venv_ready: "{{ (qtile_venv_exists.stat.exists | default(false)) and (qtile_venv_valid.stat.exists | default(false)) }}"
+    qtile_already_installed: >-
+      {{
+        (qtile_venv_exists.stat.exists | default(false))
+        and (qtile_venv_valid.stat.exists | default(false))
+        and (qtile_installed_check is defined)
+        and ((qtile_installed_check.stdout | default('')) | trim == 'installed')
+      }}
+    alacritty_source_repo_exists: "{{ (alacritty_source_exists.stat.exists | default(false)) and (alacritty_is_git_repo.stat.exists | default(false)) }}"
+    alacritty_already_built: "{{ alacritty_binary_exists.stat.exists | default(false) }}"
   when: run_gui_failsafe_checks
 
 # Hardware Detection for conditional features
@@ -373,21 +441,27 @@
 
     - name: Check for laptop DMI chassis type
       shell: dmidecode -s chassis-type 2>/dev/null || echo "unknown"
+      args:
+        executable: /bin/bash
       register: chassis_type
-      ignore_errors: yes
+      changed_when: false
+      failed_when: false
 
     - name: Check for laptop keywords in DMI product name
       shell: dmidecode -s system-product-name 2>/dev/null | grep -i -E "(laptop|notebook|portable)" || echo "none"
+      args:
+        executable: /bin/bash
       register: product_name_check
-      ignore_errors: yes
+      changed_when: false
+      failed_when: false
 
     - name: Set hardware detection facts
       set_fact:
         is_laptop: >-
           {{
-            battery_check.stat.exists or
-            chassis_type.stdout in ['Notebook', 'Laptop', 'Portable'] or
-            product_name_check.stdout != "none"
+            (battery_check.stat.exists | default(false))
+            or ((chassis_type.stdout | default('')) in ['Notebook', 'Laptop', 'Portable'])
+            or ((product_name_check.stdout | default('none')) != "none")
           }}
   when: run_gui_failsafe_checks
 
@@ -397,8 +471,8 @@
       {% if run_gui_failsafe_checks %}
       === HARDWARE DETECTION ===
       System type: {{ 'LAPTOP' if is_laptop else 'DESKTOP' }}
-      Battery detected: {{ battery_check.stat.exists }}
-      Chassis type: {{ chassis_type.stdout }}
+      Battery detected: {{ battery_check.stat.exists | default(false) }}
+      Chassis type: {{ chassis_type.stdout | default('unknown') }}
 
       {% endif %}
       === INSTALLATION PLAN ===
