@@ -167,7 +167,7 @@
     - 99-headless-lid.conf
   when: enable_laptop_lid_ignore | bool
 
-# === Battery charge thresholds (scripts/laptops-setup/t14-g2/setup-headless-lid-battery.sh) ===
+# === Battery charge thresholds (scripts/laptop/thinkpads/setup-headless-lid-battery.sh) ===
 - name: Discover supported battery charge-threshold device
   shell: |
     set -euo pipefail
@@ -262,7 +262,7 @@
     - enable_battery_charge_thresholds | bool
     - (battery_sysfs_name | default('') | length) > 0
 
-# === Headless health monitor user service (scripts/laptops-setup/t14-g2) ===
+# === Headless health monitor user service (scripts/laptop/thinkpads) ===
 - name: Check headless health monitor script
   stat:
     path: "{{ headless_health_monitor_script }}"
@@ -365,7 +365,7 @@
     - headless_health_monitor_script_stat.stat.exists | default(false)
     - laptop_dev_user_uid is defined
 
-# === SSH long-lived sessions (scripts/laptops-setup/t14-g2/setup-ssh-long-lived.sh) ===
+# === SSH long-lived sessions (scripts/laptop/thinkpads/setup-ssh-long-lived.sh) ===
 - name: Ensure sshd drop-in directory exists
   file:
     path: /etc/ssh/sshd_config.d

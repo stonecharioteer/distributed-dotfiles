@@ -7,7 +7,7 @@ enable_laptop_panic_reboot: false
 enable_nvme_health_monitoring: true
 
 # Battery charge thresholds (ThinkPad/Lenovo sysfs charge_control_*).
-# Mirrors scripts/laptops-setup/t14-g2/setup-headless-lid-battery.sh.
+# Mirrors scripts/laptop/thinkpads/setup-headless-lid-battery.sh.
 enable_battery_charge_thresholds: false
 battery_charge_start_threshold: 55
 battery_charge_stop_threshold: 60
@@ -15,17 +15,17 @@ battery_charge_stop_threshold: 60
 battery_sysfs_name: ""
 
 # Continuous user-level health TSV logger from the scripts checkout.
-# Mirrors scripts/laptops-setup/t14-g2/setup-headless-health-monitor.sh.
+# Mirrors scripts/laptop/thinkpads/setup-headless-health-monitor.sh.
 enable_headless_health_monitor: false
 headless_health_monitor_interval_seconds: 60
 headless_health_monitor_enable_linger: true
 laptop_scripts_root: "{{ dev_home }}/code/checkouts/personal/scripts"
-headless_health_monitor_script: "{{ laptop_scripts_root }}/laptops-setup/t14-g2/headless-health-monitor.sh"
+headless_health_monitor_script: "{{ laptop_scripts_root }}/laptop/thinkpads/headless-health-monitor.sh"
 headless_health_monitor_unit_dir: "{{ dev_home }}/.config/systemd/user"
 headless_health_monitor_log_dir: "{{ dev_home }}/headless-monitor/logs"
 
 # Keep SSH sessions alive for headless laptop/server use.
-# Mirrors scripts/laptops-setup/t14-g2/setup-ssh-long-lived.sh.
+# Mirrors scripts/laptop/thinkpads/setup-ssh-long-lived.sh.
 enable_ssh_long_lived: false
 ssh_client_alive_interval: 30
 ssh_client_alive_count_max: 240
