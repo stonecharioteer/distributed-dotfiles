@@ -1,0 +1,7 @@
+# Prettier config focused on Markdown (wired via pre-commit).
+proseWrap: preserve
+printWidth: 100
+tabWidth: 2
+useTabs: false
+endOfLine: lf
+singleQuote: false

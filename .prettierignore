@@ -1,0 +1,8 @@
+.git/
+.ansible/
+.cache/
+artifacts/
+**/artifacts/
+node_modules/
+*.min.js
+*.min.css
