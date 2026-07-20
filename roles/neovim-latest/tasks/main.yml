@@ -3,93 +3,127 @@
 - name: Include macOS-specific tasks
   include_tasks: darwin.yml
   when: ansible_facts["os_family"] == "Darwin"
-  tags: blog
 
 - name: Check if Neovim is already installed
   stat:
     path: "{{ neovim_binary_path }}"
   register: neovim_exists
-  tags: blog
 
 - name: Check installed Neovim version
-  shell: "{{ neovim_binary_path }} --version | head -n1"
+  shell: set -o pipefail; command -v "{{ neovim_binary_path }}" >/dev/null 2>&1 && "{{ neovim_binary_path }}" --version | head -n1
+  args:
+    executable: /bin/bash
   register: installed_neovim_version
-  when: neovim_exists.stat.exists
   changed_when: false
-  ignore_errors: yes
-  tags: blog
+  failed_when: false
+  when: neovim_exists.stat.exists | default(false)
+
+- name: Determine whether Neovim should be installed or upgraded
+  set_fact:
+    neovim_needs_install: >-
+      {{
+        (not (neovim_exists.stat.exists | default(false)))
+        or (
+          (installed_neovim_version.stdout | default('')) == ''
+          or (neovim_version | string) not in (installed_neovim_version.stdout | default(''))
+        )
+      }}
 
 - name: Display current Neovim status
   debug:
     msg: |
       Neovim status:
-      {% if neovim_exists.stat.exists %}
-      Already installed: {{ installed_neovim_version.stdout }}
+      Binary path: {{ neovim_binary_path }}
+      Binary exists: {{ neovim_exists.stat.exists | default(false) }}
+      Installed: {{ installed_neovim_version.stdout | default('not installed') }}
       Target version: NVIM {{ neovim_version }}
-      {% else %}
-      Not installed - will install {{ neovim_version }}
-      {% endif %}
-  tags: blog
+      Needs install/upgrade: {{ neovim_needs_install }}
 
 - name: Install Neovim {{ neovim_version }}
-  tags: blog
   block:
     - name: Create download directory
       file:
         path: "{{ neovim_download_dir }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
+      become: true
 
     - name: Download Neovim {{ neovim_version }}
       get_url:
         url: "{{ neovim_download_url }}"
         dest: "{{ neovim_download_dir }}/nvim-linux-x86_64.tar.gz"
-        mode: '0644'
+        mode: "0644"
+        force: true
+      become: true
 
     - name: Extract Neovim archive
       unarchive:
         src: "{{ neovim_download_dir }}/nvim-linux-x86_64.tar.gz"
         dest: "{{ neovim_download_dir }}"
-        remote_src: yes
+        remote_src: true
+        extra_opts: [--strip-components=0]
+      become: true
 
     - name: Remove old Neovim installation if it exists
       file:
-        path: "{{ neovim_install_prefix }}/share/nvim"
+        path: "{{ item }}"
         state: absent
-      when: neovim_exists.stat.exists
+      loop:
+        - "{{ neovim_install_prefix }}/share/nvim"
+        - "{{ neovim_install_prefix }}/lib/nvim"
+      become: true
+      when: neovim_exists.stat.exists | default(false)
 
     - name: Install Neovim binary
       copy:
         src: "{{ neovim_download_dir }}/nvim-linux-x86_64/bin/nvim"
         dest: "{{ neovim_binary_path }}"
-        mode: '0755'
-        remote_src: yes
+        mode: "0755"
+        remote_src: true
+      become: true
 
     - name: Install Neovim share files
       shell: |
+        set -euo pipefail
         cp -r "{{ neovim_download_dir }}/nvim-linux-x86_64/share/nvim" "{{ neovim_install_prefix }}/share/"
         chmod -R 755 "{{ neovim_install_prefix }}/share/nvim"
+      args:
+        executable: /bin/bash
+      become: true
 
     - name: Install Neovim lib files
       shell: |
-        cp -r "{{ neovim_download_dir }}/nvim-linux-x86_64/lib/nvim" "{{ neovim_install_prefix }}/lib/"
-        chmod -R 755 "{{ neovim_install_prefix }}/lib/nvim"
+        set -euo pipefail
+        if [[ -d "{{ neovim_download_dir }}/nvim-linux-x86_64/lib/nvim" ]]; then
+          mkdir -p "{{ neovim_install_prefix }}/lib"
+          cp -r "{{ neovim_download_dir }}/nvim-linux-x86_64/lib/nvim" "{{ neovim_install_prefix }}/lib/"
+          chmod -R 755 "{{ neovim_install_prefix }}/lib/nvim"
+        fi
+      args:
+        executable: /bin/bash
+      become: true
 
     - name: Create vim symlink to nvim
       file:
         src: "{{ neovim_binary_path }}"
         dest: "{{ neovim_vim_symlink_path }}"
         state: link
+        force: true
+      become: true
 
     - name: Clean up download directory
       file:
         path: "{{ neovim_download_dir }}"
         state: absent
+      become: true
 
     - name: Verify Neovim installation
-      command: "{{ neovim_binary_path }} --version"
+      shell: set -o pipefail; command -v "{{ neovim_binary_path }}" >/dev/null 2>&1 && "{{ neovim_binary_path }}" --version | head -n1
+      args:
+        executable: /bin/bash
       register: neovim_version_check
       changed_when: false
+      failed_when: neovim_version_check.rc != 0
 
     - name: Display installation success
       debug:
@@ -97,17 +131,18 @@
           Neovim {{ neovim_version }} installed successfully!
           Binary: {{ neovim_binary_path }}
           Vim symlink: {{ neovim_vim_symlink_path }}
-          Version: {{ neovim_version_check.stdout_lines[0] }}
+          Version: {{ neovim_version_check.stdout }}
 
   when:
     - ansible_facts["os_family"] != "Darwin"
-    - not neovim_exists.stat.exists or (neovim_exists.stat.exists and neovim_version not in installed_neovim_version.stdout)
+    - neovim_needs_install | bool
   rescue:
     - name: Clean up on failure
       file:
         path: "{{ neovim_download_dir }}"
         state: absent
-      ignore_errors: yes
+      become: true
+      failed_when: false
 
     - name: Display installation failure
       fail:

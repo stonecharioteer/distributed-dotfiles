@@ -16,8 +16,7 @@
     enable_server_hardening: true
     enable_hugo: true
     enable_docker: true
-    enable_tailscale: false
-    enable_laptop_health_monitoring: false
+    # tailscale/laptop flags come from inventory group_vars (e.g. laptops.yml).
 
   pre_tasks:
     - name: Update package cache (Debian/Ubuntu)
@@ -142,7 +141,13 @@
       when: enable_tailscale | bool
       tags: [networking, tailscale]
     - role: laptop-health
-      when: enable_laptop_health_monitoring | bool or enable_laptop_lid_ignore | default(false) | bool or enable_x13_screen_keepoff | default(false) | bool
+      when: >-
+        enable_laptop_health_monitoring | bool
+        or enable_laptop_lid_ignore | default(false) | bool
+        or enable_battery_charge_thresholds | default(false) | bool
+        or enable_headless_health_monitor | default(false) | bool
+        or enable_ssh_long_lived | default(false) | bool
+        or enable_x13_screen_keepoff | default(false) | bool
       tags: [laptop, health, monitoring]
 
   post_tasks:

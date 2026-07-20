@@ -20,24 +20,18 @@
     update: "{{ scripts_can_update | default(false) }}"  # Only update if on main branch with no unstaged changes
     force: no  # Never force, to preserve local changes
     accept_hostkey: yes
+  become: true
   become_user: "{{ dev_user }}"
-  when: not scripts_repo_exists
+  when: not (scripts_repo_exists | bool)
 
 - name: Normalize scripts repository origin URL to SSH
-  command: git remote set-url origin git@github.com:stonecharioteer/scripts.git
-  args:
-    chdir: "{{ dev_home }}/code/checkouts/personal/scripts"
+  command: git -C "{{ dev_home }}/code/checkouts/personal/scripts" remote set-url origin git@github.com:stonecharioteer/scripts.git
+  become: true
   become_user: "{{ dev_user }}"
   when:
-    - scripts_repo_exists
-    - scripts_git_remote is defined
-    - scripts_git_remote.stdout in [
-        'https://github.com/stonecharioteer/scripts',
-        'git@github.com:stonecharioteer/scripts.git',
-        'git@github.com:stonecharioteer/scripts',
-        'ssh://git@github.com/stonecharioteer/scripts.git',
-        'ssh://git@github.com/stonecharioteer/scripts'
-      ]
+    - scripts_repo_exists | bool
+    - (scripts_git_remote_url | default(scripts_git_remote.stdout | default(''))) is match('github\.com[:/]+stonecharioteer/scripts')
+    - (scripts_git_remote_url | default(scripts_git_remote.stdout | default(''))) is not match('^git@github\.com:stonecharioteer/scripts\.git$')
 
 - name: Leave existing scripts repository untouched (has local changes or not on main)
   debug:
@@ -53,17 +47,22 @@
 
 - name: Display git status for existing repository
   shell: |
-    cd {{ dev_home }}/code/checkouts/personal/scripts
+    set -o pipefail
+    repo="{{ dev_home }}/code/checkouts/personal/scripts"
     echo "=== Current Branch ==="
-    git branch --show-current
+    git -C "$repo" branch --show-current
     echo "=== Git Status ==="
-    git status --porcelain
+    git -C "$repo" status --porcelain
     echo "=== Uncommitted Changes ==="
-    git diff --name-only
+    git -C "$repo" diff --name-only
+  args:
+    executable: /bin/bash
+  become: true
   become_user: "{{ dev_user }}"
-  when: scripts_repo_exists
+  when: scripts_repo_exists | bool
   register: scripts_git_status_result
   changed_when: false
+  failed_when: false
 
 - name: Show scripts repository status
   debug:

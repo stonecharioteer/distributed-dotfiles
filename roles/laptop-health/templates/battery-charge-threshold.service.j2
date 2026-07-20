@@ -1,0 +1,11 @@
+[Unit]
+Description=Set battery charge thresholds (start={{ battery_charge_start_threshold }}% stop={{ battery_charge_stop_threshold }}%)
+After=multi-user.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+# Re-apply after boot and resume so firmware/kernel defaults cannot stick.
+ExecStart=/bin/sh -c 'echo {{ battery_charge_start_threshold | int }} > {{ battery_sysfs_path }}/charge_control_start_threshold; echo {{ battery_charge_stop_threshold | int }} > {{ battery_sysfs_path }}/charge_control_end_threshold'
+
+[Install]
+WantedBy=multi-user.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
