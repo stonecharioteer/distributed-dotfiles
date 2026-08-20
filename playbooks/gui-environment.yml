@@ -123,6 +123,9 @@
     - role: tmux
       when: enable_development_tools | bool
       tags: [dev, tmux]
+    - role: herdr
+      when: enable_herdr | bool
+      tags: [dev, herdr]
     - role: neovim-latest
       when: enable_development_tools | bool
       tags: [dev, neovim, editor]
@@ -182,6 +185,7 @@
           - Shell environment: {{ enable_shell_environment }}
           - Development tools: {{ enable_development_tools }}
           - Docker: {{ enable_docker }}
+          - herdr: {{ enable_herdr }}
           - GUI environment: {{ enable_gui_environment }}
           - Qtile: {{ enable_qtile }}
           - Nerd Fonts: {{ enable_nerd_fonts }}
@@ -202,6 +206,7 @@
           ✓ Modern CLI tools (ripgrep, fd, fzf, starship, etc.)
           ✓ Development folder structure
           ✓ tmux compiled from latest source
+          {% if enable_herdr | bool %}✓ herdr terminal workspace manager (prefix ctrl+a, bottom tab bar){% endif %}
           ✓ Neovim {{ neovim_version | default('latest') }} with vim symlink
           ✓ tree-sitter CLI for syntax highlighting
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
@@ -222,12 +227,13 @@
           3. Log in with your user account
           4. Test complete environment:
              - tmux new-session -d -s test
+             - herdr --version
              - docker run hello-world
              - nvim (complete plugin setup)
              - mise list (verify language runtimes)
 
           🎯 Your complete GUI workstation is ready!
           - Modern shell: Fish with mise for language management
-          - Development tools: tmux, Neovim/AstroNvim, Docker
+          - Development tools: tmux, herdr, Neovim/AstroNvim, Docker
           - GUI desktop: Qtile window manager with Alacritty terminal
           - All tools integrated and configured for maximum productivity

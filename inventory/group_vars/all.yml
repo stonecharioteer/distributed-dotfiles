@@ -14,6 +14,7 @@ enable_shell_environment: true
 enable_development_tools: true
 enable_docker: true
 enable_hugo: true
+enable_herdr: true
 enable_tailscale: false
 enable_laptop_health_monitoring: false
 enable_laptop_lid_ignore: false
