@@ -11,6 +11,7 @@
     enable_development_tools: true
     enable_hugo: true
     enable_docker: true
+    enable_herdr: true
 
   pre_tasks:
     - name: Verify running on macOS
@@ -87,6 +88,9 @@
     - role: tmux
       when: enable_development_tools | bool
       tags: [dev, tmux]
+    - role: herdr
+      when: enable_herdr | bool
+      tags: [dev, herdr]
     - role: neovim-latest
       when: enable_development_tools | bool
       tags: [dev, neovim, editor]
@@ -115,6 +119,7 @@
           - Development tools: {{ enable_development_tools }}
           - Hugo: {{ enable_hugo }}
           - Docker: {{ enable_docker }}
+          - herdr: {{ enable_herdr }}
 
           ⚠️  IMPORTANT: Some tasks required sudo access:
           - Adding Fish to /etc/shells
@@ -135,6 +140,7 @@
           ✓ Database tools (PostgreSQL client, pgcli)
           ✓ Development folder structure
           ✓ tmux via Homebrew
+          {% if enable_herdr | bool %}✓ herdr terminal workspace manager (prefix ctrl+a, bottom tab bar){% endif %}
           ✓ Neovim via Homebrew with vim symlink
           ✓ tree-sitter CLI for syntax highlighting
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
@@ -146,6 +152,7 @@
           2. Launch Docker Desktop from Applications
           3. Test development environment:
              - tmux new-session -d -s test
+             - herdr --version
              - docker run hello-world (after launching Docker Desktop)
              - nvim --version
              - mise list (verify language runtimes)
@@ -154,7 +161,7 @@
 
           🎯 Your macOS base development environment is ready!
           - Modern shell: Fish with mise for language management
-          - Development tools: tmux, Neovim, Docker
+          - Development tools: tmux, herdr, Neovim, Docker
           - All CLI tools integrated and configured for productivity
 
           💡 For GUI enhancements, also run:

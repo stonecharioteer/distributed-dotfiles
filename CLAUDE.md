@@ -11,6 +11,7 @@ This is an Ansible-based dotfiles and development environment automation reposit
 ### Running Playbooks
 
 **Ubuntu/Debian (Simple 2-playbook setup):**
+
 ```bash
 # Base development environment (for ALL systems)
 ansible-playbook --ask-become-pass playbooks/base-environment.yml
@@ -20,6 +21,7 @@ ansible-playbook --ask-become-pass playbooks/gui-environment.yml
 ```
 
 **macOS (Simple 2-playbook setup):**
+
 ```bash
 # Base development environment (for ALL macOS systems)
 ansible-playbook playbooks/macos-base-environment.yml
@@ -33,21 +35,25 @@ Note: macOS playbooks use Homebrew and don't require `--ask-become-pass` for mos
 ### Ansible Operations
 
 Run specific tags only:
+
 ```bash
 ansible-playbook --ask-become-pass playbooks/gui.yml --tags docker
 ```
 
 Skip certain tags:
+
 ```bash
 ansible-playbook --ask-become-pass playbooks/gui.yml --skip-tags "qtile,docker"
 ```
 
 List all available tags:
+
 ```bash
 ansible-playbook playbooks/servers.yml --list-tags
 ```
 
 List all tasks and roles:
+
 ```bash
 ansible-playbook playbooks/servers.yml --list-tasks
 ```
@@ -55,21 +61,25 @@ ansible-playbook playbooks/servers.yml --list-tasks
 ### Testing with Vagrant
 
 Bring up test VMs:
+
 ```bash
 vagrant up
 ```
 
 Test with a specific playbook:
+
 ```bash
 ansible-playbook playbooks/servers.yml
 ```
 
 Destroy test VMs:
+
 ```bash
 vagrant destroy -f
 ```
 
 Clean SSH known_hosts after testing:
+
 ```bash
 ssh-keygen -R "192.168.60.2"
 ssh-keygen -R "192.168.60.3"
@@ -79,12 +89,14 @@ ssh-keygen -R "192.168.60.4"
 ## Repository Quality Gates
 
 Pre-commit is the canonical local and CI quality gate for this repository:
+
 ```bash
 pre-commit install
 pre-commit run --all-files
 ```
 
 Current checks intentionally start broad but non-disruptive:
+
 - commit-message guards enforce Conventional Commits and block AI attribution footers such as `Co-authored-by: Claude` and `Generated with Claude Code`
 - generic file hygiene via `pre-commit-hooks`
 - YAML parsing/style via `yamllint`
@@ -93,6 +105,7 @@ Current checks intentionally start broad but non-disruptive:
 - local Ansible guardrails that reject risky direct binary probe tasks such as `command: tool --version` in check tasks without `failed_when: false`
 
 The `.ansible-lint` and `.yamllint` configs include compatibility skips for the existing playbooks. As roles are modernized, tighten these rules incrementally instead of removing the hooks:
+
 1. remove skipped `ansible-lint` rules one category at a time
 2. prefer fixing existing violations over adding new skips
 3. keep CI required on PRs to `main` so regressions are caught before merge
@@ -121,6 +134,7 @@ Preserve the inventory split when adding machines or features:
 The repository uses a **unified role-based architecture** with all functionality consolidated:
 
 **All Components Now Use Roles** (`roles/`):
+
 - All external configurations migrated into this repository
 - Consistent role structure with proper variable scoping, handlers, and modularity
 - Single source of truth for all environment automation
@@ -128,40 +142,48 @@ The repository uses a **unified role-based architecture** with all functionality
 ### Main Playbooks
 
 **Ubuntu/Debian:**
+
 - **playbooks/base-environment.yml**: Complete development environment for ALL Ubuntu/Debian systems
-  - Fish shell + dotfiles, mise + languages, development tools, tmux, neovim, docker
+  - Fish shell + dotfiles, mise + languages, development tools, tmux, herdr, neovim, docker
 - **playbooks/gui-environment.yml**: Complete GUI workstation (includes base + desktop)
   - Everything from base-environment.yml + Qtile + fonts + Alacritty + desktop integration
 
 **macOS:**
+
 - **playbooks/macos-base-environment.yml**: Complete development environment for ALL macOS systems
-  - Fish shell + dotfiles, mise + languages, development tools, tmux (Homebrew), neovim (Homebrew), docker
+  - Fish shell + dotfiles, mise + languages, development tools, tmux (Homebrew), herdr, neovim (Homebrew), docker
 - **playbooks/macos-gui-environment.yml**: Complete GUI workstation (includes base + GUI apps)
   - Everything from macos-base-environment.yml + JetBrains Mono Nerd Font + Ghostty + AeroSpace WM
 
 ### Legacy Playbooks (DEPRECATED)
+
 - All other playbooks replaced by the simple 2-playbook approach per platform
 
 ### Consolidated Roles (`roles/`)
 
 **Platform Support:**
+
 - All roles support Ubuntu/Debian via package managers (apt)
 - macOS support via Homebrew (roles include `darwin.yml` task files)
 - Conditional includes based on `ansible_os_family`
 
 **Shell Environment:**
+
 - **fish-shell**: Fish shell installation and setup (apt/Homebrew)
 - **mise-tools**: Runtime version manager (Node.js, Python, Go, Rust via mise)
 - **rust-toolchain**: Enhanced Rust toolchain with cargo-binstall
 - **fish-config**: Fish configuration and abbreviations
 
 **Development Tools:**
+
 - **system-deps**: Essential system dependencies and development headers
+
   - Core system tools (`curl`, `git`, `htop`, `build-essential`)
   - Development libraries (`libssl-dev`, `libffi-dev`, `pkg-config`)
   - Python3 system packages and build tools
 
 - **cli-tools**: Modern CLI development tools
+
   - File/text search: `ripgrep`, `fd-find`, `fzf`, `tree`
   - Development utilities: `direnv`, `httpie`, `zoxide`
   - File watching: `watchexec-cli` (via cargo binstall)
@@ -169,6 +191,7 @@ The repository uses a **unified role-based architecture** with all functionality
   - Fun utilities: `cowsay`, `fortune`, `lolcat`, `neofetch`
 
 - **dev-folders**: Creates standardized development directory structure
+
   - `~/code/checkouts/{personal,work}/`
   - `~/code/tools/`, `~/workspace/{projects,scratch}/`
   - `~/Pictures/screenshots/`, `~/.local/bin/`
@@ -178,6 +201,12 @@ The repository uses a **unified role-based architecture** with all functionality
   - Clones https://github.com/gpakosz/.tmux to ~/.tmux/
   - Creates ~/.tmux.conf symlink and ~/.tmux.conf.local with sensible defaults
   - Enables powerline separators (requires Nerd Fonts for proper display)
+- **herdr**: Terminal workspace manager for AI coding agents
+  - Installs the public stable binary from https://herdr.dev/latest.json into `~/.local/bin/herdr`
+  - Verifies the GitHub release SHA-256 checksum instead of running `curl | sh`
+  - Deploys shared config: prefix `ctrl+a`, bottom tab bar, system toast delivery
+  - Installs a portable `~/.config/herdr/status.sh` for load and battery in the tab bar
+  - Controlled by `enable_herdr`, default true in `group_vars/all.yml`
 - **neovim-latest**: Installs Neovim 0.11.2 binary with vim symlink (Linux) or via Homebrew (macOS)
 - **tree-sitter-cli**: Installs tree-sitter CLI via npm (uses mise Node.js)
 - **nvim-config**: Sets up custom Neovim configuration with plugins
@@ -189,6 +218,7 @@ The repository uses a **unified role-based architecture** with all functionality
 - **laptop-health**: Linux laptop/server-mode health monitoring, lid-ignore config, NVMe SMART snapshots, and X13 Flow-specific display/GPU mitigations through feature flags
 
 **GUI Environment (Linux):**
+
 - **locale-setup**: System locale configuration
 - **base-system**: Essential system packages
 - **qtile-wm**: Qtile window manager installation + Adwaita cursor theme
@@ -196,6 +226,7 @@ The repository uses a **unified role-based architecture** with all functionality
 - **desktop-integration**: Desktop session management + dark mode preference + cursor configuration
 
 **GUI Environment (macOS):**
+
 - **nerd-fonts**: JetBrains Mono Nerd Font installation (via Homebrew cask)
 - **ghostty**: Ghostty terminal emulator (GPU-accelerated, native macOS)
   - Config stored in `roles/ghostty/files/config`
@@ -207,12 +238,14 @@ The repository uses a **unified role-based architecture** with all functionality
 ### Dependency Management
 
 **All Dependencies Consolidated** (no external setups required):
+
 - **Node.js/npm**: Now managed by `mise-tools` role in this repository
 - **Rust/Cargo**: Now managed by `rust-toolchain` role in this repository
 - **Fonts**: Now managed by `nerd-fonts` role in this repository
 - **Fish shell + tools**: Now managed by fish roles in this repository
 
 **Role Dependencies**:
+
 - `tree-sitter-cli` → requires Node.js (provided by `mise-tools`)
 - `astronvim-config` → requires `neovim-latest` + `tree-sitter-cli`
 - All roles use standard variables: `dev_user`, `dev_home`
@@ -220,15 +253,18 @@ The repository uses a **unified role-based architecture** with all functionality
 ### Key Tools Installed
 
 **Shell Environment**:
+
 - **Fish shell**: Modern shell with syntax highlighting
 - **mise**: Runtime version manager (Node.js, Python, Go, Rust)
 - **Rust toolchain**: Enhanced with cargo-binstall
 - **Fish configuration**: Abbreviations and modern integrations
 
 **Development Tools**:
+
 - **System Dependencies**: Build tools, development headers, Python3 system packages
 - **CLI Tools**: ripgrep, fd-find, fzf, starship, gum, direnv, httpie, zoxide, watchexec
 - **tmux**: Latest version compiled from source (Linux) or via Homebrew (macOS)
+- **herdr**: Terminal workspace manager installed from herdr.dev into `~/.local/bin`
 - **Neovim**: 0.11.2 binary with vim symlink (Linux) or via Homebrew (macOS)
 - **Custom Neovim config**: Complete configuration with plugin setup
 - **tree-sitter CLI**: Via npm for syntax highlighting
@@ -236,6 +272,7 @@ The repository uses a **unified role-based architecture** with all functionality
 - **Docker**: Latest Engine with Compose (Linux) or Docker Desktop (macOS)
 
 **GUI Environment (Linux)**:
+
 - **Qtile**: Modern tiling window manager
 - **JetBrains Mono Nerd Font**: Programming font with icons
 - **Alacritty**: GPU-accelerated terminal emulator
@@ -243,6 +280,7 @@ The repository uses a **unified role-based architecture** with all functionality
 - **Adwaita Cursor Theme**: 16px cursor theme for high-DPI displays
 
 **GUI Environment (macOS)**:
+
 - **JetBrains Mono Nerd Font**: Programming font with icons (via Homebrew)
 - **Ghostty**: GPU-accelerated terminal emulator (native macOS)
 - **AeroSpace**: Tiling window manager (native macOS, i3/sway-like keybindings)

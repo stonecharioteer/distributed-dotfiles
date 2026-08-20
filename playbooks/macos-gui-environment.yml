@@ -10,6 +10,7 @@
     enable_shell_environment: true
     enable_development_tools: true
     enable_docker: true
+    enable_herdr: true
     enable_gui_environment: true
     enable_nerd_fonts: true
     enable_ghostty: true
@@ -88,6 +89,9 @@
     - role: tmux
       when: enable_development_tools | bool
       tags: [dev, tmux]
+    - role: herdr
+      when: enable_herdr | bool
+      tags: [dev, herdr]
     - role: neovim-latest
       when: enable_development_tools | bool
       tags: [dev, neovim, editor]
@@ -123,6 +127,7 @@
           - Shell environment: {{ enable_shell_environment }}
           - Development tools: {{ enable_development_tools }}
           - Docker: {{ enable_docker }}
+          - herdr: {{ enable_herdr }}
           - GUI environment: {{ enable_gui_environment }}
           - Nerd Fonts: {{ enable_nerd_fonts }}
           - Ghostty: {{ enable_ghostty }}
@@ -147,6 +152,7 @@
           ✓ Database tools (PostgreSQL client, pgcli)
           ✓ Development folder structure
           ✓ tmux via Homebrew
+          {% if enable_herdr | bool %}✓ herdr terminal workspace manager (prefix ctrl+a, bottom tab bar){% endif %}
           ✓ Neovim via Homebrew with vim symlink
           ✓ tree-sitter CLI for syntax highlighting
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
@@ -164,6 +170,7 @@
           4. Launch Ghostty terminal emulator
           5. Test complete environment:
              - tmux new-session -d -s test
+             - herdr --version
              - docker run hello-world (after launching Docker Desktop)
              - nvim (complete plugin setup)
              - mise list (verify language runtimes)
@@ -171,7 +178,7 @@
 
           🎯 Your complete macOS GUI workstation is ready!
           - Modern shell: Fish with mise for language management
-          - Development tools: tmux, Neovim, Docker
+          - Development tools: tmux, herdr, Neovim, Docker
           - GUI applications: Ghostty terminal, AeroSpace window manager
           - All tools integrated and configured for maximum productivity
 

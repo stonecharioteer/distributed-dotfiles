@@ -122,6 +122,9 @@
     - role: tmux
       when: enable_development_tools | bool
       tags: [dev, tmux]
+    - role: herdr
+      when: enable_herdr | bool
+      tags: [dev, herdr]
     - role: neovim-latest
       when: enable_development_tools | bool
       tags: [dev, neovim, editor]
@@ -163,6 +166,7 @@
           - Server hardening: {{ enable_server_hardening }}
           - Hugo: {{ enable_hugo }}
           - Docker: {{ enable_docker }}
+          - herdr: {{ enable_herdr }}
           - Tailscale: {{ enable_tailscale }}
           - Laptop health monitoring: {{ enable_laptop_health_monitoring }}
 
@@ -180,6 +184,7 @@
           ✓ Database tools (PostgreSQL client, pgcli)
           ✓ Development folder structure
           ✓ tmux compiled from latest source
+          {% if enable_herdr | bool %}✓ herdr terminal workspace manager (prefix ctrl+a, bottom tab bar){% endif %}
           ✓ Neovim {{ neovim_version | default('latest') }} with vim symlink
           ✓ tree-sitter CLI for syntax highlighting
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
@@ -191,6 +196,7 @@
           1. Log out and log back in for shell/group changes
           2. Test development environment:
              - tmux new-session -d -s test
+             - herdr --version
              - docker run hello-world
              - nvim --version
              - mise list (verify language runtimes)
@@ -199,7 +205,7 @@
 
           🎯 Your base development environment is ready!
           - Modern shell: Fish with mise for language management
-          - Development tools: tmux, Neovim/AstroNvim, Docker
+          - Development tools: tmux, herdr, Neovim/AstroNvim, Docker
           - All CLI tools integrated and configured for productivity
 
           💡 Useful follow-ups:
