@@ -37,14 +37,14 @@ repos:
         language: script
         entry: hooks/check-ansible-risky-patterns.sh
         files: ^(playbooks|roles|inventory)/.*\.(ya?ml)$
-      - id: test-cargo-binstall
-        name: Test binary-only Cargo batches
+      - id: test-setup-regressions
+        name: Test setup regressions
         language: python
         entry: python -m unittest discover -s tests -v
         additional_dependencies:
           - PyYAML==6.0.2
           - Jinja2==3.1.6
-        files: ^(roles/(cargo-binstall|rust-toolchain|cli-tools)/|tests/)
+        files: ^(roles/(cargo-binstall|rust-toolchain|cli-tools|tailscale)/|tests/)
         pass_filenames: false
       - id: check-private-inventory
         name: Block personal inventory commits
