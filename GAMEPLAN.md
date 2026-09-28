@@ -3,6 +3,7 @@
 ## COMPLETED: Consolidated Architecture
 
 ### ✅ Consolidated Structure (IMPLEMENTED)
+
 - **Location**: `roles/` in this repository
 - **Pattern**: Role-based with proper Ansible directory structure
 - **Status**: All external configurations consolidated into this repository
@@ -11,6 +12,7 @@
 ## ✅ IMPLEMENTED: Consolidated Role-Based Architecture
 
 ### Current Directory Structure
+
 ```
 roles/
 # Shell Environment (from ~/.config/fish/ansible/)
@@ -39,6 +41,7 @@ roles/
 ```
 
 ### Role Structure (following qtile pattern)
+
 ```
 role-name/
 ├── defaults/main.yml      # Default variables
@@ -52,12 +55,14 @@ role-name/
 ## ✅ IMPLEMENTED: Consolidated Dependency Management
 
 ### Consolidated Infrastructure (ALL INCLUDED)
+
 1. **Node.js/npm**: Now managed by `mise-tools` role in this repository
 2. **Rust/Cargo**: Now managed by `rust-toolchain` role in this repository
 3. **Fonts**: Now managed by `nerd-fonts` role in this repository
 4. **Alacritty**: Now managed by `alacritty` role in this repository
 
 ### Current Role Dependencies
+
 - **tree-sitter-cli**: Depends on Node.js (provided by `mise-tools`)
 - **astronvim-config**: Depends on `neovim-latest` + `tree-sitter-cli`
 - **All roles**: Follow consistent variable pattern (`dev_user`, `dev_home`)
@@ -65,12 +70,14 @@ role-name/
 ## Variable Management
 
 ### Standard Variables (following qtile pattern)
+
 ```yaml
 dev_user: "{{ ansible_user | default('stonecharioteer') }}"
 dev_home: "/home/{{ dev_user }}"
 ```
 
 ### Idempotency Patterns
+
 ```yaml
 - name: Check if tool is already installed
   stat:
@@ -85,6 +92,7 @@ dev_home: "/home/{{ dev_user }}"
 ## ✅ IMPLEMENTED: Consolidated Playbook Structure
 
 ### New Modular Playbooks
+
 - `playbooks/shell-environment.yml`: Fish shell + mise + language runtimes
 - `playbooks/dev-environment.yml`: Core development tools (tmux, neovim, docker)
 - `playbooks/gui-environment.yml`: Qtile + fonts + desktop applications
@@ -92,6 +100,7 @@ dev_home: "/home/{{ dev_user }}"
 - `playbooks/server-setup.yml`: Headless development server setup
 
 ### Legacy Playbooks (DEPRECATED)
+
 - `playbooks/gui.yml`: Replaced by modular approach
 - `playbooks/servers.yml`: Replaced by `server-setup.yml`
 - `playbooks/laptops.yml`: Replaced by `complete-workstation.yml`
@@ -99,6 +108,7 @@ dev_home: "/home/{{ dev_user }}"
 ## ✅ COMPLETED: All Phases Implemented
 
 ### Implementation Status: COMPLETE
+
 1. **✅ Phase 1**: Infrastructure (GAMEPLAN.md, role structure) - DONE
 2. **✅ Phase 2**: Core tools (tmux, neovim, tree-sitter) - DONE
 3. **✅ Phase 3**: Configuration (astronvim, dev-folders) - DONE
@@ -112,16 +122,19 @@ dev_home: "/home/{{ dev_user }}"
 **All external configurations have been successfully consolidated into this repository.**
 
 ### Migration Results: Fish Shell Integration ✅
+
 - **✅ Migrated roles**: `fish-shell`, `mise-tools`, `rust-toolchain`, `fish-config`
 - **✅ Created playbook**: `playbooks/shell-environment.yml`
 - **✅ Updated dependencies**: All roles now use consolidated `mise-tools`
 
 ### Migration Results: Qtile Integration ✅
+
 - **✅ Migrated roles**: `locale-setup`, `base-system`, `qtile-wm`, `nerd-fonts`, `alacritty`, `desktop-integration`
 - **✅ Created playbook**: `playbooks/gui-environment.yml`
 - **✅ Merged overlapping**: System configuration consolidated
 
 ### Final Unified Structure ✅
+
 ```
 playbooks/
 ├── shell-environment.yml    # ✅ Fish + mise + languages
@@ -152,6 +165,7 @@ roles/ (18 consolidated roles)
 ```
 
 ### Achieved Benefits ✅
+
 - **✅ Single source of truth** for all development environment automation
 - **✅ Consistent role patterns** across shell, development, and GUI setups
 - **✅ Unified documentation** and testing approach
@@ -162,16 +176,19 @@ roles/ (18 consolidated roles)
 ## Quality Standards
 
 ### Error Handling
+
 - Use `ignore_errors: yes` for non-critical failures
 - Include meaningful error messages and debugging output
 - Implement proper cleanup for failed installations
 
 ### Documentation
+
 - Clear role README files
 - Variable documentation in defaults/main.yml
 - Example inventory configurations
 
 ### Testing
+
 - Support multiple Ubuntu/Debian versions
 - Vagrant-based testing workflow
 - Idempotency verification (run twice, same result)
@@ -179,12 +196,14 @@ roles/ (18 consolidated roles)
 ## Recent Updates (2025-08-16)
 
 ### Browser Dark Mode & Cursor Configuration
+
 - **desktop-integration role**: Added browser dark mode preference via `gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'`
 - **desktop-integration role**: Added 16px Adwaita cursor configuration for high-DPI displays via `.Xresources` and environment variables
 - **qtile-wm role**: Added `adwaita-icon-theme` package to provide Adwaita cursor theme
 - **mise-tools role**: Fixed Node.js installation to use `node@latest` instead of `node@lts` per CLAUDE.md specifications
 
 ### Configuration Details
+
 - `.Xresources`: Sets `Xcursor.size: 16` and `Xcursor.theme: Adwaita`
 - `.profile`: Exports `XCURSOR_SIZE=16` and `XCURSOR_THEME=Adwaita` environment variables
 - Browser dark mode detection: Uses system `color-scheme` preference without affecting Qtile appearance
