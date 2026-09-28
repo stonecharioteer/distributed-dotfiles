@@ -12,8 +12,10 @@
     name:
       - ca-certificates
       - curl
+      - python3-debian
     state: present
     update_cache: yes
+    cache_valid_time: 86400
   when: ansible_facts["os_family"] == "Debian"
 
 - name: Install GitHub CLI repository key
@@ -23,13 +25,36 @@
     mode: '0644'
   when: ansible_facts["os_family"] == "Debian"
 
-- name: Add GitHub CLI apt repository
-  apt_repository:
-    repo: "deb [arch={{ deb_architecture.stdout }} signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
-    filename: github-cli
-    state: present
-    update_cache: yes
+- name: Remove legacy GitHub CLI repository definition
+  file:
+    path: /etc/apt/sources.list.d/github-cli.list
+    state: absent
   when: ansible_facts["os_family"] == "Debian"
+
+- name: Add GitHub CLI apt repository
+  deb822_repository:
+    name: github-cli
+    types:
+      - deb
+    uris:
+      - https://cli.github.com/packages
+    suites:
+      - stable
+    components:
+      - main
+    architectures:
+      - "{{ deb_architecture.stdout }}"
+    signed_by: /usr/share/keyrings/githubcli-archive-keyring.gpg
+    state: present
+  register: github_cli_repository
+  when: ansible_facts["os_family"] == "Debian"
+
+- name: Update apt cache for GitHub CLI repository
+  apt:
+    update_cache: yes
+  when:
+    - ansible_facts["os_family"] == "Debian"
+    - github_cli_repository.changed
 
 - name: Install GitHub CLI
   apt:

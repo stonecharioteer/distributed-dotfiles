@@ -135,93 +135,56 @@
       debug:
         msg: "⚠ Starship installation failed - continuing with other tools"
 
-- name: Check if Gum is already installed
-  shell: "command -v gum >/dev/null 2>&1 && {{ external_tools.gum.check_cmd }}"
-  args:
-    executable: /bin/bash
-  register: gum_check
-  changed_when: false
-  failed_when: false
-
-- name: Install Gum terminal UI tools
+- name: Install Gum and Glow from the Charm repository
   block:
+    - name: Install Charm repository prerequisites
+      apt:
+        name:
+          - ca-certificates
+          - python3-debian
+        state: present
+        update_cache: yes
+        cache_valid_time: 86400
+
     - name: Add Charm repository GPG key
       get_url:
         url: "{{ external_tools.charm.repo_key }}"
         dest: "{{ external_tools.charm.keyring_path }}"
         mode: '0644'
 
+    - name: Remove legacy Charm repository definition
+      file:
+        path: /etc/apt/sources.list.d/repo_charm_sh_apt.list
+        state: absent
+
     - name: Add Charm repository
-      apt_repository:
-        repo: "{{ external_tools.charm.repo_line }}"
+      deb822_repository:
+        name: charm
+        types:
+          - deb
+        uris:
+          - "{{ external_tools.charm.repo_uri }}"
+        suites: "{{ external_tools.charm.repo_suites }}"
+        components: "{{ external_tools.charm.repo_components }}"
+        signed_by: "{{ external_tools.charm.keyring_path }}"
         state: present
+      register: charm_repository
 
-    - name: Install Gum
-      package:
-        name: "{{ external_tools.gum.package }}"
-        state: present
-        update_cache: yes
-
-    - name: Verify Gum installation
-      command: "{{ external_tools.gum.check_cmd }}"
-      register: gum_version
-      changed_when: false
-
-    - name: Display Gum installation success
-      debug:
-        msg: "✓ Gum installed: {{ gum_version.stdout }}"
-
-  when:
-    - ansible_facts["os_family"] == "Debian"
-    - gum_check.rc != 0
-  rescue:
-    - name: Display Gum installation failure
-      debug:
-        msg: "⚠ Gum installation failed - continuing with other tools"
-
-- name: Check if Glow is already installed
-  shell: "command -v glow >/dev/null 2>&1 && {{ external_tools.glow.check_cmd }}"
-  args:
-    executable: /bin/bash
-  register: glow_check
-  changed_when: false
-  failed_when: false
-
-- name: Install Glow markdown renderer
-  block:
-    - name: Add Charm repository GPG key (if not already added)
-      get_url:
-        url: "{{ external_tools.charm.repo_key }}"
-        dest: "{{ external_tools.charm.keyring_path }}"
-        mode: '0644'
-
-    - name: Add Charm repository (if not already added)
-      apt_repository:
-        repo: "{{ external_tools.charm.repo_line }}"
-        state: present
-
-    - name: Install Glow
-      package:
-        name: "{{ external_tools.glow.package }}"
+    - name: Install Gum and Glow
+      apt:
+        name:
+          - "{{ external_tools.gum.package }}"
+          - "{{ external_tools.glow.package }}"
         state: present
         update_cache: yes
+        # A new source requires a refresh even if the cache is recent.
+        cache_valid_time: "{{ 0 if charm_repository.changed else 86400 }}"
 
-    - name: Verify Glow installation
-      command: "{{ external_tools.glow.check_cmd }}"
-      register: glow_version
-      changed_when: false
-
-    - name: Display Glow installation success
-      debug:
-        msg: "✓ Glow installed: {{ glow_version.stdout }}"
-
-  when:
-    - ansible_facts["os_family"] == "Debian"
-    - glow_check.rc != 0
+  when: ansible_facts["os_family"] == "Debian"
   rescue:
-    - name: Display Glow installation failure
+    - name: Display Charm tools installation failure
       debug:
-        msg: "⚠ Glow installation failed - continuing with other tools"
+        msg: "Gum/Glow setup failed: {{ ansible_failed_result.msg | default('unknown error') }}"
 
 - name: Check if Rust/cargo is available for cargo tools
   shell: |
