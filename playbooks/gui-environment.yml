@@ -129,6 +129,7 @@
       when: >-
         enable_laptop_health_monitoring | bool
         or enable_laptop_lid_ignore | default(false) | bool
+        or enable_laptop_lid_policy | default(false) | bool
         or enable_battery_charge_thresholds | default(false) | bool
         or enable_headless_health_monitor | default(false) | bool
         or enable_ssh_long_lived | default(false) | bool

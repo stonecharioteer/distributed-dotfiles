@@ -1,4 +1,8 @@
 ---
+- name: Configure GUI laptop lid policy
+  include_tasks: lid-policy.yml
+  when: ansible_facts["system"] == "Linux"
+
 - name: Install laptop health package dependencies
   package:
     name:

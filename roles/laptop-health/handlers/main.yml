@@ -8,6 +8,13 @@
     name: systemd-logind
     state: restarted
 
+- name: restart laptop lid policy
+  systemd:
+    name: laptop-lid-policy.service
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
+
 - name: apply sysctl settings
   command: sysctl --system
   changed_when: true

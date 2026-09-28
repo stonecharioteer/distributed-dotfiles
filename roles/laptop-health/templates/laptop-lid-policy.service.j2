@@ -1,0 +1,17 @@
+[Unit]
+Description=Delayed lid-close suspend on battery, no lid suspend on external power
+After=systemd-logind.service
+Requires=systemd-logind.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/systemd-inhibit --what=handle-lid-switch --who=laptop-lid-policy --why="Delayed battery lid suspend" --mode=block /usr/bin/python3 /usr/local/libexec/laptop-lid-policy.py --delay {{ laptop_lid_battery_delay_seconds | int }} --interval {{ laptop_lid_poll_interval_seconds | int }}
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
