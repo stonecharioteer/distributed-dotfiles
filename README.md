@@ -201,7 +201,7 @@ ansible-playbook --ask-become-pass playbooks/base-environment.yml --tags "fish,t
 **Available Linux tags:**
 
 - **Shell:** `shell`, `fish`, `dotfiles`, `scripts`, `mise`, `rust`, `languages`, `config`
-- **Development:** `dev`, `deps`, `cli`, `folders`, `tmux`, `herdr`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
+- **Development:** `dev`, `deps`, `cli`, `folders`, `tmux`, `herdr`, `pi`, `ai`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
 - **Networking:** `networking`, `tailscale`
 - **Laptop/server mode:** `laptop`, `health`, `monitoring`
 - **GUI:** `gui`, `system`, `locale`, `repos`, `wm`, `qtile`, `fonts`, `terminal`, `alacritty`, `desktop`, `integration`
@@ -237,7 +237,7 @@ ansible-playbook playbooks/macos-base-environment.yml --tags "fish,tmux,neovim"
 **Available macOS tags:**
 
 - **Shell:** `shell`, `fish`, `dotfiles`, `scripts`, `mise`, `rust`, `languages`, `config`
-- **Development:** `dev`, `cli`, `folders`, `tmux`, `herdr`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
+- **Development:** `dev`, `cli`, `folders`, `tmux`, `herdr`, `pi`, `ai`, `neovim`, `editor`, `hugo`, `blog`, `docker`, `containers`
 - **GUI:** `gui`, `fonts`, `terminal`, `ghostty`, `wm`, `aerospace`
 
 ### Target specific hosts (Ubuntu/Debian)
@@ -252,6 +252,30 @@ ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-envir
 # Host groups
 ansible-playbook -i inventory/my-home.yml --ask-become-pass playbooks/base-environment.yml --limit servers
 ```
+
+### Pi coding agent
+
+All four Linux/macOS playbooks include the [Pi configuration role](roles/pi-config/README.md).
+It installs Pi and five pinned packages: goal tracking, environment checks, vision
+handoff, the Powerline footer, and xAI login support. It also installs Herdr's
+managed Pi integration when Herdr is available.
+
+The shared preferences match the controller: `openai-codex/gpt-5.6-sol`, high
+thinking, hidden thinking blocks, the dark theme, and Simplified Technical English
+instructions. Credentials, sessions, trust records, and machine-specific model
+catalogs stay on each device. Existing unrelated settings and packages are kept.
+
+```bash
+# Update Pi only, after mise and Node.js are installed
+./bootstrap gui --tags pi -- --limit HOST
+
+# Include the runtime and Herdr on a new machine
+./bootstrap gui --tags mise,herdr,pi -- --limit HOST
+```
+
+Close Pi before running setup. Then start `pi` and use `/login` on the target
+machine. Use `/model` if the preferred model is not available to that account.
+Set `enable_pi: false` in inventory to skip this role.
 
 ### Optional Supabase tooling
 

@@ -44,7 +44,7 @@ repos:
         additional_dependencies:
           - PyYAML==6.0.2
           - Jinja2==3.1.6
-        files: ^(roles/(cargo-binstall|rust-toolchain|cli-tools|tailscale)/|tests/)
+        files: ^(roles/(cargo-binstall|rust-toolchain|cli-tools|tailscale|pi-config)/|playbooks/.*environment\.yml|tests/)
         pass_filenames: false
       - id: check-private-inventory
         name: Block personal inventory commits

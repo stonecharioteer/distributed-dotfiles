@@ -92,6 +92,9 @@
     - role: herdr
       when: enable_herdr | bool
       tags: [dev, herdr]
+    - role: pi-config
+      when: enable_pi | bool
+      tags: [dev, pi, ai, config]
     - role: neovim-latest
       when: enable_development_tools | bool
       tags: [dev, neovim, editor]

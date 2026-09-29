@@ -207,6 +207,11 @@ The repository uses a **unified role-based architecture** with all functionality
   - Deploys shared config: prefix `ctrl+a`, bottom tab bar, system toast delivery
   - Installs a portable `~/.config/herdr/status.sh` for load and battery in the tab bar
   - Controlled by `enable_herdr`, default true in `group_vars/all.yml`
+- **pi-config**: Installs Pi and pinned extensions through mise-managed Node.js on Linux/macOS
+  - Shares model/UI preferences and global communication instructions without copying credentials or sessions
+  - Includes goal tracking, environment checks, vision handoff, Powerline footer, and xAI login support
+  - Installs the official Herdr Pi integration when Herdr is present
+  - Controlled by `enable_pi`, default true; use the `pi` tag after mise setup
 - **neovim-latest**: Installs Neovim 0.11.2 binary with vim symlink (Linux) or via Homebrew (macOS)
 - **tree-sitter-cli**: Installs tree-sitter CLI via npm (uses mise Node.js)
 - **nvim-config**: Sets up custom Neovim configuration with plugins
