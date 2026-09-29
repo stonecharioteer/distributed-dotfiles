@@ -1,0 +1,185 @@
+---
+# Install herdr from the public stable manifest and apply the shared config.
+# The official curl | sh installer is not used here. The role downloads the
+# matching GitHub release asset and verifies its SHA-256 checksum.
+
+- name: Ensure herdr directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ herdr_user_group }}"
+    mode: "0755"
+  loop:
+    - "{{ herdr_install_dir }}"
+    - "{{ herdr_config_dir }}"
+    - "{{ herdr_fish_completions_path | dirname }}"
+    - "{{ herdr_fish_path_snippet | dirname }}"
+  become: no
+
+- name: Fetch herdr release manifest
+  uri:
+    url: "{{ herdr_manifest_url }}"
+    return_content: yes
+    status_code: 200
+  register: herdr_manifest
+  check_mode: false
+  become: no
+
+- name: Set herdr release facts
+  set_fact:
+    herdr_release: "{{ herdr_manifest.json | default((herdr_manifest.content | default('{}') | from_json), true) }}"
+    herdr_os_name: "{{ 'macos' if ansible_facts['os_family'] == 'Darwin' else 'linux' }}"
+    herdr_cpu_name: "{{ 'aarch64' if (ansible_facts['architecture'] | default(ansible_facts['machine']) | default('')) in ['arm64', 'aarch64'] else 'x86_64' }}"
+
+- name: Set herdr asset key
+  set_fact:
+    herdr_asset_key: "{{ herdr_os_name }}-{{ herdr_cpu_name }}"
+
+- name: Fail when herdr has no binary for this platform
+  fail:
+    msg: >-
+      herdr has no release asset for {{ herdr_asset_key }}
+      (os_family={{ ansible_facts['os_family'] }},
+      architecture={{ ansible_facts['architecture'] }}).
+  when: herdr_asset_key not in (herdr_release.assets | default({}))
+
+- name: Set herdr download facts
+  set_fact:
+    herdr_target_version: "{{ herdr_release.version }}"
+    herdr_download_url: "{{ herdr_release.assets[herdr_asset_key] }}"
+    herdr_sha256: "{{ herdr_release.sha256[herdr_asset_key] | default('') }}"
+
+- name: Fail when herdr checksum is missing
+  fail:
+    msg: "herdr release manifest has no SHA-256 checksum for {{ herdr_asset_key }}."
+  when: herdr_sha256 | length != 64
+
+- name: Check installed herdr version
+  shell: command -v "{{ herdr_binary_path }}" >/dev/null 2>&1 && "{{ herdr_binary_path }}" --version
+  args:
+    executable: /bin/bash
+  register: herdr_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  become: no
+
+- name: Set installed herdr version
+  set_fact:
+    herdr_installed_version: "{{ herdr_installed.stdout | default('') | regex_search('[0-9]+\\.[0-9]+\\.[0-9]+') | default('', true) }}"
+
+- name: Determine whether herdr should be installed or upgraded
+  set_fact:
+    herdr_needs_install: "{{ (herdr_installed.rc | default(1)) != 0 or herdr_installed_version != (herdr_target_version | string) }}"
+
+- name: Display herdr installation status
+  debug:
+    msg: |
+      herdr status:
+      Binary path: {{ herdr_binary_path }}
+      Installed: {{ herdr_installed.stdout | default('not installed') }}
+      Target version: {{ herdr_target_version }}
+      Asset: {{ herdr_asset_key }}
+      Needs install/upgrade: {{ herdr_needs_install }}
+
+- name: Install herdr {{ herdr_target_version }}
+  when: herdr_needs_install | bool
+  become: no
+  block:
+    - name: Download herdr {{ herdr_target_version }}
+      get_url:
+        url: "{{ herdr_download_url }}"
+        dest: "{{ herdr_binary_path }}.new"
+        checksum: "sha256:{{ herdr_sha256 }}"
+        mode: "0755"
+        force: yes
+        owner: "{{ dev_user }}"
+        group: "{{ herdr_user_group }}"
+
+    - name: Replace herdr binary
+      command: mv "{{ herdr_binary_path }}.new" "{{ herdr_binary_path }}"
+  rescue:
+    - name: Remove incomplete herdr download
+      file:
+        path: "{{ herdr_binary_path }}.new"
+        state: absent
+      failed_when: false
+
+    - name: Fail herdr installation
+      fail:
+        msg: "herdr installation failed for {{ herdr_asset_key }} {{ herdr_target_version }}."
+
+- name: Install herdr config
+  copy:
+    src: config.toml
+    dest: "{{ herdr_config_path }}"
+    owner: "{{ dev_user }}"
+    group: "{{ herdr_user_group }}"
+    mode: "0644"
+  become: no
+  notify: Reload herdr config
+
+- name: Install herdr status script
+  copy:
+    src: status.sh
+    dest: "{{ herdr_status_script_path }}"
+    owner: "{{ dev_user }}"
+    group: "{{ herdr_user_group }}"
+    mode: "0755"
+  become: no
+
+- name: Install herdr PATH helper for fish
+  copy:
+    src: herdr-path.fish
+    dest: "{{ herdr_fish_path_snippet }}"
+    owner: "{{ dev_user }}"
+    group: "{{ herdr_user_group }}"
+    mode: "0644"
+  become: no
+
+- name: Generate herdr fish completions
+  command: "{{ herdr_binary_path }} completion fish"
+  register: herdr_fish_completion
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  become: no
+
+- name: Install herdr fish completions
+  copy:
+    dest: "{{ herdr_fish_completions_path }}"
+    content: "{{ herdr_fish_completion.stdout | trim }}\n"
+    owner: "{{ dev_user }}"
+    group: "{{ herdr_user_group }}"
+    mode: "0644"
+  become: no
+  when: (herdr_fish_completion.rc | default(1)) == 0
+
+- name: Verify herdr installation
+  shell: command -v "{{ herdr_binary_path }}" >/dev/null 2>&1 && "{{ herdr_binary_path }}" --version
+  args:
+    executable: /bin/bash
+  register: herdr_verify
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  become: no
+
+- name: Display herdr setup result
+  debug:
+    msg: |
+      herdr is installed and configured.
+      Version: {{ herdr_verify.stdout }}
+      Binary: {{ herdr_binary_path }}
+      Config: {{ herdr_config_path }}
+      Status script: {{ herdr_status_script_path }}
+
+      Shared settings:
+      - prefix: ctrl+a
+      - tab bar: bottom
+      - toast delivery: system
+
+      Start a session with: herdr
+      Stop the background server with: herdr server stop
+      tmux stays installed as a fallback. Fish autostart for tmux is not managed in this repository.

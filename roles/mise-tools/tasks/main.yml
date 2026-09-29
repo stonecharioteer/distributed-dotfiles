@@ -134,35 +134,15 @@
   become: no
   tags: blog
 
-- name: Remove Ruby from mise if present
-  shell: |
-    "{{ dev_home }}/.local/bin/mise" unuse ruby -g -y || true
-    "{{ dev_home }}/.local/bin/mise" uninstall ruby --all -y || true
-  args:
-    executable: /bin/bash
-  environment:
-    HOME: "{{ dev_home }}"
-  become: no
-  register: mise_ruby_cleanup
-  changed_when: "'ruby' in mise_ruby_cleanup.stdout | lower"
-  failed_when: false
-  tags: blog
-
-- name: Install latest Node.js via mise
-  shell: |
-    "{{ dev_home }}/.local/bin/mise" use -g node@latest
-  environment:
-    HOME: "{{ dev_home }}"
-  become: no
-  tags: blog
-
-- name: Set up pnpm with mise-managed Node.js
-  shell: |
-    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
-    corepack enable pnpm
-    corepack prepare pnpm@latest --activate
-  args:
-    executable: /bin/bash
+# Ruby is not managed here. Keep any installation needed by other software.
+- name: Install latest Node.js and pnpm via mise
+  command:
+    argv:
+      - "{{ dev_home }}/.local/bin/mise"
+      - use
+      - -g
+      - node@latest
+      - pnpm@latest
   environment:
     HOME: "{{ dev_home }}"
   become: no
@@ -171,9 +151,12 @@
 # Python management handled separately via uv instead of mise
 
 - name: Install Go via mise
-  shell: |
-    "{{ dev_home }}/.local/bin/mise" install go@latest
-    "{{ dev_home }}/.local/bin/mise" global go@latest
+  command:
+    argv:
+      - "{{ dev_home }}/.local/bin/mise"
+      - use
+      - -g
+      - go@latest
   environment:
     HOME: "{{ dev_home }}"
   become: no
@@ -182,16 +165,19 @@
 # Rust management handled separately via system installation
 
 - name: Install fx JSON viewer via Go (if Go is available)
-  shell: |
-    eval "$("{{ dev_home }}/.local/bin/mise" activate bash)"
-    if command -v go >/dev/null 2>&1; then
-      go install github.com/antonmedv/fx@latest
-    fi
-  args:
-    executable: /bin/bash
+  command:
+    argv:
+      - "{{ dev_home }}/.local/bin/mise"
+      - exec
+      - --
+      - go
+      - install
+      - github.com/antonmedv/fx@latest
+    creates: "{{ dev_home }}/go/bin/fx"
   become: no
   environment:
     HOME: "{{ dev_home }}"
+    GOBIN: "{{ dev_home }}/go/bin"
   ignore_errors: yes
 
 - name: Check if uv is already installed
@@ -227,6 +213,10 @@
       fish_add_path {{ dev_home }}/.local/bin
       fish_add_path {{ dev_home }}/.cargo/bin
       fish_add_path {{ dev_home }}/.fzf/bin
+      {% if ansible_facts['os_family'] == 'Darwin' %}
+      fish_add_path /opt/homebrew/bin
+      fish_add_path /opt/homebrew/sbin
+      {% endif %}
     create: yes
     owner: "{{ dev_user }}"
     group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"

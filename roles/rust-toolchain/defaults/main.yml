@@ -1,0 +1,16 @@
+---
+# Crate names can differ from the installed executable names.
+rust_cli_tools:
+  - {package: bat, binary: bat}
+  - {package: tokei, binary: tokei}
+  - {package: du-dust, binary: dust}
+  - {package: bottom, binary: btm}
+  - {package: xh, binary: xh}
+  - {package: eza, binary: eza}
+  - {package: lsd, binary: lsd}
+  - {package: procs, binary: procs}
+  - {package: sd, binary: sd}
+  - {package: tealdeer, binary: tldr}
+  - {package: grex, binary: grex}
+  - {package: gitui, binary: gitui}
+  - {package: atuin, binary: atuin}

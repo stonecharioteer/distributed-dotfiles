@@ -1,0 +1,18 @@
+---
+# Default variables for herdr
+dev_user: "{{ ansible_user | default('stonecharioteer') }}"
+dev_home: "/home/{{ dev_user }}"
+herdr_user_group: "{{ 'staff' if ansible_facts['os_family'] == 'Darwin' else dev_user }}"
+
+herdr_install_dir: "{{ dev_home }}/.local/bin"
+herdr_binary_path: "{{ herdr_install_dir }}/herdr"
+herdr_config_dir: "{{ dev_home }}/.config/herdr"
+herdr_config_path: "{{ herdr_config_dir }}/config.toml"
+herdr_status_script_path: "{{ herdr_config_dir }}/status.sh"
+herdr_fish_data_dir: "{{ dev_home }}/.local/share/fish"
+herdr_fish_completions_path: "{{ herdr_fish_data_dir }}/vendor_completions.d/herdr.fish"
+herdr_fish_path_snippet: "{{ herdr_fish_data_dir }}/vendor_conf.d/herdr-path.fish"
+
+# Always install the public stable release from herdr.dev/latest.json.
+# Pinning is not used because older manifest entries do not always include checksums.
+herdr_manifest_url: "https://herdr.dev/latest.json"

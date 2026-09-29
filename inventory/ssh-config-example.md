@@ -78,6 +78,7 @@ all:
 ```
 
 Then run:
+
 ```bash
 # Test connectivity
 ansible all -m ping

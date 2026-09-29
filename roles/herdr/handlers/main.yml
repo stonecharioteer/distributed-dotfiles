@@ -1,0 +1,5 @@
+---
+- name: Reload herdr config
+  command: "{{ herdr_binary_path }} server reload-config"
+  failed_when: false
+  become: no

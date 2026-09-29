@@ -2,6 +2,13 @@
 # General laptop health/server-mode defaults.
 enable_laptop_health_monitoring: false
 enable_laptop_lid_ignore: false
+# GUI policy: ignore lid closure on AC; delay suspension on battery.
+enable_laptop_lid_policy: false
+laptop_lid_battery_delay_seconds: 300
+laptop_lid_poll_interval_seconds: 10
+laptop_lid_policy_script: "{{ laptop_scripts_root }}/laptop/lid-power-policy.py"
+# Optional local scripts checkout source before the helper is available on target.
+laptop_lid_policy_controller_source: ""
 enable_laptop_sysrq: true
 enable_laptop_panic_reboot: false
 enable_nvme_health_monitoring: true

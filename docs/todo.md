@@ -1,7 +1,7 @@
 # TODO
 
 - [ ] Create task files for:
-  - [ ] Bare Build Dependencies for *all* machines
+  - [ ] Bare Build Dependencies for _all_ machines
   - [ ] Any Machine I'll ssh into
     - [ ] tmux
     - [ ] neovim

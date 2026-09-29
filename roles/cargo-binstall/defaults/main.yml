@@ -1,0 +1,19 @@
+---
+# Pinned upstream release. SHA-256 values are the GitHub release asset digests.
+cargo_binstall_version: "1.24.0"
+cargo_binstall_assets:
+  Linux-x86_64:
+    file: cargo-binstall-x86_64-unknown-linux-musl.tgz
+    sha256: 7ffe1832c4bc3148d00f02d51c1d96c9cccdec76a0fa20e6e5692201d78bcc0b
+  Linux-aarch64:
+    file: cargo-binstall-aarch64-unknown-linux-musl.tgz
+    sha256: c2c44aba65d402ac43ee821387c49246bc574bde65d3d7f0f7a9e666c5a69f7f
+  Darwin-x86_64:
+    file: cargo-binstall-x86_64-apple-darwin.zip
+    sha256: 082b204980c8c3f1f3dc109a9c937c6e0604c2f754b50059cc5cc912e80a39c2
+  Darwin-arm64:
+    file: cargo-binstall-aarch64-apple-darwin.zip
+    sha256: aa3ad3ba751c6fad85d83bf4aa7a114e4e04372de439a62cd7cad3c4025bdbbe
+
+# Each caller supplies a list of {package, binary} entries.
+cargo_binstall_tools: []
