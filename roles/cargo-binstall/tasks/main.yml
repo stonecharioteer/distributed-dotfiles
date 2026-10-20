@@ -1,0 +1,108 @@
+---
+- name: Set up binary-only Cargo installation
+  become: "{{ ansible_facts['os_family'] != 'Darwin' }}"
+  become_user: "{{ dev_user }}"
+  block:
+    - name: Check installed cargo-binstall
+      stat:
+        path: "{{ dev_home }}/.cargo/bin/cargo-binstall"
+      register: cargo_binstall_existing
+
+    - name: Select cargo-binstall release platform
+      set_fact:
+        cargo_binstall_platform: "{{ ansible_facts['system'] }}-{{ ansible_facts['architecture'] }}"
+      when: not (cargo_binstall_existing.stat.executable | default(false))
+
+    - name: Require a supported cargo-binstall release platform
+      assert:
+        that:
+          - cargo_binstall_platform in cargo_binstall_assets
+        fail_msg: >-
+          No configured cargo-binstall binary for {{ cargo_binstall_platform }}.
+          Add a verified release asset. Automatic source builds are disabled.
+      when: not (cargo_binstall_existing.stat.executable | default(false))
+
+    - name: Install prebuilt cargo-binstall
+      when:
+        - not (cargo_binstall_existing.stat.executable | default(false))
+        - not ansible_check_mode
+      block:
+        - name: Create cargo-binstall staging directory
+          tempfile:
+            state: directory
+            prefix: cargo-binstall-
+          register: cargo_binstall_staging
+
+        - name: Download verified cargo-binstall archive
+          get_url:
+            url: >-
+              https://github.com/cargo-bins/cargo-binstall/releases/download/v{{ cargo_binstall_version }}/{{ cargo_binstall_assets[cargo_binstall_platform].file }}
+            dest: "{{ cargo_binstall_staging.path }}/{{ cargo_binstall_assets[cargo_binstall_platform].file }}"
+            checksum: "sha256:{{ cargo_binstall_assets[cargo_binstall_platform].sha256 }}"
+            mode: '0644'
+
+        - name: Extract cargo-binstall archive
+          unarchive:
+            src: "{{ cargo_binstall_staging.path }}/{{ cargo_binstall_assets[cargo_binstall_platform].file }}"
+            dest: "{{ cargo_binstall_staging.path }}"
+            remote_src: true
+
+        - name: Verify downloaded cargo-binstall binary
+          command: '"{{ cargo_binstall_staging.path }}/cargo-binstall" -V'
+          changed_when: false
+
+        - name: Ensure Cargo binary directory exists
+          file:
+            path: "{{ dev_home }}/.cargo/bin"
+            state: directory
+            mode: '0755'
+
+        - name: Install verified cargo-binstall binary
+          copy:
+            src: "{{ cargo_binstall_staging.path }}/cargo-binstall"
+            dest: "{{ dev_home }}/.cargo/bin/cargo-binstall"
+            remote_src: true
+            mode: '0755'
+      always:
+        - name: Remove cargo-binstall staging directory
+          file:
+            path: "{{ cargo_binstall_staging.path }}"
+            state: absent
+          when: cargo_binstall_staging.path is defined
+
+    - name: Install missing Cargo tools in one concurrent batch
+      shell: |
+        set -euo pipefail
+        export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+        missing=()
+        {% for tool in cargo_binstall_tools %}
+        if ! command -v {{ tool.binary | quote }} >/dev/null 2>&1; then
+          missing+=({{ tool.package | quote }})
+        fi
+        {% endfor %}
+        if [[ -z "${missing[*]-}" ]]; then
+          exit 0
+        fi
+        printf 'Installing missing Cargo tools: %s\n' "${missing[*]}"
+        # One process resolves/downloads crates concurrently and manages its own locks.
+        "$HOME/.cargo/bin/cargo-binstall" --no-confirm --disable-strategies compile \
+          --continue-on-failure "${missing[@]}"
+      args:
+        executable: /bin/bash
+      environment:
+        HOME: "{{ dev_home }}"
+        CARGO_HOME: "{{ dev_home }}/.cargo"
+        RUSTUP_HOME: "{{ dev_home }}/.rustup"
+      register: cargo_binstall_batch
+      changed_when: "'Installing missing Cargo tools:' in (cargo_binstall_batch.stdout | default(''))"
+      failed_when: false
+      when: cargo_binstall_tools | length > 0
+
+    - name: Report Cargo binary installation failures
+      debug:
+        msg: >-
+          Some Cargo tools could not be installed from binaries. Source compilation
+          was disabled. Check the errors below, then select a package-manager
+          alternative or explicitly run cargo install --locked <crate> on the target.
+          {{ cargo_binstall_batch.stderr | default('') }}
+      when: (cargo_binstall_batch.rc | default(0)) != 0

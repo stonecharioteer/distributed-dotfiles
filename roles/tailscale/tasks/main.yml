@@ -1,15 +1,39 @@
 ---
 - name: Check if Tailscale is already installed
-  command: which tailscale
+  shell: command -v tailscale
   register: tailscale_check
   changed_when: false
   failed_when: false
+  check_mode: false
 
 - name: Install Tailscale on Debian/Ubuntu when missing
   when:
     - ansible_facts["os_family"] == "Debian"
     - tailscale_check.rc != 0
   block:
+    - name: Resolve Tailscale repository from the base distribution
+      shell: |
+        set -eu
+        . /etc/os-release
+        if [ -n "${UBUNTU_CODENAME:-}" ]; then
+          distribution=ubuntu
+          codename="$UBUNTU_CODENAME"
+        else
+          distribution="${ID:-}"
+          codename="${VERSION_CODENAME:-}"
+        fi
+        case "$distribution" in
+          ubuntu|debian) ;;
+          *) echo "Unsupported Tailscale apt distribution: $distribution" >&2; exit 1 ;;
+        esac
+        case "$codename" in
+          ''|*[!a-z0-9]*) echo "Missing or invalid base distribution codename" >&2; exit 1 ;;
+        esac
+        printf '%s/%s\n' "$distribution" "$codename"
+      register: tailscale_repository_path
+      changed_when: false
+      check_mode: false
+
     - name: Install Tailscale apt prerequisites
       apt:
         name:
@@ -18,16 +42,17 @@
           - curl
         state: present
         update_cache: true
+        cache_valid_time: 86400
 
     - name: Add Tailscale apt keyring
       get_url:
-        url: "https://pkgs.tailscale.com/stable/{{ ansible_facts['distribution'] | lower }}/{{ ansible_facts['distribution_release'] }}.noarmor.gpg"
+        url: "https://pkgs.tailscale.com/stable/{{ tailscale_repository_path.stdout | trim }}.noarmor.gpg"
         dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
         mode: "0644"
 
     - name: Add Tailscale apt repository
       get_url:
-        url: "https://pkgs.tailscale.com/stable/{{ ansible_facts['distribution'] | lower }}/{{ ansible_facts['distribution_release'] }}.tailscale-keyring.list"
+        url: "https://pkgs.tailscale.com/stable/{{ tailscale_repository_path.stdout | trim }}.tailscale-keyring.list"
         dest: /etc/apt/sources.list.d/tailscale.list
         mode: "0644"
 

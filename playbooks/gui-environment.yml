@@ -37,48 +37,32 @@
       tags: [github, github-preflight, shell, fish, dotfiles, scripts, dev, neovim, editor, config, gui, system, repos]
       when: enable_github_preflight | bool
 
-    - name: Check which packages are missing
-      shell: dpkg -l {{ item }} 2>/dev/null | grep -q '^ii' || echo "{{ item }}"
-      register: missing_packages_check
-      loop:
-        - curl
-        - wget
-        - git
-        - unzip
-        - tar
-        - gzip
-        - software-properties-common
-        - apt-transport-https
-        - ca-certificates
-        - gnupg
-        - lsb-release
-        - gh
-        - python3-dev
-        - python3-pip
-        - python3-venv
-        - build-essential
-        - htop
-        - tree
-        - rsync
-      changed_when: false
-      failed_when: false
-      when: ansible_facts["os_family"] == "Debian"
-
-    - name: Create list of packages to install
-      set_fact:
-        packages_to_install: "{{ missing_packages_check.results | selectattr('stdout', 'defined') | selectattr('stdout', '!=', '') | map(attribute='stdout') | list }}"
-      when: ansible_facts["os_family"] == "Debian"
-
-    - name: Install missing system packages for GUI workstation
+    - name: Install system packages for GUI workstation
       apt:
-        name: "{{ packages_to_install }}"
+        name:
+          - curl
+          - wget
+          - git
+          - unzip
+          - tar
+          - gzip
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - gh
+          - python3-dev
+          - python3-pip
+          - python3-venv
+          - build-essential
+          - htop
+          - tree
+          - rsync
         state: present
         install_recommends: no
         force_apt_get: yes
-      when:
-        - ansible_facts["os_family"] == "Debian"
-        - packages_to_install is defined
-        - packages_to_install | length > 0
+      when: ansible_facts["os_family"] == "Debian"
 
   roles:
     # Failsafe checks for all components
@@ -123,6 +107,12 @@
     - role: tmux
       when: enable_development_tools | bool
       tags: [dev, tmux]
+    - role: herdr
+      when: enable_herdr | bool
+      tags: [dev, herdr]
+    - role: pi-config
+      when: enable_pi | bool
+      tags: [dev, pi, ai, config]
     - role: neovim-latest
       when: enable_development_tools | bool
       tags: [dev, neovim, editor]
@@ -142,6 +132,7 @@
       when: >-
         enable_laptop_health_monitoring | bool
         or enable_laptop_lid_ignore | default(false) | bool
+        or enable_laptop_lid_policy | default(false) | bool
         or enable_battery_charge_thresholds | default(false) | bool
         or enable_headless_health_monitor | default(false) | bool
         or enable_ssh_long_lived | default(false) | bool
@@ -182,6 +173,7 @@
           - Shell environment: {{ enable_shell_environment }}
           - Development tools: {{ enable_development_tools }}
           - Docker: {{ enable_docker }}
+          - herdr: {{ enable_herdr }}
           - GUI environment: {{ enable_gui_environment }}
           - Qtile: {{ enable_qtile }}
           - Nerd Fonts: {{ enable_nerd_fonts }}
@@ -202,6 +194,7 @@
           ✓ Modern CLI tools (ripgrep, fd, fzf, starship, etc.)
           ✓ Development folder structure
           ✓ tmux compiled from latest source
+          {% if enable_herdr | bool %}✓ herdr terminal workspace manager (prefix ctrl+a, bottom tab bar){% endif %}
           ✓ Neovim {{ neovim_version | default('latest') }} with vim symlink
           ✓ tree-sitter CLI for syntax highlighting
           ✓ Custom Neovim configuration from git@github.com:stonecharioteer/nvim-config.git
@@ -222,12 +215,13 @@
           3. Log in with your user account
           4. Test complete environment:
              - tmux new-session -d -s test
+             - herdr --version
              - docker run hello-world
              - nvim (complete plugin setup)
              - mise list (verify language runtimes)
 
           🎯 Your complete GUI workstation is ready!
           - Modern shell: Fish with mise for language management
-          - Development tools: tmux, Neovim/AstroNvim, Docker
+          - Development tools: tmux, herdr, Neovim/AstroNvim, Docker
           - GUI desktop: Qtile window manager with Alacritty terminal
           - All tools integrated and configured for maximum productivity

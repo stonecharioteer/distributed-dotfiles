@@ -1,0 +1,203 @@
+---
+- name: Install and configure Pi for the development user
+  become: "{{ ansible_facts['os_family'] != 'Darwin' }}"
+  become_user: "{{ dev_user }}"
+  environment: >-
+    {{ {'HOME': dev_home, 'PI_CODING_AGENT_DIR': pi_agent_dir,
+        'PI_SKIP_VERSION_CHECK': '1', 'PI_TELEMETRY': '0',
+        'npm_config_ignore_scripts': 'true', 'npm_config_save_exact': 'true'}
+       | combine(pi_extra_environment) }}
+  block:
+    - name: Check mise-managed Node.js for Pi
+      command:
+        argv: ["{{ pi_mise_binary }}", exec, --, node, --version]
+        chdir: "{{ dev_home }}"
+      register: pi_node_version
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Require Node.js 24 or newer for the Pi extension set
+      assert:
+        that:
+          - pi_node_version.rc == 0
+          - (pi_node_version.stdout | trim | regex_replace('^v', '')) is version('24.0.0', '>=')
+        fail_msg: "Run the mise-tools role first. These Pi extensions require Node.js 24 or newer."
+
+    - name: Inspect globally installed npm packages
+      command:
+        argv: ["{{ pi_mise_binary }}", exec, --, npm, list, --global, --depth=0, --json]
+        chdir: "{{ dev_home }}"
+      register: pi_global_npm
+      changed_when: false
+      failed_when: pi_global_npm.rc not in [0, 1]
+      check_mode: false
+
+    - name: Install the selected Pi CLI version
+      command:
+        argv:
+          - "{{ pi_mise_binary }}"
+          - exec
+          - --
+          - npm
+          - install
+          - --global
+          - --ignore-scripts
+          - "@earendil-works/pi-coding-agent@{{ pi_version }}"
+        chdir: "{{ dev_home }}"
+      when: >-
+        ((pi_global_npm.stdout | from_json).get('dependencies', {})
+          .get('@earendil-works/pi-coding-agent', {}).get('version', '')) != pi_version
+
+    - name: Create private Pi configuration directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0700'
+      loop:
+        - "{{ dev_home }}/.pi"
+        - "{{ pi_agent_dir }}"
+        - "{{ pi_agent_dir }}/npm"
+        - "{{ pi_agent_dir }}/extensions"
+
+    - name: Check existing Pi settings
+      stat:
+        path: "{{ pi_agent_dir }}/settings.json"
+      register: pi_settings_stat
+
+    - name: Read existing Pi settings without exposing local values
+      slurp:
+        src: "{{ pi_agent_dir }}/settings.json"
+      register: pi_settings_raw
+      when: pi_settings_stat.stat.exists
+      no_log: true
+
+    - name: Preserve unrelated Pi settings
+      set_fact:
+        pi_existing_settings: "{{ pi_settings_raw.content | default('e30=') | b64decode | from_json }}"
+      no_log: true
+
+    - name: Build shared Pi preferences without replacing unrelated settings
+      set_fact:
+        pi_desired_settings: >-
+          {{ pi_existing_settings | combine(pi_preferences, recursive=True)
+             | combine({'npmCommand': [pi_mise_binary, 'exec', '--', 'npm']}) }}
+      no_log: true
+
+    - name: Merge shared Pi preferences
+      copy:
+        dest: "{{ pi_agent_dir }}/settings.json"
+        content: "{{ pi_desired_settings | to_nice_json }}\n"
+        mode: '0600'
+      when: pi_desired_settings != pi_existing_settings
+      no_log: true
+      diff: false
+
+    - name: Keep Pi settings private
+      file:
+        path: "{{ pi_agent_dir }}/settings.json"
+        mode: '0600'
+      when: pi_settings_stat.stat.exists or not ansible_check_mode
+
+    - name: Add shared Pi agent instructions
+      blockinfile:
+        path: "{{ pi_agent_dir }}/AGENTS.md"
+        block: "{{ lookup('file', role_path ~ '/files/AGENTS.md') }}"
+        marker: '<!-- {mark} ANSIBLE MANAGED PI PREFERENCES -->'
+        create: true
+        mode: '0600'
+
+    - name: Inspect installed Pi extension versions
+      command:
+        argv:
+          - "{{ pi_mise_binary }}"
+          - exec
+          - --
+          - npm
+          - list
+          - --prefix
+          - "{{ pi_agent_dir }}/npm"
+          - --depth=0
+          - --json
+        chdir: "{{ dev_home }}"
+      register: pi_extension_npm
+      changed_when: false
+      failed_when: pi_extension_npm.rc not in [0, 1]
+      check_mode: false
+      when: not ansible_check_mode
+
+    - name: Check the Pi npm manifest
+      stat:
+        path: "{{ pi_agent_dir }}/npm/package.json"
+      register: pi_manifest_stat
+
+    - name: Read the Pi npm manifest
+      slurp:
+        src: "{{ pi_agent_dir }}/npm/package.json"
+      register: pi_manifest_raw
+      when: pi_manifest_stat.stat.exists
+
+    - name: Collect exact npm dependency specifications
+      set_fact:
+        pi_npm_specs: "{{ (pi_manifest_raw.content | default('e30=') | b64decode | from_json).get('dependencies', {}) }}"
+
+    - name: Collect configured Pi package sources
+      set_fact:
+        pi_configured_sources: >-
+          {{ (pi_existing_settings.get('packages', []) | select('string') | list)
+             + (pi_existing_settings.get('packages', []) | select('mapping')
+                | map(attribute='source') | list) }}
+      no_log: true
+
+    - name: Install or register selected Pi extensions
+      command:
+        argv:
+          - "{{ pi_mise_binary }}"
+          - exec
+          - --
+          - pi
+          - install
+          - "npm:{{ item.name }}@{{ item.version }}"
+          - --no-approve
+        chdir: "{{ dev_home }}"
+      loop: "{{ pi_packages }}"
+      loop_control:
+        label: "{{ item.name }}@{{ item.version }}"
+      when:
+        - not ansible_check_mode
+        - >-
+          ((pi_extension_npm.stdout | from_json).get('dependencies', {})
+            .get(item.name, {}).get('version', '')) != item.version
+          or pi_npm_specs.get(item.name, '') != item.version
+          or ('npm:' ~ item.name ~ '@' ~ item.version) not in pi_configured_sources
+
+    - name: Check for Herdr integration support
+      stat:
+        path: "{{ pi_herdr_binary }}"
+      register: pi_herdr_stat
+      when: pi_enable_herdr_integration | bool
+
+    - name: Inspect Herdr agent integrations
+      command:
+        argv: ["{{ pi_herdr_binary }}", integration, status]
+      register: pi_herdr_status
+      changed_when: false
+      when:
+        - pi_enable_herdr_integration | bool
+        - pi_herdr_stat.stat.exists
+
+    - name: Install or update the official Herdr Pi integration
+      command:
+        argv: ["{{ pi_herdr_binary }}", integration, install, pi]
+      when:
+        - pi_enable_herdr_integration | bool
+        - pi_herdr_stat.stat.exists
+        - "not (pi_herdr_status.stdout | default('') is search('(?m)^pi: current '))"
+
+    - name: Display Pi setup next steps
+      debug:
+        msg: >-
+          Pi configuration is managed in {{ pi_agent_dir }}. Start pi and use /login
+          on this device, then choose an available model with /model. Use
+          /vision-handoff to select a vision model if needed. Credentials, model
+          catalogs, trust records, sessions, and queued prompts were not copied.

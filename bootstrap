@@ -217,6 +217,10 @@ case "${profile}" in
     ;;
 esac
 
+if [[ ("${profile}" == "headless" || "${profile}" == "gui") && -z "${inventory}" ]]; then
+  inventory="inventory/hosts.yml"
+fi
+
 if [[ "${inventory}" != *, ]]; then
   if [[ "${profile}" == "headless" ]] && ! has_limit_arg; then
     select_inventory_target headless_machines

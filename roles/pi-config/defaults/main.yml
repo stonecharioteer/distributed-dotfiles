@@ -1,0 +1,27 @@
+---
+enable_pi: true
+pi_version: "0.85.1"
+pi_mise_binary: "{{ dev_home }}/.local/bin/mise"
+pi_agent_dir: "{{ dev_home }}/.pi/agent"
+pi_herdr_binary: "{{ dev_home }}/.local/bin/herdr"
+pi_enable_herdr_integration: "{{ enable_herdr | default(false) }}"
+
+# Reusable preferences from the controller's Pi config. No credentials or history.
+pi_preferences:
+  defaultProvider: openai-codex
+  defaultModel: gpt-5.6-sol
+  defaultThinkingLevel: high
+  hideThinkingBlock: true
+  theme: dark
+
+# Same extensions as the controller, pinned for repeatable installs.
+# Powerline 0.16.0 and xAI 1.5.2 exclude Pi 0.85 in their peer ranges.
+pi_packages:
+  - {name: pi-codex-goal, version: "0.2.0"}
+  - {name: pi-env-guard, version: "1.1.1"}
+  - {name: pi-vision-handoff, version: "0.10.1"}
+  - {name: pi-powerline-footer, version: "0.18.0"}
+  - {name: pi-xai-oauth, version: "1.6.0"}
+
+# For isolated tests or custom npm prefixes; no credentials belong here.
+pi_extra_environment: {}

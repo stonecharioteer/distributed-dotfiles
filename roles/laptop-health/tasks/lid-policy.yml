@@ -1,0 +1,216 @@
+---
+- name: Check whether the GUI lid policy is installed
+  stat:
+    path: /etc/systemd/system/laptop-lid-policy.service
+  register: laptop_lid_policy_unit
+
+- name: Install GUI laptop lid policy
+  when: enable_laptop_lid_policy | bool
+  block:
+    - name: Validate GUI lid policy settings
+      assert:
+        that:
+          - not (enable_laptop_lid_ignore | bool)
+          - laptop_lid_battery_delay_seconds | int > 0
+          - laptop_lid_poll_interval_seconds | int > 0
+          - laptop_lid_poll_interval_seconds | int <= laptop_lid_battery_delay_seconds | int
+        fail_msg: "Use either server lid-ignore or GUI lid policy, with a positive delay and polling interval."
+
+    - name: Install GUI lid policy dependencies
+      apt:
+        name:
+          - python3
+          - dconf-cli
+          - python3-lxml
+        state: present
+
+    - name: Create root-owned helper directory
+      file:
+        path: /usr/local/libexec
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Install lid policy helper from the scripts checkout
+      copy:
+        src: "{{ laptop_lid_policy_controller_source if laptop_lid_policy_controller_source | length > 0 else laptop_lid_policy_script }}"
+        remote_src: "{{ laptop_lid_policy_controller_source | length == 0 }}"
+        dest: /usr/local/libexec/laptop-lid-policy.py
+        owner: root
+        group: root
+        mode: '0755'
+      notify: restart laptop lid policy
+
+    - name: Verify lid and power sensors before changing lid handling
+      command: /usr/bin/python3 /usr/local/libexec/laptop-lid-policy.py --check
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Create dconf system policy directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /etc/dconf/profile
+        - /etc/dconf/db/laptop-lid.d/locks
+
+    - name: Create default dconf profile if missing
+      copy:
+        dest: /etc/dconf/profile/user
+        content: "user-db:user\n"
+        force: false
+        mode: '0644'
+
+    - name: Add laptop lid policy to the dconf profile
+      lineinfile:
+        path: /etc/dconf/profile/user
+        line: system-db:laptop-lid
+        state: present
+
+    - name: Disable immediate Cinnamon lid actions
+      copy:
+        dest: /etc/dconf/db/laptop-lid.d/00-lid-policy
+        content: |
+          [org/cinnamon/settings-daemon/plugins/power]
+          lid-close-ac-action='nothing'
+          lid-close-battery-action='nothing'
+        mode: '0644'
+      register: laptop_lid_dconf_settings
+
+    - name: Prevent Cinnamon user settings from bypassing the lid delay
+      copy:
+        dest: /etc/dconf/db/laptop-lid.d/locks/lid-policy
+        content: |
+          /org/cinnamon/settings-daemon/plugins/power/lid-close-ac-action
+          /org/cinnamon/settings-daemon/plugins/power/lid-close-battery-action
+        mode: '0644'
+      register: laptop_lid_dconf_locks
+
+    - name: Compile laptop lid dconf policy
+      command: dconf update
+      when: laptop_lid_dconf_settings.changed or laptop_lid_dconf_locks.changed
+      changed_when: true
+
+    - name: Check for Xfce power settings support
+      stat:
+        path: /usr/bin/xfconf-query
+      register: laptop_lid_xfconf
+
+    - name: Configure Xfce lid actions
+      when: laptop_lid_xfconf.stat.exists
+      block:
+        - name: Create Xfce policy and backup directories
+          file:
+            path: "{{ item }}"
+            state: directory
+            mode: '0755'
+          loop:
+            - /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
+            - /var/lib/laptop-lid-policy
+
+        - name: Create Xfce power defaults if missing
+          copy:
+            dest: /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml
+            content: |
+              <?xml version="1.0" encoding="UTF-8"?>
+              <channel name="xfce4-power-manager" version="1.0">
+                <property name="xfce4-power-manager" type="empty"/>
+              </channel>
+            force: false
+            mode: '0644'
+
+        - name: Save original Xfce system defaults once
+          copy:
+            src: /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml
+            dest: /var/lib/laptop-lid-policy/xfce4-power-manager.xml.before
+            remote_src: true
+            force: false
+            mode: '0644'
+
+        - name: Disable and lock immediate Xfce lid actions
+          community.general.xml:
+            path: /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml
+            xpath: "/channel/property[@name='xfce4-power-manager']/property[@name='{{ item.0 }}']"
+            attribute: "{{ item.1.attribute }}"
+            value: "{{ item.1.value }}"
+          loop: >-
+            {{ ['lid-action-on-ac', 'lid-action-on-battery'] | product([
+              {'attribute': 'type', 'value': 'uint'},
+              {'attribute': 'value', 'value': '0'},
+              {'attribute': 'unlocked', 'value': 'root'}]) | list }}
+
+    - name: Install GUI lid policy service
+      template:
+        src: laptop-lid-policy.service.j2
+        dest: /etc/systemd/system/laptop-lid-policy.service
+        mode: '0644'
+      notify: restart laptop lid policy
+
+    - name: Enable GUI lid policy service
+      systemd:
+        name: laptop-lid-policy.service
+        enabled: true
+        state: started
+        daemon_reload: true
+      when: not ansible_check_mode
+
+    - name: Explain GUI lid policy activation
+      debug:
+        msg: >-
+          Lid-close policy: stay awake on external power, suspend after
+          {{ laptop_lid_battery_delay_seconds }} seconds continuously closed on battery.
+          Opening the lid or restoring power cancels the timer. Reboot after the
+          first installation so desktop sessions load the dconf policy.
+          Manual suspend and other idle/critical-battery actions are unchanged.
+
+- name: Remove disabled GUI laptop lid policy
+  when:
+    - not (enable_laptop_lid_policy | bool)
+    - laptop_lid_policy_unit.stat.exists
+  block:
+    - name: Stop GUI lid policy service
+      systemd:
+        name: laptop-lid-policy.service
+        state: stopped
+        enabled: false
+
+    - name: Remove managed GUI lid policy files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/systemd/system/laptop-lid-policy.service
+        - /usr/local/libexec/laptop-lid-policy.py
+        - /etc/dconf/db/laptop-lid.d/00-lid-policy
+        - /etc/dconf/db/laptop-lid.d/locks/lid-policy
+      notify: reload systemd daemon
+
+    - name: Remove laptop lid policy from the dconf profile
+      lineinfile:
+        path: /etc/dconf/profile/user
+        line: system-db:laptop-lid
+        state: absent
+
+    - name: Check saved Xfce system defaults
+      stat:
+        path: /var/lib/laptop-lid-policy/xfce4-power-manager.xml.before
+      register: laptop_lid_xfce_backup
+
+    - name: Restore saved Xfce system defaults
+      copy:
+        src: /var/lib/laptop-lid-policy/xfce4-power-manager.xml.before
+        dest: /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml
+        remote_src: true
+        mode: '0644'
+      when: laptop_lid_xfce_backup.stat.exists
+
+    - name: Remove restored Xfce backup
+      file:
+        path: /var/lib/laptop-lid-policy/xfce4-power-manager.xml.before
+        state: absent
+
+    - name: Restore prior Cinnamon lid settings
+      command: dconf update
+      changed_when: true
